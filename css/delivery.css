@@ -1,0 +1,329 @@
+/* SIDEC Delivery — protótipo comercial, mobile-first.
+   Elemento memorável: a rota no céu (arco loja → porta com o Drone Bot voando). O resto é lista limpa:
+   cardápio em linhas com divisores, um único acento âmbar para ação e seleção. */
+
+.delivery { background: var(--white); }
+.delivery [hidden] { display: none !important; } /* componentes com display próprio respeitam o atributo hidden */
+
+.brand__tag--delivery { display: inline; color: var(--navy-900); border-left-color: var(--sun-400); font-weight: 600; } /* nome do app visível no mobile */
+
+.dl-h2 { font-size: var(--fs-lg); letter-spacing: -0.01em; text-wrap: balance; }
+
+/* ---------- Abertura ---------- */
+.dl-intro { padding-block: var(--s-6) var(--s-5); }
+.dl-intro h1 { max-width: 30rem; font-size: var(--fs-xl); line-height: 1.12; letter-spacing: -0.02em; text-wrap: balance; }
+.dl-intro__note {
+  max-width: 40rem;
+  margin-top: var(--s-3);
+  padding-left: var(--s-3);
+  font-size: var(--fs-sm);
+  color: var(--gray-700);
+  border-left: 3px solid var(--sun-400);
+  text-wrap: pretty;
+}
+
+/* ---------- Loja + carrinho ---------- */
+.dl-shop { display: grid; gap: var(--s-7); padding-bottom: var(--s-8); }
+.dl-shop__menu { display: grid; gap: var(--s-6); min-width: 0; }
+.dl-shop__menu section { display: grid; gap: var(--s-3); }
+
+@media (min-width: 900px) {
+  .dl-shop { grid-template-columns: minmax(0, 1fr) 23rem; align-items: start; }
+  .cart { position: sticky; top: calc(var(--header-h) + var(--s-4)); }
+}
+
+/* Lojas: rolagem lateral no celular, três colunas a partir do tablet */
+.stores {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(13.5rem, 1fr);
+  gap: var(--s-3);
+  overflow-x: auto;
+  padding: 2px 2px var(--s-2);
+  scroll-snap-type: x mandatory;
+}
+
+@media (min-width: 600px) {
+  .stores { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+}
+
+.store {
+  display: flex;
+  gap: var(--s-3);
+  align-items: flex-start;
+  padding: var(--s-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: border-color var(--dur), background-color var(--dur);
+}
+
+.store input { width: 1.125rem; height: 1.125rem; margin-top: 0.2rem; accent-color: var(--navy-900); flex: none; }
+.store:hover { border-color: var(--gray-400); }
+.store:has(input:checked) { background: var(--sun-50); border-color: var(--navy-900); box-shadow: inset 0 0 0 1px var(--navy-900); }
+.store:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+.store__body { display: grid; gap: var(--s-1); }
+.store__name { font-weight: 600; line-height: 1.25; }
+.store__meta { font-size: var(--fs-sm); color: var(--text-muted); }
+
+/* Cardápio em linhas, não em cartões */
+.menu { border-top: 1px solid var(--line-strong); }
+
+.dish {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s-4);
+  align-items: center;
+  padding-block: var(--s-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.dish__text { display: grid; gap: var(--s-1); }
+.dish__name { font-family: var(--font-body); font-size: var(--fs-base); font-weight: 600; }
+.dish__desc { font-size: var(--fs-sm); color: var(--text-muted); text-wrap: pretty; }
+.dish__price { font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.qty {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+}
+
+.qty__btn {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--navy-900);
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  transition: background-color var(--dur), transform var(--dur) var(--ease-out);
+}
+
+.qty__btn:hover { background: var(--sun-50); }
+.qty__btn:active { transform: scale(0.94); }
+.qty__btn[aria-disabled="true"] { color: var(--gray-400); background: none; cursor: not-allowed; transform: none; }
+.qty__n { min-width: 1.5rem; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---------- Carrinho ---------- */
+.cart {
+  display: grid;
+  gap: var(--s-4);
+  padding: var(--s-5);
+  background: var(--white);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+}
+
+.cart__store { font-size: var(--fs-sm); color: var(--text-muted); }
+.cart__lines, .receipt__lines { display: grid; gap: var(--s-2); }
+.cart__line, .receipt__lines li { display: flex; justify-content: space-between; gap: var(--s-3); font-size: var(--fs-sm); }
+.cart__empty { font-size: var(--fs-sm); color: var(--text-muted); text-wrap: pretty; }
+.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.cart__form { display: grid; gap: var(--s-4); }
+
+.modes { display: grid; gap: var(--s-2); margin: 0; padding: 0; border: 0; }
+.modes legend { margin-bottom: var(--s-2); font-weight: 600; font-size: var(--fs-sm); }
+
+.mode {
+  display: flex;
+  gap: var(--s-3);
+  align-items: flex-start;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.mode input { width: 1.125rem; height: 1.125rem; margin-top: 0.2rem; accent-color: var(--navy-900); flex: none; }
+.mode:has(input:checked) { border-color: var(--navy-900); box-shadow: inset 0 0 0 1px var(--navy-900); }
+.mode:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+.mode:has(input:disabled) { cursor: not-allowed; background: var(--surface-alt); }
+.mode:has(input:disabled) .mode__name,
+.mode:has(input:disabled) .mode__eta,
+.mode:has(input:disabled) .mode__fee { color: var(--text-muted); }
+
+.mode__body { display: grid; grid-template-columns: 1fr auto; gap: 0 var(--s-3); width: 100%; }
+.mode__name { font-weight: 600; }
+.mode__eta { grid-column: 1; font-size: var(--fs-sm); color: var(--gray-700); }
+.mode__fee { grid-column: 2; grid-row: 1; font-variant-numeric: tabular-nums; }
+.mode__why { grid-column: 1 / -1; font-size: var(--fs-sm); color: var(--p1-ink); }
+.mode__why:empty { display: none; }
+
+.totals { display: grid; gap: var(--s-2); margin: 0; font-size: var(--fs-sm); }
+.totals div { display: flex; justify-content: space-between; gap: var(--s-3); }
+.totals dd { margin: 0; font-variant-numeric: tabular-nums; }
+.totals__sum { padding-top: var(--s-3); border-top: 1px solid var(--line-strong); font-size: var(--fs-md); font-weight: 600; }
+
+.btn--sun { color: var(--navy-900); background: var(--sun-400); }
+.btn--sun:hover { background: var(--sun-500); }
+.cart__submit { width: 100%; min-height: 3rem; font-size: var(--fs-base); }
+
+/* Barra fixa do carrinho no celular (deixa espaço à direita para o Drone Bot) */
+.cart-bar {
+  position: fixed;
+  left: var(--s-4);
+  right: 5.5rem;
+  bottom: var(--s-4);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 3.25rem;
+  padding: var(--s-2) var(--s-4);
+  color: var(--white);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--navy-900);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-float);
+}
+
+.cart-bar__total { font-variant-numeric: tabular-nums; }
+.cart-bar__go { margin-left: auto; padding: var(--s-1) var(--s-3); color: var(--navy-900); background: var(--sun-400); border-radius: var(--radius-sm); }
+.cart-bar:focus-visible { outline: 3px solid var(--sun-400); outline-offset: 2px; }
+
+@media (max-width: 899px) { .delivery main { padding-bottom: var(--s-9); } }
+@media (min-width: 900px) { .delivery .cart-bar { display: none !important; } }
+
+/* ---------- Acompanhamento ---------- */
+.dl-track { padding-block: var(--s-8); background: var(--sky-50); border-block: 1px solid var(--blue-100); }
+.dl-track .container { display: grid; gap: var(--s-5); }
+.dl-track__empty { color: var(--gray-700); }
+.dl-h2:focus { outline: none; }
+.dl-h2:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+
+.track { display: grid; gap: var(--s-5); }
+.track__status { max-width: 40rem; font-family: var(--font-display); font-size: var(--fs-md); font-weight: 600; text-wrap: pretty; }
+
+/* Etapas: bolinhas ligadas por uma linha */
+.stepper { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+.stepper li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--s-2);
+  padding-top: 1.25rem;
+  font-size: var(--fs-xs);
+  text-align: center;
+  color: var(--text-muted);
+  text-wrap: balance;
+}
+
+.stepper li::before {
+  content: "";
+  position: absolute;
+  top: 0.25rem;
+  left: 50%;
+  z-index: 1;
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-left: -0.375rem;
+  background: var(--white);
+  border: 2px solid var(--gray-500);
+  border-radius: 50%;
+}
+
+.stepper li + li::after {
+  content: "";
+  position: absolute;
+  top: 0.6rem;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--gray-200);
+}
+
+.stepper li.is-done,
+.stepper li[aria-current] { color: var(--navy-900); }
+.stepper li.is-done::before { background: var(--navy-900); border-color: var(--navy-900); }
+.stepper li.is-done + li::after { background: var(--navy-900); }
+.stepper li[aria-current] { font-weight: 600; }
+.stepper li[aria-current]::before { top: 0.125rem; width: 1rem; height: 1rem; margin-left: -0.5rem; background: var(--sun-400); border-color: var(--navy-900); }
+
+/* Rota no céu */
+.sky { display: grid; gap: var(--s-2); max-width: 46rem; margin: 0; }
+.sky__svg { display: block; width: 100%; height: auto; overflow: visible; }
+.sky__route { fill: none; stroke: var(--gray-400); stroke-width: 3; stroke-dasharray: 2 10; stroke-linecap: round; }
+.sky__done { fill: none; stroke: var(--blue-600); stroke-width: 4; stroke-linecap: round; }
+.sky__pin circle { stroke: var(--navy-900); stroke-width: 2; }
+.sky__pin--store circle { fill: var(--sun-400); }
+.sky__pin--home circle { fill: var(--white); }
+.sky__pin .sky__pulse { fill: var(--sun-400); stroke: none; opacity: 0; }
+.sky__svg.is-delivered .sky__pin--home circle { fill: var(--p3); }
+
+.sky__svg.is-preparing .sky__pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sky-pulse 1.6s var(--ease-out) infinite;
+}
+
+@keyframes sky-pulse {
+  from { opacity: 0.55; transform: scale(0.6); }
+  to { opacity: 0; transform: scale(1.8); }
+}
+
+.sky__ends { display: flex; justify-content: space-between; gap: var(--s-4); font-size: var(--fs-sm); font-weight: 600; }
+.sky__ends span:last-child { text-align: right; }
+
+.track__facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: var(--s-3) var(--s-5); margin: 0; }
+.track__facts dt { font-size: var(--fs-xs); color: var(--text-muted); }
+.track__facts dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.track__prio { max-width: 42rem; padding-left: var(--s-3); font-size: var(--fs-sm); color: var(--gray-700); border-left: 3px solid var(--p4); }
+
+.receipt {
+  display: grid;
+  gap: var(--s-3);
+  max-width: 26rem;
+  padding: var(--s-5);
+  background: var(--white);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+}
+
+.receipt h3 { font-size: var(--fs-md); }
+.receipt__total { padding-top: var(--s-3); border-top: 1px dashed var(--line-strong); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.track__actions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+
+/* ---------- Como funciona ---------- */
+.dl-how { padding-block: var(--s-8); }
+.dl-how .container { display: grid; gap: var(--s-5); justify-items: start; }
+.how { display: grid; gap: var(--s-3); max-width: 44rem; counter-reset: passo; }
+.how li { position: relative; padding-left: 2.75rem; counter-increment: passo; text-wrap: pretty; }
+
+.how li::before {
+  content: counter(passo);
+  position: absolute;
+  top: -0.1rem;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  background: var(--sun-400);
+  border-radius: 50%;
+}
+
+.how strong { display: block; }
+.dl-how__bot { width: 1.75rem; height: 1.75rem; padding: 0.15rem; background: var(--white); border-radius: 50%; }
+
+.site-footer--delivery { margin-top: 0; padding-block: var(--s-6); }
+.site-footer--delivery .site-footer__legal { margin: 0; padding: 0; border: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sky__svg.is-preparing .sky__pulse { animation: none; opacity: 0.35; }
+  .qty__btn:active { transform: none; }
+}

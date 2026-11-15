@@ -1,0 +1,249 @@
+/* Drone Bot — avatar SVG animado, janela de chat e tutorial guiado.
+   Só transform/opacity são animados (composição na GPU, bom desempenho em celulares). */
+
+/* ---------- Avatar ---------- */
+.db { width: 100%; height: 100%; overflow: visible; }
+.db-body { fill: var(--navy-900); }
+.db-props { fill: var(--navy-700); }
+.db-eye rect { fill: var(--cyan-400); }
+
+.db-float,
+.db-prop,
+.db-eye,
+.db-eyes,
+.db-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.db-float { animation: db-float 4s ease-in-out infinite; }
+
+/* Hélice vista de frente: compressão horizontal simula a rotação */
+.db-prop { animation: db-spin 0.22s linear infinite; }
+.db-prop--tr,
+.db-prop--bl { animation-delay: -0.11s; }
+
+.db-eye { animation: db-blink 5.2s ease-in-out infinite; }
+.db-eye + .db-eye { animation-delay: 0.04s; }
+.db-eyes { transition: transform 300ms var(--ease-out); }
+
+.db-ring {
+  fill: none;
+  stroke: var(--cyan-400);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 7;
+  stroke-linecap: round;
+  opacity: 0;
+  transition: opacity 250ms;
+}
+
+/* Estados (alternados via classe pelo JavaScript) */
+.db.is-thinking .db-ring { opacity: 1; animation: db-orbit 1.4s linear infinite; }
+.db.is-thinking .db-eyes { transform: translate(2px, -3px); }
+
+.db.is-talking .db-eye { animation: db-talk 0.32s ease-in-out infinite alternate; }
+
+.db.is-happy .db-float { animation: db-hop 0.6s var(--ease-out); }
+.db.is-happy .db-eye { animation: none; transform: scaleY(0.45); }
+
+.db.is-alert .db-float { animation: db-shake 0.45s ease-in-out 2; }
+.db.is-alert .db-ring { opacity: 1; stroke: var(--p1); }
+
+@keyframes db-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes db-spin { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.16); } }
+@keyframes db-blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
+@keyframes db-talk { from { transform: scaleY(0.7); } to { transform: scaleY(1.1); } }
+@keyframes db-orbit { to { transform: rotate(360deg); } }
+@keyframes db-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-7px); } }
+@keyframes db-shake { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-7deg); } 75% { transform: rotate(7deg); } }
+
+/* ---------- Chat ---------- */
+.chat {
+  position: fixed;
+  right: var(--s-4);
+  bottom: var(--s-4);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s-3);
+}
+
+.chat__launcher {
+  width: 4rem;
+  height: 4rem;
+  padding: 0.55rem;
+  background: var(--white);
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  box-shadow: var(--shadow-float);
+  transition: transform var(--dur) var(--ease-out), border-color var(--dur);
+}
+
+.chat__launcher:hover { transform: translateY(-2px); border-color: var(--blue-600); }
+.chat__launcher.is-active { border-color: var(--blue-600); }
+
+.chat__panel {
+  display: flex;
+  flex-direction: column;
+  width: min(23.5rem, calc(100vw - 2rem));
+  height: min(35rem, calc(100vh - 7.5rem));
+  overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-float);
+  opacity: 0;
+  transform: translateY(12px) scale(0.96);
+  transform-origin: bottom right;
+  transition: opacity 200ms var(--ease-out), transform 220ms var(--ease-out);
+}
+
+.chat__panel.is-open { opacity: 1; transform: none; }
+.chat__panel.is-closing { opacity: 0; transform: translateY(8px) scale(0.97); }
+
+.chat__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  color: var(--white);
+  background: var(--navy-900);
+}
+
+.chat__head-avatar {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0.3rem;
+  background: var(--white);
+  border-radius: 50%;
+}
+
+.chat__title { font-size: var(--fs-base); letter-spacing: 0; }
+.chat__subtitle { font-size: var(--fs-xs); color: var(--gray-200); }
+
+.chat__close,
+.tour__close {
+  margin-left: auto;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: inherit;
+  background: none;
+  border: 1px solid rgb(255 255 255 / 0.25);
+  border-radius: 50%;
+}
+
+.chat__log {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.chat__msg {
+  max-width: 88%;
+  padding: var(--s-2) var(--s-3);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  border-radius: var(--radius-lg);
+  animation: chat-in 220ms var(--ease-out);
+}
+
+.chat__msg--bot { align-self: flex-start; background: var(--surface-alt); border-bottom-left-radius: var(--radius-sm); }
+.chat__msg--user { align-self: flex-end; color: var(--white); background: var(--blue-600); border-bottom-right-radius: var(--radius-sm); }
+
+.chat__entities { margin-top: var(--s-2); font-size: var(--fs-xs); color: var(--cyan-700); }
+.chat__link { display: block; margin-top: var(--s-2); font-weight: 600; }
+
+.chat__typing { display: flex; gap: 4px; padding-block: var(--s-3); }
+.chat__typing span:not(.visually-hidden) {
+  width: 6px;
+  height: 6px;
+  background: var(--gray-400);
+  border-radius: 50%;
+  animation: chat-dot 1s ease-in-out infinite;
+}
+.chat__typing span:nth-child(2) { animation-delay: 0.15s; }
+.chat__typing span:nth-child(3) { animation-delay: 0.3s; }
+
+.chat__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  padding: 0 var(--s-4) var(--s-3);
+}
+
+.chat__chip {
+  min-height: 2.5rem;
+  padding: var(--s-1) var(--s-3);
+  font-size: var(--fs-xs);
+  color: var(--blue-700);
+  background: var(--white);
+  border: 1px solid var(--blue-100);
+  border-radius: 999px;
+  transition: background-color var(--dur), border-color var(--dur);
+}
+
+.chat__chip:hover { background: var(--blue-100); border-color: var(--blue-600); }
+
+.chat__form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  border-top: 1px solid var(--line);
+}
+
+@keyframes chat-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes chat-dot { 0%, 100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+
+/* ---------- Tutorial guiado ---------- */
+.tour {
+  position: fixed;
+  left: var(--s-4);
+  right: 5.5rem;
+  bottom: var(--s-4);
+  z-index: 70;
+  display: grid;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  color: var(--white);
+  background: var(--navy-900);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-float);
+  animation: chat-in 240ms var(--ease-out);
+}
+
+.tour__head { display: flex; align-items: center; gap: var(--s-2); }
+.tour__avatar { width: 2.25rem; height: 2.25rem; padding: 0.25rem; background: var(--white); border-radius: 50%; }
+.tour__count { font-size: var(--fs-xs); color: var(--cyan-400); }
+.tour__title { font-size: var(--fs-md); letter-spacing: 0; }
+.tour__title:focus { outline: none; }
+.tour__text { font-size: var(--fs-sm); color: var(--gray-200); }
+.tour__progress { width: 100%; height: 4px; accent-color: var(--cyan-400); }
+.tour__actions { display: flex; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-2); }
+.tour .btn--ghost { color: var(--white); border-color: rgb(255 255 255 / 0.3); }
+
+.is-tour-target {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid var(--cyan-400);
+  outline-offset: 6px;
+  border-radius: var(--radius);
+}
+
+@media (min-width: 600px) {
+  .tour { right: auto; width: 23rem; left: var(--s-5); bottom: var(--s-5); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .db-float, .db-prop, .db-eye, .db-ring, .chat__typing span { animation: none !important; }
+  .chat__panel { transition: opacity 120ms; transform: none; }
+}

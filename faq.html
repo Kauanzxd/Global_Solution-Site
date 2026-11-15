@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Perguntas frequentes — SIDEC</title>
+  <meta name="description" content="Perguntas frequentes sobre o SIDEC: prioridades, segurança, regulação, dados e modelo de negócio.">
+  <link rel="icon" href="assets/icons/drone-mark.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/drone-bot.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body data-page="faq">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="site-header">
+    <div class="container site-header__bar">
+      <a class="brand" href="index.html" aria-label="SIDEC, página inicial">
+        <img src="assets/icons/drone-mark.svg" alt="" width="32" height="32">
+        <span class="brand__name">SIDEC</span>
+        <span class="brand__tag">Drones de entrega e cuidado</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="nav-toggle__bars" aria-hidden="true"></span>
+        <span class="visually-hidden">Abrir menu</span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Principal">
+        <ul class="site-nav__list">
+          <li><a href="index.html">Início</a></li>
+          <li><a href="sobre.html">Sobre</a></li>
+          <li><a href="central.html">Central</a></li>
+          <li><a href="rastreamento.html">Rastreamento</a></li>
+          <li><a href="saude/index.html">Saúde</a></li>
+          <li><a href="delivery/index.html">Delivery</a></li>
+          <li><a href="faq.html" aria-current="page">FAQ</a></li>
+          <li><a href="integrantes.html">Integrantes</a></li>
+          <li><a class="site-nav__cta" href="contato.html">Contato</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <section class="page-hero" aria-labelledby="page-title">
+      <div class="container">
+        <p class="eyebrow">Perguntas frequentes</p>
+        <h1 id="page-title">O que você precisa saber sobre o SIDEC.</h1>
+      </div>
+    </section>
+
+    <div class="container faq-layout">
+      <aside class="faq-aside" aria-label="Ajuda adicional">
+        <p>Não encontrou sua dúvida? O Drone Bot responde sobre prioridades, segurança e rastreamento, ou use o formulário de contato.</p>
+        <a class="btn btn--ghost" href="contato.html">Falar com a equipe</a>
+      </aside>
+
+      <section aria-labelledby="faq-list-title">
+        <h2 id="faq-list-title" class="visually-hidden">Lista de perguntas</h2>
+        <div class="accordion" data-accordion>
+          <div class="accordion__item">
+            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-1" id="faq-1-btn">O SIDEC já opera drones de verdade?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+            <div class="accordion__panel" id="faq-1" role="region" aria-labelledby="faq-1-btn"><div><p>Não. O SIDEC é um projeto acadêmico da FIAP Global Solution 2026. Toda a frota, as rotas e a telemetria exibidas no site são simulações com dados fictícios. O site não controla nenhum drone real.</p></div></div>
+          </div>
+          <div class="accordion__item">
+            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-2" id="faq-2-btn">Como a central decide qual entrega vai primeiro?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+            <div class="accordion__panel" id="faq-2" role="region" aria-labelledby="faq-2-btn"><div><p>Pela prioridade: P1 Órgãos, P2 Emergência, P3 Saúde e P4 Comercial. Pedidos com a mesma prioridade seguem a ordem de chegada. Você pode testar isso na Central.</p></div></div>
+          </div>
+          <div class="accordion__item">
+            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-3" id="faq-3-btn">Uma emergência pode cancelar uma entrega comercial?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+            <div class="accordion__panel" id="faq-3" role="region" aria-labelledby="faq-3-btn"><div><p>Pode reorganizar uma entrega comercial que ainda não decolou: o drone é realocado e o pedido comercial volta para a fila. Uma entrega que já está em voo é sempre concluída antes.</p></div></div>
+          </div>
+          <div class="accordion__item">
+            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-4" id="faq-4-btn">Por que órgãos exigem 30% de reserva de bateria?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+            <div class="accordion__panel" id="faq-4" role="region" aria-labelledby="faq-4-btn"><div><p>Porque não há margem para erro. A central calcula o consumo estimado da rota e só libera o voo se a bateria cobrir esse consumo mais 30%. Se nenhum drone atender, o sistema indica outro meio de transporte.</p></div></div>
+          </div>
+          <div class="accordion__item">
+            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-5" id="faq-5-btn">O que acontece se o drone falhar no ar?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+            <div class="accordion__panel" id="faq-5" role="region" aria-labelledby="faq-5-btn"><div><p>Com bateria insuficiente ou falha de motor, ele busca a zona de pouso seguro mais próxima da rota. Em falha grave, aciona paraquedas, luzes e alertas sonoros. A carga fica aguardando resgate por uma equipe ou outro drone.</p></div></div>
+          </div>
+          <div class="accordion__item">
+            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-6" id="faq-6-btn">Como a temperatura de medicamentos e órgãos é controlada?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+            <div class="accordion__panel" id="faq-6" role="region" aria-labelledby="faq-6-btn"><div><p>O compartimento térmico tem sensores de temperatura. Se a leitura sair da faixa definida para a carga, a equipe médica recebe um alerta imediato. No site, isso é demonstrado no Rastreamento.</p></div></div>
+          </div>
+          <div class="accordion__item">
+            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-7" id="faq-7-btn">O drone substitui ambulâncias e helicópteros?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+            <div class="accordion__panel" id="faq-7" role="region" aria-labelledby="faq-7-btn"><div><p>Não. É um meio complementar, limitado por peso, autonomia, clima, zonas de pouso e regras da ANAC e do DECEA.</p></div></div>
+          </div>
+          <div class="accordion__item">
+            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-8" id="faq-8-btn">Como as entregas comerciais ajudam a saúde?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+            <div class="accordion__panel" id="faq-8" role="region" aria-labelledby="faq-8-btn"><div><p>Pelo subsídio cruzado: parte da taxa de cada entrega comercial compõe um fundo que ajuda a financiar as rotas de saúde e emergência, junto com contratos públicos e institucionais.</p></div></div>
+          </div>
+          <div class="accordion__item">
+            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-9" id="faq-9-btn">iFood, Shopee ou AliExpress são parceiros do SIDEC?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+            <div class="accordion__panel" id="faq-9" role="region" aria-labelledby="faq-9-btn"><div><p>Não. Essas empresas são citadas apenas como parcerias potenciais. Não existe parceria, integração ou autorização oficial.</p></div></div>
+          </div>
+          <div class="accordion__item">
+            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-10" id="faq-10-btn">O site guarda meus dados?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+            <div class="accordion__panel" id="faq-10" role="region" aria-labelledby="faq-10-btn"><div><p>Não. O formulário de contato só valida os campos no navegador e nada é enviado. A simulação guarda apenas dados fictícios no armazenamento local do seu navegador, que você pode restaurar na Central.</p></div></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="site-footer__grid">
+        <div class="site-footer__brand">
+          <a class="brand" href="index.html"><span class="brand__name">SIDEC</span></a>
+          <p>A tecnologia que entrega. O cuidado que transforma.</p>
+        </div>
+        <div>
+          <h2>Navegação</h2>
+          <ul><li><a href="sobre.html">Sobre</a></li><li><a href="central.html">Central</a></li><li><a href="rastreamento.html">Rastreamento</a></li><li><a href="faq.html">FAQ</a></li></ul>
+        </div>
+        <div>
+          <h2>Projeto</h2>
+          <ul><li><a href="integrantes.html">Integrantes</a></li><li><a href="contato.html">Contato</a></li><li><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório</a></li></ul>
+        </div>
+      </div>
+      <p class="site-footer__legal">Projeto acadêmico — FIAP Global Solution 2026. Conceito e simulações com dados fictícios; o site não controla drones reais e não coleta dados pessoais. Operações reais dependem de autorização da ANAC e do DECEA.</p>
+    </div>
+  </footer>
+
+  <script src="js/ui.js" defer></script>
+  <script src="js/operations.js" defer></script>
+  <script src="js/data.js" defer></script>
+  <script src="js/state.js" defer></script>
+  <script src="js/drone-avatar.js" defer></script>
+  <script src="js/chatbot.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+/* SIDEC — tokens de design */
+:root {
+  /* Cor */
+  --navy-950: #071226;
+  --navy-900: #0B1B33;
+  --navy-800: #132847;
+  --navy-700: #1E3760;
+  --blue-700: #1858C4;
+  --blue-600: #1F6FEB;
+  --blue-100: #E3EDFD;
+  --cyan-400: #14C8C8;
+  --cyan-700: #0A7373;
+  --cyan-100: #DDF6F6;
+  --white: #FFFFFF;
+  --gray-25: #FAFBFC;
+  --gray-50: #F4F6F9;
+  --gray-100: #E8ECF2;
+  --gray-200: #D5DCE6;
+  --gray-400: #8C97A8;
+  --gray-500: #5E6A7D;
+  --gray-700: #3A4558;
+
+  --p1: #D92D20;
+  --p1-bg: #FEE4E2;
+  --p1-ink: #B42318; /* texto pequeno sobre --p1-bg com contraste AA (5,5:1) */
+  --p2: #B54708;
+  --p2-bg: #FEF0C7;
+  --p3: #067647;
+  --p3-bg: #DCFAE6;
+  --p4: #1F6FEB;
+  --p4-bg: #E3EDFD;
+
+  /* SIDEC Saúde: superfície clínica menta */
+  --mint-50: #EEF6F3;
+  --mint-200: #C6E3D8;
+
+  /* SIDEC Delivery: acento comercial âmbar (texto sempre navy sobre ele) e céu da rota */
+  --sun-400: #FFB547;
+  --sun-500: #F5A21E;
+  --sun-50: #FFF6E3;
+  --sky-50: #EEF5FF;
+
+  --text: var(--navy-900);
+  --text-muted: var(--gray-500);
+  --surface: var(--white);
+  --surface-alt: var(--gray-50);
+  --line: var(--gray-100);
+  --line-strong: var(--gray-200);
+  --focus: var(--blue-600);
+
+  /* Tipografia */
+  --font-display: "Sora", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1rem;
+  --fs-md: 1.125rem;
+  --fs-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --fs-xl: clamp(1.6rem, 1.3rem + 1.4vw, 2.25rem);
+  --fs-2xl: clamp(2.1rem, 1.5rem + 2.6vw, 3.4rem);
+  --fs-3xl: clamp(2.5rem, 1.6rem + 3.6vw, 4.25rem);
+
+  /* Espaço (base 4px) */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+  --s-9: 5rem;
+  --s-10: 6rem;
+
+  --container: 75rem;
+  --gutter: 1rem;
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 14px;
+  --header-h: 4rem;
+
+  --shadow-float: 0 12px 32px -12px rgb(11 27 51 / 0.35);
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur: 200ms;
+}
+
+@media (min-width: 600px) {
+  :root { --gutter: 1.5rem; }
+}
+
+@media (min-width: 900px) {
+  :root { --gutter: 2rem; --header-h: 4.5rem; }
+}

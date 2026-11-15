@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIDEC Delivery — protótipo de entrega comercial por drone</title>
+  <meta name="description" content="Protótipo conceitual independente: escolha uma loja fictícia, monte o carrinho, compare drone e entrega convencional e acompanhe o voo.">
+  <link rel="icon" href="../assets/icons/drone-mark.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/drone-bot.css">
+  <link rel="stylesheet" href="../css/delivery.css">
+</head>
+<body class="delivery" data-page="delivery" data-base="../">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="site-header">
+    <div class="container site-header__bar">
+      <a class="brand" href="index.html" aria-label="SIDEC Delivery, início do aplicativo">
+        <img src="../assets/icons/drone-mark.svg" alt="" width="32" height="32">
+        <span class="brand__name">SIDEC</span>
+        <span class="brand__tag brand__tag--delivery">Delivery</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="nav-toggle__bars" aria-hidden="true"></span>
+        <span class="visually-hidden">Abrir menu</span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="SIDEC Delivery">
+        <ul class="site-nav__list">
+          <li><a href="#lojas">Lojas</a></li>
+          <li><a href="#carrinho">Carrinho</a></li>
+          <li><a href="#acompanhar">Acompanhar</a></li>
+          <li><a href="#como-funciona">Como funciona</a></li>
+          <li><a class="site-nav__cta" href="../index.html">Portal SIDEC</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <section class="dl-intro" aria-labelledby="page-title">
+      <div class="container">
+        <h1 id="page-title">Peça no comércio do bairro e receba por drone.</h1>
+        <p class="dl-intro__note">Protótipo conceitual independente, sem parceria ou integração com iFood ou qualquer outro aplicativo. Lojas, produtos, preços e prazos são fictícios, e nenhum pagamento é feito.</p>
+      </div>
+    </section>
+
+    <div class="container dl-shop">
+      <div class="dl-shop__menu">
+        <section id="lojas" aria-labelledby="lojas-title">
+          <h2 id="lojas-title" class="dl-h2">Escolha a loja</h2>
+          <div class="stores" id="dl-lojas" role="radiogroup" aria-labelledby="lojas-title"></div>
+        </section>
+
+        <section id="cardapio" aria-labelledby="cardapio-title">
+          <h2 id="cardapio-title" class="dl-h2">Cardápio</h2>
+          <ul class="menu" id="dl-menu"></ul>
+        </section>
+      </div>
+
+      <aside class="cart" id="carrinho" aria-labelledby="carrinho-title">
+        <h2 id="carrinho-title" class="dl-h2">Seu carrinho</h2>
+        <p class="cart__store" id="cart-loja"></p>
+        <ul class="cart__lines" id="cart-linhas"></ul>
+        <p class="cart__empty" id="cart-vazio">Seu carrinho está vazio. Toque em “+” num produto para adicionar.</p>
+
+        <form class="cart__form" id="form-pedido" novalidate>
+          <div class="field">
+            <label for="dl-bairro">Entregar em</label>
+            <select class="input" id="dl-bairro" name="bairro"></select>
+          </div>
+
+          <fieldset class="modes" id="dl-modos">
+            <legend>Como entregar</legend>
+            <label class="mode" id="modo-drone">
+              <input type="radio" name="modo" value="drone" checked>
+              <span class="mode__body">
+                <span class="mode__name">Drone SIDEC</span>
+                <span class="mode__eta" data-eta="drone"></span>
+                <span class="mode__fee" data-fee="drone"></span>
+                <span class="mode__why" data-why="drone"></span>
+              </span>
+            </label>
+            <label class="mode" id="modo-convencional">
+              <input type="radio" name="modo" value="convencional">
+              <span class="mode__body">
+                <span class="mode__name">Entrega convencional</span>
+                <span class="mode__eta" data-eta="convencional"></span>
+                <span class="mode__fee" data-fee="convencional"></span>
+              </span>
+            </label>
+            <p class="field__hint">Prazos ilustrativos, contados do preparo até a sua porta.</p>
+          </fieldset>
+
+          <dl class="totals">
+            <div><dt>Produtos</dt><dd id="tot-produtos">R$ 0,00</dd></div>
+            <div><dt>Entrega</dt><dd id="tot-entrega">R$ 0,00</dd></div>
+            <div><dt>Peso do pedido</dt><dd id="tot-peso">0 kg</dd></div>
+            <div class="totals__sum"><dt>Total</dt><dd id="tot-total">R$ 0,00</dd></div>
+          </dl>
+
+          <button class="btn btn--sun cart__submit" type="submit" id="btn-confirmar">Confirmar pedido</button>
+          <p class="form-status" id="pedido-status" role="status"></p>
+        </form>
+      </aside>
+    </div>
+
+    <section class="dl-track" id="acompanhar" aria-labelledby="acompanhar-title">
+      <div class="container">
+        <h2 id="acompanhar-title" class="dl-h2">Acompanhe seu pedido</h2>
+        <p class="dl-track__empty" id="track-vazio">Nenhum pedido em andamento. Confirme um carrinho para ver o drone sair da loja até a sua porta.</p>
+
+        <div class="track" id="track" hidden>
+          <p class="track__status" id="track-status" aria-live="polite"></p>
+
+          <ol class="stepper" id="track-etapas">
+            <li>Pedido confirmado</li>
+            <li>Preparando</li>
+            <li>Drone a caminho</li>
+            <li>Chegando</li>
+            <li>Entregue</li>
+          </ol>
+
+          <figure class="sky" id="track-ceu">
+            <svg class="sky__svg" viewBox="0 0 600 150" role="img" aria-labelledby="sky-desc">
+              <desc id="sky-desc">Rota do drone da loja até o endereço de entrega</desc>
+              <path class="sky__route" d="M40 120 C 170 10, 430 10, 560 120"></path>
+              <path class="sky__done" id="sky-done" d="M40 120 C 170 10, 430 10, 560 120" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"></path>
+              <g class="sky__pin sky__pin--store" transform="translate(40 120)">
+                <circle class="sky__pulse" r="14"></circle>
+                <circle r="9"></circle>
+              </g>
+              <g class="sky__pin sky__pin--home" transform="translate(560 120)">
+                <circle r="9"></circle>
+              </g>
+              <g class="sky__drone" id="sky-drone" transform="translate(18 98)"></g>
+            </svg>
+            <figcaption class="sky__ends">
+              <span id="sky-origem"></span>
+              <span id="sky-destino"></span>
+            </figcaption>
+          </figure>
+
+          <dl class="track__facts" id="track-dados"></dl>
+          <p class="track__prio">Pedidos comerciais têm prioridade 4. Se um hospital precisar do drone antes da decolagem, seu pedido espera o próximo drone livre.</p>
+
+          <div class="receipt" id="recibo" hidden>
+            <h3>Resumo do pedido</h3>
+            <ul class="receipt__lines" id="recibo-linhas"></ul>
+            <p class="receipt__total" id="recibo-total"></p>
+          </div>
+
+          <div class="track__actions">
+            <a class="btn btn--ghost btn--sm" id="link-rastreio" href="../rastreamento.html">Rastreamento detalhado</a>
+            <a class="btn btn--ghost btn--sm" href="../central.html#fila">Ver na Central</a>
+            <button class="btn btn--dark btn--sm" type="button" id="btn-novo">Fazer novo pedido</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="dl-how" id="como-funciona" aria-labelledby="como-title">
+      <div class="container">
+        <h2 id="como-title" class="dl-h2">Como funciona</h2>
+        <ol class="how">
+          <li><strong>Monte o carrinho</strong> numa loja de cada vez.</li>
+          <li><strong>Escolha o bairro e o drone.</strong> Pedidos acima da carga máxima dos drones vão pela entrega convencional.</li>
+          <li><strong>Confirme.</strong> O pedido entra na fila da central como prioridade 4 (comercial).</li>
+          <li><strong>Acompanhe o voo</strong> até o pouso na sua porta e receba a confirmação.</li>
+        </ol>
+        <button class="btn btn--dark" type="button" id="btn-tour">
+          <span class="dl-how__bot" data-drone-avatar=""></span>
+          Começar tutorial guiado
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <a class="cart-bar" id="cart-bar" href="#carrinho" hidden>
+    <span id="bar-qtd"></span>
+    <span class="cart-bar__total" id="bar-total"></span>
+    <span class="cart-bar__go">Ver carrinho</span>
+  </a>
+  <p class="visually-hidden" id="cart-anuncio" aria-live="polite"></p>
+
+  <footer class="site-footer site-footer--delivery">
+    <div class="container">
+      <p class="site-footer__legal">SIDEC Delivery — protótipo acadêmico da FIAP Global Solution 2026. Conceito independente, sem parceria ou integração com plataformas de delivery. Dados fictícios; não controla drones reais e não processa pagamentos. <a href="../index.html">Voltar ao portal</a></p>
+    </div>
+  </footer>
+
+  <script src="../js/ui.js" defer></script>
+  <script src="../js/operations.js" defer></script>
+  <script src="../js/data.js" defer></script>
+  <script src="../js/state.js" defer></script>
+  <script src="../js/drone-avatar.js" defer></script>
+  <script src="../js/chatbot.js" defer></script>
+  <script src="../js/delivery-core.js" defer></script>
+  <script src="../js/delivery.js" defer></script>
+</body>
+</html>

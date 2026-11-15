@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rastreamento — SIDEC Control</title>
+  <meta name="description" content="Rastreamento demonstrativo de entregas SIDEC: mapa esquemático, etapas, telemetria e demonstrações de segurança.">
+  <link rel="icon" href="assets/icons/drone-mark.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/drone-bot.css">
+  <link rel="stylesheet" href="css/control.css">
+</head>
+<body class="control" data-page="rastreamento">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="site-header">
+    <div class="container site-header__bar">
+      <a class="brand" href="index.html" aria-label="SIDEC, página inicial">
+        <img src="assets/icons/drone-mark.svg" alt="" width="32" height="32">
+        <span class="brand__name">SIDEC</span>
+        <span class="brand__tag">Control · rastreamento</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="nav-toggle__bars" aria-hidden="true"></span>
+        <span class="visually-hidden">Abrir menu</span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Principal">
+        <ul class="site-nav__list">
+          <li><a href="index.html">Início</a></li>
+          <li><a href="sobre.html">Sobre</a></li>
+          <li><a href="central.html">Central</a></li>
+          <li><a href="rastreamento.html" aria-current="page">Rastreamento</a></li>
+          <li><a href="saude/index.html">Saúde</a></li>
+          <li><a href="delivery/index.html">Delivery</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+          <li><a href="integrantes.html">Integrantes</a></li>
+          <li><a class="site-nav__cta" href="contato.html">Contato</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo" class="ops">
+    <section class="ops__bar" aria-labelledby="page-title">
+      <div class="container ops__bar-inner">
+        <div>
+          <p class="eyebrow eyebrow--light">SIDEC Control · simulação</p>
+          <h1 id="page-title" class="ops__title">Rastreamento</h1>
+        </div>
+        <form class="track-search" id="busca" role="search">
+          <label for="track-select">Entrega</label>
+          <select class="input" id="track-select"></select>
+          <button class="btn btn--ghost-light" type="button" id="btn-track-tour">Tutorial</button>
+        </form>
+      </div>
+    </section>
+
+    <div class="container track">
+      <section class="panel track__summary" aria-labelledby="summary-title">
+        <h2 id="summary-title" class="visually-hidden">Resumo da entrega</h2>
+        <div class="summary" id="summary"></div>
+      </section>
+
+      <section class="panel track__map" id="mapa" aria-labelledby="mapa-title">
+        <div class="panel__head">
+          <h2 id="mapa-title" class="panel__title">Mapa esquemático</h2>
+          <p class="panel__hint">Cidade-modelo fictícia (20 × 16 km). Não representa rotas reais autorizadas.</p>
+        </div>
+        <svg class="map" id="map" viewBox="-4 -4 208 168" role="img" aria-labelledby="map-desc">
+          <desc id="map-desc">Mapa esquemático com bases, hospitais, zonas de pouso seguro, a rota da entrega selecionada e a posição atual do drone.</desc>
+          <g id="map-grid" class="map__grid"></g>
+          <g id="map-route"></g>
+          <g id="map-points"></g>
+          <g id="map-drone" class="map__drone"></g>
+        </svg>
+        <ul class="legend" aria-label="Legenda do mapa">
+          <li><span class="legend__key legend__key--base" aria-hidden="true"></span>Base</li>
+          <li><span class="legend__key legend__key--hospital" aria-hidden="true"></span>Hospital / UBS</li>
+          <li><span class="legend__key legend__key--zona" aria-hidden="true"></span>Zona de pouso seguro</li>
+          <li><span class="legend__key legend__key--rota" aria-hidden="true"></span>Rota</li>
+        </ul>
+      </section>
+
+      <section class="panel" id="etapas" aria-labelledby="etapas-title">
+        <div class="panel__head"><h2 id="etapas-title" class="panel__title">Etapas</h2></div>
+        <ol class="steps" id="steps"></ol>
+      </section>
+
+      <section class="panel" id="telemetria" aria-labelledby="tele-title">
+        <div class="panel__head">
+          <h2 id="tele-title" class="panel__title">Telemetria</h2>
+          <p class="panel__hint">Leituras demonstrativas calculadas pela simulação.</p>
+        </div>
+        <dl class="telemetry" id="telemetry"></dl>
+        <div class="alert-box" id="temp-alert" role="alert"></div>
+      </section>
+
+      <section class="panel" id="seguranca" aria-labelledby="seg-title">
+        <div class="panel__head">
+          <h2 id="seg-title" class="panel__title">Demonstrações de segurança</h2>
+          <p class="panel__hint">Disponíveis enquanto a entrega está em voo.</p>
+        </div>
+        <div class="safety" id="safety-actions">
+          <button class="btn btn--primary" type="button" data-action="launch">Decolar</button>
+          <button class="btn btn--ghost-light" type="button" data-action="bateria">Bateria insuficiente</button>
+          <button class="btn btn--ghost-light" type="button" data-action="motor">Falha de motor</button>
+          <button class="btn btn--danger" type="button" data-action="grave">Falha grave</button>
+          <button class="btn btn--ghost-light" type="button" data-action="temp">Temperatura fora da faixa</button>
+        </div>
+        <p class="panel__hint" id="safety-hint"></p>
+        <div class="incident" id="incident" aria-live="assertive"></div>
+      </section>
+    </div>
+
+    <p class="container ops__note">Simulação acadêmica: o SIDEC não controla drones reais. O mesmo pedido e o mesmo drone aparecem na Central.</p>
+  </main>
+
+  <footer class="site-footer site-footer--compact">
+    <div class="container">
+      <p class="site-footer__legal">Projeto acadêmico — FIAP Global Solution 2026. O site não controla drones reais. <a href="index.html">Voltar ao portal</a></p>
+    </div>
+  </footer>
+
+  <script src="js/ui.js" defer></script>
+  <script src="js/operations.js" defer></script>
+  <script src="js/data.js" defer></script>
+  <script src="js/state.js" defer></script>
+  <script src="js/drone-avatar.js" defer></script>
+  <script src="js/chatbot.js" defer></script>
+  <script src="js/tracking.js" defer></script>
+</body>
+</html>

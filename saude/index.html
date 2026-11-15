@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIDEC Saúde — pedidos e acompanhamento de entregas de saúde</title>
+  <meta name="description" content="Miniaplicativo demonstrativo do SIDEC para cidadãos, hospitais e operadores: pedidos de medicamentos, órgãos e emergências, rastreamento médico e simuladores.">
+  <link rel="icon" href="../assets/icons/drone-mark.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/drone-bot.css">
+  <link rel="stylesheet" href="../css/saude.css">
+</head>
+<body class="saude" data-page="saude" data-base="../">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="site-header site-header--saude">
+    <div class="container site-header__bar">
+      <a class="brand" href="index.html" aria-label="SIDEC Saúde, início do aplicativo">
+        <img src="../assets/icons/drone-mark.svg" alt="" width="32" height="32">
+        <span class="brand__name">SIDEC</span>
+        <span class="brand__tag brand__tag--saude">Saúde</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="nav-toggle__bars" aria-hidden="true"></span>
+        <span class="visually-hidden">Abrir menu</span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="SIDEC Saúde">
+        <ul class="site-nav__list">
+          <li><a href="#pedir">Pedir</a></li>
+          <li><a href="#acompanhar">Acompanhar</a></li>
+          <li><a href="#simuladores">Simuladores</a></li>
+          <li><a href="#aprenda">Aprenda</a></li>
+          <li><a class="site-nav__cta" href="../index.html">Portal SIDEC</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <!-- Abertura -->
+    <section class="sh-hero" aria-labelledby="page-title">
+      <div class="container sh-hero__grid">
+        <div class="sh-hero__text">
+          <h1 id="page-title">Remédio, órgão ou socorro: peça, acompanhe e entenda cada voo.</h1>
+          <p class="lead">Um espaço só para entregas de saúde. Escolha quem você é, faça um pedido fictício e veja a central decidir em tempo real.</p>
+          <p class="sh-note">Simulação: nenhum dado pessoal ou médico é pedido. Pedidos, hospitais e drones são fictícios.</p>
+        </div>
+        <figure class="sh-hero__tag" aria-labelledby="tag-legenda">
+          <div class="tag" id="sh-tag"></div>
+          <figcaption id="tag-legenda" class="sh-hero__caption">Etiqueta da entrega de saúde mais urgente agora</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Pedidos por perfil -->
+    <section class="sh-section" id="pedir" aria-labelledby="pedir-title">
+      <div class="container">
+        <div class="sh-head">
+          <h2 id="pedir-title">Quem está pedindo?</h2>
+          <p>Cada perfil tem uma prioridade diferente na fila do SIDEC.</p>
+        </div>
+
+        <div class="roles" role="tablist" aria-label="Perfil do solicitante">
+          <button class="roles__tab" type="button" role="tab" id="tab-cidadao" aria-controls="painel-cidadao" aria-selected="true">
+            <span class="prio prio--3">P3</span><span class="roles__name">Cidadão</span><span class="roles__desc">Medicamento de uso contínuo</span>
+          </button>
+          <button class="roles__tab" type="button" role="tab" id="tab-hospital" aria-controls="painel-hospital" aria-selected="false" tabindex="-1">
+            <span class="prio prio--1">P1</span><span class="roles__name">Hospital</span><span class="roles__desc">Órgão para transplante</span>
+          </button>
+          <button class="roles__tab" type="button" role="tab" id="tab-operador" aria-controls="painel-operador" aria-selected="false" tabindex="-1">
+            <span class="prio prio--2">P2</span><span class="roles__name">Operador</span><span class="roles__desc">Emergência e Defesa Civil</span>
+          </button>
+        </div>
+
+        <!-- Cidadão -->
+        <div class="role-panel" role="tabpanel" id="painel-cidadao" aria-labelledby="tab-cidadao">
+          <form class="sh-form" id="form-cidadao" data-prioridade="3" novalidate>
+            <div class="field">
+              <label for="c-item">Medicamento <span class="req" aria-hidden="true">*</span></label>
+              <select class="input" id="c-item" name="produto" required aria-describedby="c-item-erro">
+                <option value="">Selecione</option>
+                <option value="Losartana 50 mg — uso contínuo" data-peso="0.3">Losartana 50 mg (uso contínuo)</option>
+                <option value="Metformina 850 mg — uso contínuo" data-peso="0.4">Metformina 850 mg (uso contínuo)</option>
+                <option value="Insulina NPH — refrigerada" data-peso="0.4" data-termico="1">Insulina NPH (refrigerada, 2–8 °C)</option>
+                <option value="Kit de curativos" data-peso="0.8">Kit de curativos</option>
+              </select>
+              <p class="field__error" id="c-item-erro">Escolha um medicamento.</p>
+            </div>
+            <div class="field">
+              <label for="c-origem">Retirar em</label>
+              <select class="input" id="c-origem" name="origemId" data-places="ubs,farmacia"></select>
+            </div>
+            <div class="field">
+              <label for="c-destino">Entregar no bairro</label>
+              <select class="input" id="c-destino" name="destinoId" data-places="bairro"></select>
+            </div>
+            <div class="field field--full">
+              <label class="check" for="c-ciente">
+                <input type="checkbox" id="c-ciente" name="ciente" required aria-describedby="c-ciente-erro">
+                <span>Entendo que é uma simulação e não informei dados pessoais ou médicos reais. <span class="req" aria-hidden="true">*</span></span>
+              </label>
+              <p class="field__error" id="c-ciente-erro">Confirme para continuar.</p>
+            </div>
+            <button class="btn btn--primary" type="submit">Pedir medicamento</button>
+          </form>
+        </div>
+
+        <!-- Hospital -->
+        <div class="role-panel" role="tabpanel" id="painel-hospital" aria-labelledby="tab-hospital" hidden>
+          <form class="sh-form" id="form-hospital" data-prioridade="1" novalidate>
+            <div class="field">
+              <label for="h-item">Órgão ou tecido <span class="req" aria-hidden="true">*</span></label>
+              <select class="input" id="h-item" name="produto" required aria-describedby="h-item-erro">
+                <option value="">Selecione</option>
+                <option value="Rim para transplante" data-peso="1.5">Rim</option>
+                <option value="Fígado para transplante" data-peso="1.8">Fígado</option>
+                <option value="Coração para transplante" data-peso="1">Coração</option>
+                <option value="Córneas para transplante" data-peso="0.5">Córneas</option>
+              </select>
+              <p class="field__error" id="h-item-erro">Escolha o órgão ou tecido.</p>
+            </div>
+            <div class="field">
+              <label for="h-origem">Hospital de origem</label>
+              <select class="input" id="h-origem" name="origemId" data-places="hospital"></select>
+            </div>
+            <div class="field">
+              <label for="h-destino">Hospital de destino</label>
+              <select class="input" id="h-destino" name="destinoId" data-places="hospital"></select>
+            </div>
+            <div class="precheck field--full" id="h-precheck" aria-live="polite"></div>
+            <button class="btn btn--primary" type="submit">Solicitar transporte</button>
+          </form>
+        </div>
+
+        <!-- Operador -->
+        <div class="role-panel" role="tabpanel" id="painel-operador" aria-labelledby="tab-operador" hidden>
+          <form class="sh-form" id="form-operador" data-prioridade="2" novalidate>
+            <div class="field">
+              <label for="o-item">Suprimento <span class="req" aria-hidden="true">*</span></label>
+              <select class="input" id="o-item" name="produto" required aria-describedby="o-item-erro">
+                <option value="">Selecione</option>
+                <option value="Água potável (5 L)" data-peso="5">Água potável (5 L)</option>
+                <option value="Kit de primeiros socorros" data-peso="2">Kit de primeiros socorros</option>
+                <option value="Medicamentos básicos para abrigo" data-peso="1.5">Medicamentos básicos para abrigo</option>
+              </select>
+              <p class="field__error" id="o-item-erro">Escolha o suprimento.</p>
+            </div>
+            <div class="field">
+              <label for="o-origem">Sair da base</label>
+              <select class="input" id="o-origem" name="origemId" data-places="base"></select>
+            </div>
+            <div class="field">
+              <label for="o-destino">Área atingida</label>
+              <select class="input" id="o-destino" name="destinoId" data-places="bairro"></select>
+            </div>
+            <button class="btn btn--primary" type="submit">Enviar suprimento</button>
+          </form>
+        </div>
+
+        <div class="sh-result" id="pedido-resultado" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- Rastreamento médico -->
+    <section class="sh-section sh-section--alt" id="acompanhar" aria-labelledby="acompanhar-title">
+      <div class="container">
+        <div class="sh-head">
+          <h2 id="acompanhar-title">Rastreamento médico</h2>
+          <p>Entregas de órgãos, emergência e saúde. Atualiza sozinho a cada segundo.</p>
+        </div>
+        <div class="track-cols">
+          <div>
+            <h3 class="track-cols__title">Em andamento</h3>
+            <ul class="cards" id="sh-ativos"></ul>
+          </div>
+          <div>
+            <h3 class="track-cols__title">Histórico demonstrativo</h3>
+            <ol class="history" id="sh-historico"></ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Simuladores e testes -->
+    <section class="sh-section" id="simuladores" aria-labelledby="sim-title">
+      <div class="container">
+        <div class="sh-head">
+          <h2 id="sim-title">Teste as regras com as próprias mãos.</h2>
+          <p>Os simuladores usam as mesmas funções da central de operações.</p>
+        </div>
+
+        <div class="sims">
+          <form class="sim" id="sim-temp" aria-labelledby="sim-temp-title">
+            <h3 id="sim-temp-title">Temperatura da carga</h3>
+            <p class="sim__hint">Medicamentos refrigerados e órgãos viajam entre 2 e 8 °C.</p>
+            <label for="temp-range">Temperatura no compartimento: <output class="mono" id="temp-valor" for="temp-range">5 °C</output></label>
+            <input class="range" type="range" id="temp-range" min="-2" max="14" step="0.5" value="5">
+            <meter class="sim__meter" id="temp-meter" min="-2" max="14" low="2" high="8" optimum="5" value="5">5 °C</meter>
+            <p class="sim__out" id="temp-saida" role="status"></p>
+          </form>
+
+          <form class="sim" id="sim-autonomia" aria-labelledby="sim-aut-title">
+            <h3 id="sim-aut-title">Autonomia do voo</h3>
+            <p class="sim__hint">Consumo ilustrativo de 3% de bateria por km.</p>
+            <div class="field">
+              <label for="aut-tipo">Carga</label>
+              <select class="input" id="aut-tipo">
+                <option value="1">Órgão (reserva de 30%)</option>
+                <option value="3" selected>Medicamento (reserva de 15%)</option>
+              </select>
+            </div>
+            <label for="aut-km">Distância total: <output class="mono" id="aut-km-valor" for="aut-km">10 km</output></label>
+            <input class="range" type="range" id="aut-km" min="1" max="30" step="0.5" value="10">
+            <label for="aut-bat">Bateria do drone: <output class="mono" id="aut-bat-valor" for="aut-bat">60%</output></label>
+            <input class="range" type="range" id="aut-bat" min="5" max="100" step="1" value="60">
+            <dl class="sim__bars">
+              <div><dt>Necessário</dt><dd><meter class="sim__meter" id="aut-need" min="0" max="100" value="0"></meter><span class="mono" id="aut-need-valor">—</span></dd></div>
+              <div><dt>Disponível</dt><dd><meter class="sim__meter" id="aut-have" min="0" max="100" value="0"></meter><span class="mono" id="aut-have-valor">—</span></dd></div>
+            </dl>
+            <p class="sim__out" id="aut-saida" role="status"></p>
+          </form>
+
+          <section class="sim sim--wide" id="quiz" aria-labelledby="quiz-title">
+            <h3 id="quiz-title">Teste rápido: quem decola primeiro?</h3>
+            <p class="sim__hint">Toque nos pedidos na ordem em que a central deveria atendê-los.</p>
+            <ol class="quiz" id="quiz-list"></ol>
+            <p class="sim__out" id="quiz-saida" role="status"></p>
+            <button class="btn btn--ghost btn--sm" type="button" id="quiz-novo">Nova rodada</button>
+          </section>
+        </div>
+
+        <h3 class="sh-sub">Simulados da operação</h3>
+        <ul class="drills">
+          <li><a class="drill" href="../central.html#cenarios"><span class="drill__n mono">A</span><span><strong>Órgão sem autonomia</strong> e outros 5 cenários na Central</span></a></li>
+          <li><a class="drill" href="../rastreamento.html?tour=1"><span class="drill__n mono">B</span><span><strong>Pane, paraquedas e temperatura</strong> no rastreamento</span></a></li>
+          <li><a class="drill" href="../central.html#fila"><span class="drill__n mono">C</span><span><strong>Fila de prioridade ao vivo</strong> com os seus pedidos</span></a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Tutorial -->
+    <section class="sh-section sh-section--alt" id="aprenda" aria-labelledby="aprenda-title">
+      <div class="container sh-learn">
+        <div class="sh-head">
+          <h2 id="aprenda-title">Como pedir um medicamento, passo a passo</h2>
+          <p>Prefere ser guiado? O Drone Bot destaca cada parte da tela.</p>
+          <button class="btn btn--dark" type="button" id="btn-tour">
+            <span class="sh-learn__bot" data-drone-avatar=""></span>
+            Começar tutorial guiado
+          </button>
+        </div>
+        <ol class="steps-list">
+          <li><strong>Escolha o perfil “Cidadão”.</strong> Pedidos de uso contínuo entram como prioridade 3.</li>
+          <li><strong>Selecione o medicamento.</strong> Os refrigerados viajam em compartimento térmico de 2 a 8 °C.</li>
+          <li><strong>Indique onde retirar e o bairro de entrega.</strong> A UBS ou a farmácia prepara o pacote.</li>
+          <li><strong>Envie o pedido.</strong> A central escolhe o drone disponível mais próximo, com carga e bateria suficientes.</li>
+          <li><strong>Acompanhe.</strong> Libere a decolagem e veja o voo, a bateria e a temperatura até a entrega.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer site-footer--saude">
+    <div class="container">
+      <p class="site-footer__legal">SIDEC Saúde — protótipo acadêmico da FIAP Global Solution 2026. Simulação com dados fictícios: não substitui atendimento médico e não controla drones reais. Em emergência, ligue 192 (SAMU) ou 199 (Defesa Civil). <a href="../index.html">Voltar ao portal</a></p>
+    </div>
+  </footer>
+
+  <script src="../js/ui.js" defer></script>
+  <script src="../js/operations.js" defer></script>
+  <script src="../js/data.js" defer></script>
+  <script src="../js/state.js" defer></script>
+  <script src="../js/drone-avatar.js" defer></script>
+  <script src="../js/chatbot.js" defer></script>
+  <script src="../js/saude.js" defer></script>
+</body>
+</html>

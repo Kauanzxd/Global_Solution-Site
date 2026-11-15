@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIDEC — Sistema Inteligente de Drones de Entrega e Cuidado</title>
+  <meta name="description" content="SIDEC: rede conceitual de drones adaptados para órgãos, medicamentos e ajuda emergencial, sustentada por entregas comerciais. Projeto acadêmico FIAP Global Solution 2026.">
+  <link rel="icon" href="assets/icons/drone-mark.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/drone-bot.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body data-page="inicio">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="site-header">
+    <div class="container site-header__bar">
+      <a class="brand" href="index.html" aria-label="SIDEC, página inicial">
+        <img src="assets/icons/drone-mark.svg" alt="" width="32" height="32">
+        <span class="brand__name">SIDEC</span>
+        <span class="brand__tag">Drones de entrega e cuidado</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="nav-toggle__bars" aria-hidden="true"></span>
+        <span class="visually-hidden">Abrir menu</span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Principal">
+        <ul class="site-nav__list">
+          <li><a href="index.html" aria-current="page">Início</a></li>
+          <li><a href="sobre.html">Sobre</a></li>
+          <li><a href="central.html">Central</a></li>
+          <li><a href="rastreamento.html">Rastreamento</a></li>
+          <li><a href="saude/index.html">Saúde</a></li>
+          <li><a href="delivery/index.html">Delivery</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+          <li><a href="integrantes.html">Integrantes</a></li>
+          <li><a class="site-nav__cta" href="contato.html">Contato</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <!-- Hero: mensagem + painel ao vivo alimentado pelo mesmo motor da central -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="container hero__grid">
+        <div class="hero__copy">
+          <p class="eyebrow">SDC/00 · Global Solution FIAP 2026 — CitizenTech</p>
+          <h1 id="hero-title">A tecnologia que entrega. <span class="hero__accent">O cuidado que transforma.</span></h1>
+          <p class="lead">O SIDEC é uma rede inteligente de drones adaptados que conecta saúde, emergências e logística comercial. As entregas comerciais ajudam a financiar o transporte de órgãos, medicamentos e ajuda humanitária.</p>
+          <div class="hero__actions">
+            <a class="btn btn--primary" href="central.html">Abrir a Central <span class="btn__arrow" aria-hidden="true">→</span></a>
+            <a class="btn btn--ghost" href="rastreamento.html">Rastrear uma entrega</a>
+          </div>
+          <p class="hero__note">Conceito acadêmico. Todas as operações exibidas são simulações com dados fictícios.</p>
+        </div>
+
+        <aside class="strip" aria-labelledby="strip-title">
+          <div class="strip__head">
+            <h2 id="strip-title" class="strip__title">Central SIDEC · agora</h2>
+            <span class="strip__live mono">SIMULAÇÃO</span>
+          </div>
+          <div class="strip__visual">
+            <svg class="strip__route" viewBox="0 0 320 120" aria-hidden="true" focusable="false">
+              <path d="M10 100 C 90 100, 110 30, 190 40 S 290 20, 310 18" />
+              <circle cx="10" cy="100" r="5" />
+              <circle cx="190" cy="40" r="4" />
+              <circle cx="310" cy="18" r="5" />
+            </svg>
+            <span class="strip__drone" data-drone-avatar="Drone Bot, mascote do SIDEC"></span>
+          </div>
+          <dl class="strip__queue" id="hero-queue">
+            <div><dt><span class="prio prio--1">P1</span> Órgãos</dt><dd class="mono" data-count="1">—</dd></div>
+            <div><dt><span class="prio prio--2">P2</span> Emergência</dt><dd class="mono" data-count="2">—</dd></div>
+            <div><dt><span class="prio prio--3">P3</span> Saúde</dt><dd class="mono" data-count="3">—</dd></div>
+            <div><dt><span class="prio prio--4">P4</span> Comercial</dt><dd class="mono" data-count="4">—</dd></div>
+          </dl>
+          <p class="strip__flight mono" id="hero-flight">Carregando simulação…</p>
+          <progress class="strip__progress" id="hero-progress" max="100" value="0" aria-label="Progresso do voo em destaque"></progress>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Problema -->
+    <section class="section" id="problema" aria-labelledby="problema-title">
+      <div class="container split">
+        <div class="split__aside">
+          <p class="eyebrow">SDC/01 · O problema</p>
+          <h2 id="problema-title">Quando o tempo decide uma vida, o trânsito vira barreira.</h2>
+        </div>
+        <ol class="cases">
+          <li class="case">
+            <span class="case__index mono">01</span>
+            <div>
+              <h3>Órgão para transplante</h3>
+              <p>A janela de conservação é limitada. O helicóptero pode estar indisponível e a ambulância pode ficar presa no congestionamento.</p>
+            </div>
+          </li>
+          <li class="case">
+            <span class="case__index mono">02</span>
+            <div>
+              <h3>Enchentes e deslizamentos</h3>
+              <p>Estradas bloqueadas isolam bairros e regiões inteiras justamente quando água, medicamentos e kits de primeiros socorros são mais urgentes.</p>
+            </div>
+          </li>
+          <li class="case">
+            <span class="case__index mono">03</span>
+            <div>
+              <h3>Medicamento de uso contínuo</h3>
+              <p>Idosos, pessoas com mobilidade reduzida e moradores de regiões afastadas enfrentam dificuldade para buscar o tratamento todo mês.</p>
+            </div>
+          </li>
+          <li class="case case--muted">
+            <span class="case__index mono">+</span>
+            <div>
+              <h3>Ao mesmo tempo, as ruas lotam de entregas</h3>
+              <p>Um grande volume diário de viagens de moto e carro aumenta trânsito, acidentes e emissões. O SIDEC transforma parte dessa demanda em receita para o cuidado.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Como funciona: fluxo interativo -->
+    <section class="section section--alt" id="como-funciona" aria-labelledby="fluxo-title">
+      <div class="container">
+        <div class="section__head">
+          <p class="eyebrow">SDC/02 · Como funciona</p>
+          <h2 id="fluxo-title">Seis etapas, do pedido à confirmação.</h2>
+          <p class="lead">Selecione uma etapa para ver o que a central inteligente verifica.</p>
+        </div>
+
+        <div class="flow" data-flow>
+          <div class="flow__track" role="tablist" aria-label="Etapas de uma entrega">
+            <button class="flow__step" type="button" role="tab" id="tab-1" aria-controls="step-1" aria-selected="true"><span class="mono">01</span> Pedido</button>
+            <button class="flow__step" type="button" role="tab" id="tab-2" aria-controls="step-2" aria-selected="false" tabindex="-1"><span class="mono">02</span> Priorização</button>
+            <button class="flow__step" type="button" role="tab" id="tab-3" aria-controls="step-3" aria-selected="false" tabindex="-1"><span class="mono">03</span> Seleção do drone</button>
+            <button class="flow__step" type="button" role="tab" id="tab-4" aria-controls="step-4" aria-selected="false" tabindex="-1"><span class="mono">04</span> Rota segura</button>
+            <button class="flow__step" type="button" role="tab" id="tab-5" aria-controls="step-5" aria-selected="false" tabindex="-1"><span class="mono">05</span> Monitoramento</button>
+            <button class="flow__step" type="button" role="tab" id="tab-6" aria-controls="step-6" aria-selected="false" tabindex="-1"><span class="mono">06</span> Entrega</button>
+          </div>
+          <div class="flow__panel" role="tabpanel" id="step-1" aria-labelledby="tab-1">
+            <h3>O pedido chega pelo canal certo</h3>
+            <p>Cidadãos solicitam pelo site ou chatbot. Hospitais, Central de Transplantes, Defesa Civil e empresas parceiras têm canais próprios.</p>
+            <ul class="checklist"><li>Tipo de carga e peso</li><li>Origem e destino</li><li>Quem solicita e quem paga</li></ul>
+          </div>
+          <div class="flow__panel" role="tabpanel" id="step-2" aria-labelledby="tab-2" hidden>
+            <h3>A fila se organiza sozinha</h3>
+            <p>Cada pedido recebe uma prioridade de 1 a 4. Órgãos e emergências passam à frente e podem reorganizar uma entrega comercial que ainda não decolou.</p>
+            <ul class="checklist"><li>P1 Órgãos · P2 Emergência · P3 Saúde · P4 Comercial</li><li>Empate: ordem de chegada</li></ul>
+          </div>
+          <div class="flow__panel" role="tabpanel" id="step-3" aria-labelledby="tab-3" hidden>
+            <h3>O drone certo, não o primeiro</h3>
+            <p>A central escolhe o drone disponível mais próximo da filial adequada, desde que suporte a carga e tenha autonomia para toda a rota.</p>
+            <ul class="checklist"><li>Disponibilidade e carga máxima</li><li>Órgãos: consumo previsto + 30% de reserva</li><li>Sem drone elegível: outro meio de transporte</li></ul>
+          </div>
+          <div class="flow__panel" role="tabpanel" id="step-4" aria-labelledby="tab-4" hidden>
+            <h3>Rota com saídas de emergência</h3>
+            <p>O planejamento considera as zonas de pouso seguro ao longo do caminho e as áreas que devem ser evitadas.</p>
+            <ul class="checklist"><li>Zonas de pouso no corredor da rota</li><li>Rotas autorizadas pelos órgãos competentes</li></ul>
+          </div>
+          <div class="flow__panel" role="tabpanel" id="step-5" aria-labelledby="tab-5" hidden>
+            <h3>Telemetria durante todo o voo</h3>
+            <p>Bateria, posição, temperatura e vibração são acompanhadas continuamente. Fora da faixa térmica, a equipe médica é alertada.</p>
+            <ul class="checklist"><li>Bateria e posição</li><li>Temperatura da carga</li><li>Vibração</li></ul>
+          </div>
+          <div class="flow__panel" role="tabpanel" id="step-6" aria-labelledby="tab-6" hidden>
+            <h3>Chegada confirmada</h3>
+            <p>A entrega é registrada com horário de chegada e confirmação de recebimento. O drone volta a ficar disponível para a próxima missão.</p>
+            <ul class="checklist"><li>Registro de chegada</li><li>Confirmação de recebimento</li></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Prioridades -->
+    <section class="section" id="prioridades" aria-labelledby="prioridades-title">
+      <div class="container">
+        <div class="section__head">
+          <p class="eyebrow">SDC/03 · Regra central</p>
+          <h2 id="prioridades-title">Quatro níveis de prioridade. Uma fila que respeita a vida.</h2>
+        </div>
+        <ol class="ladder">
+          <li class="ladder__row ladder__row--1">
+            <span class="ladder__level mono">P1</span>
+            <div class="ladder__main"><h3>Órgãos</h3><p>Órgãos e tecidos destinados a transplantes.</p></div>
+            <dl class="ladder__meta"><div><dt>Solicitam</dt><dd>Hospitais e Central Estadual de Transplantes</dd></div><div><dt>Pagador</dt><dd>Contratos com secretarias de saúde</dd></div></dl>
+          </li>
+          <li class="ladder__row ladder__row--2">
+            <span class="ladder__level mono">P2</span>
+            <div class="ladder__main"><h3>Emergência</h3><p>Água, medicamentos, kits de primeiros socorros e itens essenciais.</p></div>
+            <dl class="ladder__meta"><div><dt>Solicitam</dt><dd>Defesa Civil e prefeituras</dd></div><div><dt>Pagador</dt><dd>Contratos com o poder público</dd></div></dl>
+          </li>
+          <li class="ladder__row ladder__row--3">
+            <span class="ladder__level mono">P3</span>
+            <div class="ladder__main"><h3>Saúde</h3><p>Medicamentos de uso contínuo, exames e insumos entre UBSs, farmácias e cidadãos.</p></div>
+            <dl class="ladder__meta"><div><dt>Solicitam</dt><dd>Cidadãos, UBSs e farmácias</dd></div><div><dt>Pagador</dt><dd>Modelo subsidiado ou SUS</dd></div></dl>
+          </li>
+          <li class="ladder__row ladder__row--4">
+            <span class="ladder__level mono">P4</span>
+            <div class="ladder__main"><h3>Comercial</h3><p>Pedidos de plataformas de delivery e comércio eletrônico.</p></div>
+            <dl class="ladder__meta"><div><dt>Solicitam</dt><dd>Plataformas e lojas (parcerias potenciais)</dd></div><div><dt>Pagador</dt><dd>Empresas interessadas (potenciais), por entrega</dd></div></dl>
+          </li>
+        </ol>
+        <ul class="rules">
+          <li>P1 e P2 podem reorganizar uma entrega comercial <strong>ainda não iniciada</strong>.</li>
+          <li>Entrega comercial <strong>em voo</strong> é concluída antes de o drone ser realocado.</li>
+          <li>Órgãos só decolam se a bateria cobrir a rota com <strong>30% de reserva</strong>.</li>
+          <li>Sem drone elegível, a central indica <strong>outro meio de transporte</strong>.</li>
+        </ul>
+        <a class="btn btn--dark" href="central.html#cenarios">Testar as regras na Central <span class="btn__arrow" aria-hidden="true">→</span></a>
+      </div>
+    </section>
+
+    <!-- Segurança -->
+    <section class="section section--dark" id="seguranca" aria-labelledby="seguranca-title">
+      <div class="container split">
+        <div class="split__aside">
+          <p class="eyebrow eyebrow--light">SDC/04 · Segurança e contingência</p>
+          <h2 id="seguranca-title">Drones agrícolas existentes, adaptados para cuidar de cargas sensíveis.</h2>
+          <ul class="spec-list mono">
+            <li>Compartimento de carga travado</li>
+            <li>Compartimento térmico</li>
+            <li>Sensores de temperatura e vibração</li>
+            <li>Paraquedas de emergência</li>
+            <li>Redundância de motores</li>
+            <li>GPS duplo</li>
+            <li>Conexão 4G/5G</li>
+            <li>Sensores anticolisão</li>
+            <li>Luzes e alertas sonoros</li>
+          </ul>
+        </div>
+        <div>
+          <table class="contingency">
+            <caption class="visually-hidden">Respostas do sistema para cada situação de contingência</caption>
+            <thead><tr><th scope="col">Situação</th><th scope="col">Resposta demonstrada</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Bateria insuficiente ou falha de motor</th><td>Pouso na zona segura mais próxima da rota.</td></tr>
+              <tr><th scope="row">Falha grave</th><td>Paraquedas, luzes e alerta sonoro.</td></tr>
+              <tr><th scope="row">Temperatura fora da faixa</th><td>Alerta imediato à equipe médica.</td></tr>
+              <tr><th scope="row">Carga após pouso de emergência</th><td>Resgate por equipe em solo ou outro drone.</td></tr>
+            </tbody>
+          </table>
+          <p class="limits"><strong>Limitações consideradas:</strong> peso máximo, autonomia, vento e chuva, zonas de pouso disponíveis e restrições da ANAC e do DECEA. O drone é um meio <em>complementar</em>, não substitui ambulâncias, aviões ou helicópteros.</p>
+          <a class="btn btn--primary" href="rastreamento.html#seguranca">Simular uma pane <span class="btn__arrow" aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Impacto e ODS -->
+    <section class="section" id="impacto" aria-labelledby="impacto-title">
+      <div class="container">
+        <div class="section__head">
+          <p class="eyebrow">SDC/05 · Impacto</p>
+          <h2 id="impacto-title">Cinco Objetivos de Desenvolvimento Sustentável.</h2>
+        </div>
+        <ul class="ods">
+          <li class="ods__item ods__item--3"><span class="ods__num mono">ODS 3</span><h3>Saúde e bem-estar</h3><p>Transporte de órgãos e acesso a medicamentos.</p></li>
+          <li class="ods__item ods__item--9"><span class="ods__num mono">ODS 9</span><h3>Indústria, inovação e infraestrutura</h3><p>Adaptação de tecnologia já existente.</p></li>
+          <li class="ods__item ods__item--10"><span class="ods__num mono">ODS 10</span><h3>Redução das desigualdades</h3><p>Áreas isoladas e pessoas com mobilidade reduzida.</p></li>
+          <li class="ods__item ods__item--11"><span class="ods__num mono">ODS 11</span><h3>Cidades sustentáveis</h3><p>Menos veículos de entrega e menos pressão no trânsito.</p></li>
+          <li class="ods__item ods__item--13"><span class="ods__num mono">ODS 13</span><h3>Ação climática</h3><p>Menos emissões e resposta mais rápida a emergências.</p></li>
+        </ul>
+        <div class="indicators">
+          <h3>Indicadores que a plataforma acompanha</h3>
+          <ul class="indicators__list">
+            <li>Tempo entre solicitação e entrega</li>
+            <li>Órgãos transportados dentro do prazo</li>
+            <li>Pessoas atendidas em áreas isoladas</li>
+            <li>Entregas durante emergências</li>
+            <li>Viagens de moto potencialmente evitadas</li>
+            <li>Quilômetros de trânsito poupados</li>
+            <li>CO₂ potencialmente evitado</li>
+            <li>Ocorrências e pousos seguros</li>
+          </ul>
+          <p class="demo-note"><strong>NOTA</strong> Não há dados reais de operação. Valores numéricos exibidos nas simulações são ilustrativos.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modelo de negócio -->
+    <section class="section section--alt" id="modelo" aria-labelledby="modelo-title">
+      <div class="container split">
+        <div class="split__aside">
+          <p class="eyebrow">SDC/06 · Modelo de negócio</p>
+          <h2 id="modelo-title">Subsídio cruzado: cada entrega comercial ajuda a sustentar o cuidado.</h2>
+          <p class="lead">Taxas por entrega comercial e contratos públicos e institucionais compõem a receita. Parte da margem comercial financia as rotas de saúde e emergência.</p>
+          <h3 class="minor-title">Parcerias potenciais</h3>
+          <p class="partners">iFood · Shopee · AliExpress · hospitais · UBSs · Central de Transplantes · Defesa Civil · fabricantes de drones agrícolas</p>
+          <p class="field__hint">Nenhuma dessas organizações é parceira oficial do projeto.</p>
+        </div>
+
+        <form class="subsidy" id="subsidy" aria-labelledby="subsidy-title">
+          <h3 id="subsidy-title">Simulador de subsídio (ilustrativo)</h3>
+          <div class="field">
+            <label for="subsidy-range">Entregas comerciais por dia</label>
+            <input class="subsidy__range" id="subsidy-range" type="range" min="0" max="3000" step="100" value="1200" aria-describedby="subsidy-assumptions">
+            <output class="subsidy__value mono" for="subsidy-range" id="subsidy-value">1.200</output>
+          </div>
+          <dl class="subsidy__result">
+            <div><dt>Receita comercial diária</dt><dd class="mono" id="subsidy-revenue">—</dd></div>
+            <div><dt>Destinado ao fundo social</dt><dd class="mono" id="subsidy-fund">—</dd></div>
+            <div class="subsidy__highlight"><dt>Entregas de saúde financiadas por dia</dt><dd class="mono" id="subsidy-health">—</dd></div>
+          </dl>
+          <meter class="subsidy__meter" id="subsidy-meter" min="0" max="350" value="0" aria-label="Entregas de saúde financiadas"></meter>
+          <p class="field__hint" id="subsidy-assumptions">Premissas ilustrativas: taxa de R$ 9,00 por entrega comercial, 35% da taxa destinada ao fundo social e custo médio de R$ 28,00 por entrega de saúde.</p>
+        </form>
+      </div>
+    </section>
+
+    <!-- Ecossistema -->
+    <section class="section" id="ecossistema" aria-labelledby="eco-title">
+      <div class="container">
+        <div class="section__head">
+          <p class="eyebrow">SDC/07 · Ecossistema</p>
+          <h2 id="eco-title">Três experiências conectadas pelo mesmo motor.</h2>
+        </div>
+        <ul class="eco">
+          <li class="eco__item">
+            <span class="eco__tag mono">Disponível</span>
+            <h3>SIDEC Control</h3>
+            <p>Central operacional com fila, frota, cenários de teste e rastreamento com telemetria.</p>
+            <p class="eco__links"><a href="central.html">Central</a> <a href="rastreamento.html">Rastreamento</a></p>
+          </li>
+          <li class="eco__item">
+            <span class="eco__tag mono">Disponível</span>
+            <h3>SIDEC Saúde</h3>
+            <p>Aplicação para cidadãos, hospitais e operadores solicitarem e acompanharem entregas de saúde.</p>
+            <p class="eco__links"><a href="saude/index.html">Abrir o SIDEC Saúde</a></p>
+          </li>
+          <li class="eco__item">
+            <span class="eco__tag mono">Disponível</span>
+            <h3>SIDEC Delivery</h3>
+            <p>Protótipo conceitual independente de entrega comercial por drone, pensado para o celular.</p>
+            <p class="eco__links"><a href="delivery/index.html">Abrir o SIDEC Delivery</a></p>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="site-footer__grid">
+        <div class="site-footer__brand">
+          <a class="brand" href="index.html"><span class="brand__name">SIDEC</span></a>
+          <p>A tecnologia que entrega. O cuidado que transforma.</p>
+        </div>
+        <div>
+          <h2>Navegação</h2>
+          <ul><li><a href="sobre.html">Sobre</a></li><li><a href="central.html">Central</a></li><li><a href="rastreamento.html">Rastreamento</a></li><li><a href="faq.html">FAQ</a></li></ul>
+        </div>
+        <div>
+          <h2>Projeto</h2>
+          <ul><li><a href="integrantes.html">Integrantes</a></li><li><a href="contato.html">Contato</a></li><li><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório</a></li></ul>
+        </div>
+      </div>
+      <p class="site-footer__legal">Projeto acadêmico — FIAP Global Solution 2026. Conceito e simulações com dados fictícios; o site não controla drones reais e não coleta dados pessoais. Operações reais dependem de autorização da ANAC e do DECEA.</p>
+    </div>
+  </footer>
+
+  <script src="js/ui.js" defer></script>
+  <script src="js/operations.js" defer></script>
+  <script src="js/data.js" defer></script>
+  <script src="js/state.js" defer></script>
+  <script src="js/drone-avatar.js" defer></script>
+  <script src="js/chatbot.js" defer></script>
+  <script src="js/home.js" defer></script>
+</body>
+</html>
