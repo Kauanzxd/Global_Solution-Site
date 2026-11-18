@@ -68,6 +68,6 @@
     form.reset();
     attempted = false;
     if (counter) counter.textContent = '0/1000';
-    status.focus();
+    // Sem mover o foco: a região role="status" anuncia o sucesso uma única vez.
   });
 })(window);
