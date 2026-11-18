@@ -7,11 +7,14 @@
   const RESERVA = { 1: 0.3, 2: 0.15, 3: 0.15, 4: 0.15 }; // órgão: 30% (regra oficial); demais: 15% (ilustrativo)
   const CORREDOR_KM = 2.5; // distância máxima de uma zona de pouso até a rota
   const FAIXA_TERMICA = { min: 2, max: 8 };
+  const RESGATE_MS = 20000; // resgate da carga e do drone após pouso de emergência (tempo simulado)
+  const MANUTENCAO_MS = 30000; // inspeção na base antes de voltar à frota (tempo simulado)
+  const RECARGA_PCT_POR_S = 0.5; // recarga ilustrativa de drones parados
 
   const PRIORIDADES = { 1: 'Órgãos', 2: 'Emergência', 3: 'Saúde', 4: 'Comercial' };
   const STATUS = {
     fila: 'Na fila', atribuida: 'Drone atribuído', em_voo: 'Em voo', entregue: 'Entregue',
-    outro_meio: 'Outro meio de transporte', pouso_emergencia: 'Pouso de emergência',
+    outro_meio: 'Outro meio de transporte', pouso_emergencia: 'Pouso de emergência', convencional: 'Entrega convencional',
     disponivel: 'Disponível', atribuido: 'Aguardando decolagem', manutencao: 'Em manutenção'
   };
 
@@ -54,7 +57,7 @@
       .sort((a, b) => a.prioridade - b.prioridade || a.ordem - b.ordem);
   }
 
-  /* Regra de autonomia isolada da geometria: usada pela central e pelo simulador do SIDEC Saúde. */
+  /* Regra de autonomia isolada da geometria: usada pela central e pelo simulador do SADEC Saúde. */
   function estimateAutonomy({ km, consumoKm, bateria, prioridade }) {
     const consumo = round1(km * consumoKm);
     const reserva = RESERVA[prioridade];
@@ -198,8 +201,39 @@
     return { x: trajeto[0].x, y: trajeto[0].y };
   }
 
+  /* Ciclo de vida da frota: recarga de drones parados, resgate após pouso de emergência e fim da manutenção. */
+  function maintainFleet(state, now) {
+    const dt = typeof state.ultimoTick === 'number' ? Math.max(0, now - state.ultimoTick) : 0;
+    state.ultimoTick = now;
+    state.drones.forEach((d) => {
+      if (d.status === 'disponivel' && d.bateria < 100 && dt > 0) {
+        d.bateria = Math.min(100, round1(d.bateria + (dt / 1000) * RECARGA_PCT_POR_S));
+      }
+      if (d.status === 'pouso_emergencia' && typeof d.resgateAte === 'number' && now >= d.resgateAte) {
+        const base = byId(state.filiais, d.filialId) || state.filiais[0];
+        const e = byId(state.entregas, d.entregaId);
+        if (e && e.evento) e.evento.resgate = false;
+        Object.assign(d, { status: 'manutencao', x: base.x, y: base.y, entregaId: null, resgateAte: null, manutencaoAte: now + MANUTENCAO_MS });
+        addLog(state, d.nome + ' resgatado e levado para inspeção em ' + base.nome + '.' + (e ? ' Carga de ' + e.id + ' recolhida pela equipe de solo.' : ''), 'warn');
+      } else if (d.status === 'manutencao' && typeof d.manutencaoAte === 'number' && now >= d.manutencaoAte) {
+        Object.assign(d, { status: 'disponivel', bateria: 100, manutencaoAte: null });
+        addLog(state, d.nome + ' liberado após inspeção, com bateria recarregada.', 'ok');
+      }
+    });
+  }
+
+  /* Entrega comercial atendida pelo meio convencional por escolha do cliente: não é fallback de indisponibilidade. */
+  function markConventional(state, entregaId) {
+    const e = byId(state.entregas, entregaId);
+    if (!e || e.status !== 'fila') return { ok: false, motivo: 'Só um pedido na fila pode ir pela entrega convencional.' };
+    Object.assign(e, { status: 'convencional', modo: 'convencional', droneId: null, motivo: 'Cliente escolheu a entrega convencional.' });
+    addLog(state, e.id + ': entrega convencional escolhida pelo cliente (fora da frota de drones).', 'info');
+    return { ok: true };
+  }
+
   function tick(state, now) {
     const done = [];
+    maintainFleet(state, now);
     state.entregas.forEach((e) => {
       if (e.status !== 'em_voo' || flightProgress(e, now) < 1) return;
       const d = byId(state.drones, e.droneId);
@@ -225,7 +259,7 @@
     const ponto = paraquedas ? pos : { x: zona.x, y: zona.y };
     e.status = 'pouso_emergencia';
     e.evento = { tipo, zonaId: zona.id, x: ponto.x, y: ponto.y, paraquedas, resgate: true, progresso: progress };
-    Object.assign(d, { status: 'pouso_emergencia', x: ponto.x, y: ponto.y, bateria: round1(e.bateriaInicial - e.consumo * progress) });
+    Object.assign(d, { status: 'pouso_emergencia', x: ponto.x, y: ponto.y, bateria: round1(e.bateriaInicial - e.consumo * progress), resgateAte: now + RESGATE_MS });
     addLog(state, paraquedas
       ? e.id + ': falha grave. Paraquedas, luzes e alerta sonoro acionados. Carga aguarda resgate (referência: ' + zona.nome + ').'
       : e.id + ': ' + (tipo === 'bateria' ? 'bateria insuficiente' : 'falha de motor') + '. Pouso seguro em ' + zona.nome + '. Carga aguarda resgate.', 'erro');
@@ -273,7 +307,7 @@
       prioridade, carga, pesoKg,
       origemId: data.origemId,
       destinoId: data.destinoId,
-      solicitante: String(data.solicitante || 'Central SIDEC').slice(0, 60),
+      solicitante: String(data.solicitante || 'Central SADEC').slice(0, 60),
       status: 'fila', droneId: null, ordem: state.seq,
       faixaTemp: prioridade === 1 || data.termico ? Object.assign({}, FAIXA_TERMICA) : null
     };
@@ -283,9 +317,9 @@
   }
 
   const api = {
-    FLIGHT_MS_PER_KM, RESERVA, PRIORIDADES, STATUS, FAIXA_TERMICA,
+    FLIGHT_MS_PER_KM, RESERVA, PRIORIDADES, STATUS, FAIXA_TERMICA, RESGATE_MS, MANUTENCAO_MS, RECARGA_PCT_POR_S,
     distance, findPoint, byId, sortQueue, estimateAutonomy, checkAutonomy, selectDrone, dispatch, processQueue,
-    launch, tick, flightProgress, positionAt, routeLandingZones, emergencyLanding,
+    launch, tick, markConventional, flightProgress, positionAt, routeLandingZones, emergencyLanding,
     checkTemperature, sensorReading, createOrder, addLog
   };
 

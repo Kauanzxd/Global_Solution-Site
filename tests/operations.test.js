@@ -212,3 +212,52 @@ test('pedido de saúde refrigerado recebe faixa térmica de 2 a 8 °C', () => {
   const comum = ops.createOrder(s, { prioridade: 3, carga: 'Losartana', pesoKg: 0.3, origemId: 'L-1', destinoId: 'L-2' });
   assert.equal(comum.faixaTemp, null);
 });
+
+test('após pouso de emergência e resgate, o drone volta à base em manutenção e depois fica disponível com bateria cheia', () => {
+  const s = makeState({ drones: [drone('D1')], entregas: [entrega('M')] });
+  ops.dispatch(s, 'M');
+  ops.launch(s, 'M', 0);
+  const pane = 3 * ops.FLIGHT_MS_PER_KM;
+  ops.emergencyLanding(s, 'M', 'motor', pane);
+  const d = byId(s.drones, 'D1');
+  ops.tick(s, pane + ops.RESGATE_MS - 1);
+  assert.equal(d.status, 'pouso_emergencia');
+  ops.tick(s, pane + ops.RESGATE_MS);
+  assert.equal(d.status, 'manutencao');
+  assert.deepEqual([d.x, d.y], [0, 0]);
+  assert.equal(byId(s.entregas, 'M').evento.resgate, false);
+  ops.tick(s, pane + ops.RESGATE_MS + ops.MANUTENCAO_MS);
+  assert.equal(d.status, 'disponivel');
+  assert.equal(d.bateria, 100);
+  assert.equal(d.entregaId, null);
+});
+
+test('drone em manutenção programada (sem prazo de retorno) continua indisponível', () => {
+  const s = makeState({ drones: [drone('D1', { status: 'manutencao', bateria: 23 })] });
+  ops.tick(s, 0);
+  ops.tick(s, 10 * 60 * 1000);
+  assert.equal(byId(s.drones, 'D1').status, 'manutencao');
+});
+
+test('drone disponível recarrega com o tempo até 100%; drone em voo não recarrega', () => {
+  const s = makeState({ drones: [drone('D1', { bateria: 40 }), drone('D2', { bateria: 50, status: 'em_voo' })] });
+  ops.tick(s, 0);
+  ops.tick(s, 10000);
+  assert.equal(byId(s.drones, 'D1').bateria, 40 + 10 * ops.RECARGA_PCT_POR_S);
+  assert.equal(byId(s.drones, 'D2').bateria, 50);
+  ops.tick(s, 10 * 60 * 1000);
+  assert.equal(byId(s.drones, 'D1').bateria, 100);
+});
+
+test('entrega convencional é modalidade própria: não vira outro meio, não entra na fila e não recebe drone', () => {
+  const s = makeState({ drones: [drone('D1')], entregas: [entrega('C', { prioridade: 4 })] });
+  const r = ops.markConventional(s, 'C');
+  assert.equal(r.ok, true);
+  const e = byId(s.entregas, 'C');
+  assert.equal(e.status, 'convencional');
+  assert.equal(e.modo, 'convencional');
+  assert.equal(ops.sortQueue(s).length, 0);
+  assert.equal(ops.dispatch(s, 'C').ok, false);
+  assert.equal(s.entregas.filter((x) => x.status === 'outro_meio').length, 0);
+  assert.equal(ops.markConventional(s, 'C').ok, false);
+});
