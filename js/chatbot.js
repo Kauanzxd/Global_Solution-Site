@@ -87,13 +87,13 @@
   }
 
   const REPLIES = {
-    saudacao: () => ({ text: 'Olá! Sou o Drone Bot, assistente do SIDEC. Posso rastrear entregas, explicar as prioridades, a segurança e mostrar a central passo a passo.' }),
+    saudacao: () => ({ text: 'Olá! Sou o Drone Bot, assistente do SADEC. Posso rastrear entregas, explicar as prioridades, a segurança e mostrar a central passo a passo.' }),
     ajuda: () => ({ text: 'Não entendi bem. Tente uma das opções abaixo ou escreva, por exemplo, "rastrear SDC-0003".' }),
     rastrear: trackReply,
     remedio: (ent) => ({
       text: 'Pedidos de medicamento de uso contínuo são prioridade 3 (Saúde). O cidadão, a UBS ou a farmácia registra o pedido e a central escolhe um drone com carga e autonomia suficientes' +
-        (ent.bairro ? ' para ' + ent.bairro : '') + '. Nesta demonstração, faça o pedido no SIDEC Saúde.',
-      links: [link('saude/index.html#pedir', 'Pedir medicamento no SIDEC Saúde')]
+        (ent.bairro ? ' para ' + ent.bairro : '') + '. Nesta demonstração, faça o pedido no SADEC Saúde.',
+      links: [link('saude/index.html#pedir', 'Pedir medicamento no SADEC Saúde')]
     }),
     urgente: (ent) => ({
       text: (ent.tipoCarga === 'órgão'
@@ -113,8 +113,8 @@
       links: [link('contato.html', 'Abrir formulário de contato')]
     }),
     delivery: () => ({
-      text: 'Pedidos de comida e mercado são prioridade 4 (Comercial). Eles ajudam a financiar a rede, mas cedem o drone para órgãos e emergências enquanto não decolaram. Experimente no protótipo do SIDEC Delivery.',
-      links: [link('delivery/index.html', 'Abrir o SIDEC Delivery')]
+      text: 'Pedidos de comida e mercado são prioridade 4 (Comercial). Eles ajudam a financiar a rede, mas cedem o drone para órgãos e emergências enquanto não decolaram. Experimente no protótipo do SADEC Delivery.',
+      links: [link('delivery/index.html', 'Abrir o SADEC Delivery')]
     }),
     prioridades: () => ({
       text: 'A fila segue quatro níveis: P1 Órgãos, P2 Emergência, P3 Saúde e P4 Comercial. P1 e P2 podem reorganizar uma entrega comercial que ainda não decolou, mas nada em voo é interrompido.',
@@ -125,12 +125,12 @@
       links: [link('rastreamento.html', 'Testar no rastreamento')]
     }),
     sobre: () => ({
-      text: 'O SIDEC é um conceito de rede de drones adaptados que leva órgãos, medicamentos e ajuda emergencial, financiada em parte por entregas comerciais. Tudo aqui é simulado com dados fictícios.',
+      text: 'O SADEC é um conceito de rede de drones adaptados que leva órgãos, medicamentos e ajuda emergencial, financiada em parte por entregas comerciais. Tudo aqui é simulado com dados fictícios.',
       links: [link('sobre.html', 'Conhecer o projeto')]
     }),
     tutorial: () => (TOURS[page]
       ? { text: 'Vamos lá! Vou destacar cada parte desta página.', action: 'tour' }
-      : { text: 'Há tutoriais guiados no SIDEC Saúde, no SIDEC Delivery, na Central e no Rastreamento.', links: [link('saude/index.html?tour=1', 'Como pedir um medicamento'), link('delivery/index.html?tour=1', 'Como pedir por drone no Delivery'), link('central.html?tour=1', 'Tutorial da Central'), link('rastreamento.html?tour=1', 'Tutorial do Rastreamento')] })
+      : { text: 'Há tutoriais guiados no SADEC Saúde, no SADEC Delivery, na Central e no Rastreamento.', links: [link('saude/index.html?tour=1', 'Como pedir um medicamento'), link('delivery/index.html?tour=1', 'Como pedir por drone no Delivery'), link('central.html?tour=1', 'Tutorial da Central'), link('rastreamento.html?tour=1', 'Tutorial do Rastreamento')] })
   };
 
   /* Implementação local por regras. Retorna Promise para manter o mesmo contrato de um backend real. */
@@ -253,7 +253,7 @@
     log, chips, form
   ]);
   const launcher = el('button', { type: 'button', class: 'chat__launcher', 'aria-expanded': 'false', 'aria-controls': 'chat-panel' }, [
-    launcherAvatar, el('span', { class: 'visually-hidden', text: 'Abrir Drone Bot, assistente do SIDEC' })
+    launcherAvatar, el('span', { class: 'visually-hidden', text: 'Abrir Drone Bot, assistente do SADEC' })
   ]);
   doc.body.append(el('div', { class: 'chat' }, [panel, launcher]));
 
@@ -263,34 +263,42 @@
 
   function addMessage(who, reply) {
     const msg = el('div', { class: 'chat__msg chat__msg--' + who }, el('p', { text: reply.text }));
-    if (reply.entities && Object.keys(reply.entities).length) {
-      msg.append(el('p', { class: 'chat__entities mono', text: Object.entries(reply.entities).map(([k, v]) => k + ': ' + v).join(' · ') }));
-    }
-    (reply.links || []).forEach((l) => msg.append(el('a', { class: 'chat__link', href: l.href, text: l.text + ' →' })));
+    // reply.entities continua disponível para integrações; não é exibido como rótulo técnico.
+    (reply.links || []).forEach((l) => msg.append(el('a', { class: 'chat__link', href: l.href, text: l.text })));
     log.append(msg);
     log.scrollTop = log.scrollHeight;
   }
 
   let busy = false;
-  function send(text) {
+  function send(text, retry) {
     const clean = String(text).trim().slice(0, 200);
     if (!clean || busy) return;
     busy = true;
-    addMessage('user', { text: clean });
+    if (!retry) addMessage('user', { text: clean });
     const typing = el('div', { class: 'chat__msg chat__msg--bot chat__typing', role: 'status' }, [el('span'), el('span'), el('span'), el('span', { class: 'visually-hidden', text: 'Drone Bot está digitando' })]);
     log.append(typing);
     log.scrollTop = log.scrollHeight;
     avatar.setState(headAvatar, 'thinking');
-    respond(clean).then((reply) => {
-      setTimeout(() => {
-        typing.remove();
+    // Usa a função pública: uma integração futura que substitua SIDEC.bot.respond também passa por aqui.
+    Promise.resolve()
+      .then(() => SIDEC.bot.respond(clean))
+      .then((reply) => new Promise((resolve) => {
+        setTimeout(() => resolve(reply), Math.min(1200, 450 + String(reply.text || '').length * 4)); // "digitação" proporcional
+      }))
+      .then((reply) => {
         addMessage('bot', reply);
         avatar.setState(headAvatar, reply.intent === 'reclamar' || reply.intent === 'urgente' ? 'alert' : 'talking', 1400);
         setChips(reply.chips && reply.chips.length ? reply.chips : SUGESTOES);
-        busy = false;
         if (reply.action === 'tour') { closePanel(); startTour(); }
-      }, Math.min(1200, 450 + reply.text.length * 4)); // tempo de "digitação" proporcional à resposta
-    });
+      })
+      .catch(() => {
+        addMessage('bot', { text: 'Não consegui responder agora. Sua mensagem não se perdeu: use "Tentar de novo".' });
+        chips.replaceChildren(el('button', { type: 'button', class: 'chat__chip', text: 'Tentar de novo', onclick: () => send(clean, true) }));
+      })
+      .finally(() => {
+        typing.remove();
+        busy = false;
+      });
   }
 
   form.addEventListener('submit', (e) => {
