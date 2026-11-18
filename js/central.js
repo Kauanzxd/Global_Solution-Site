@@ -6,7 +6,7 @@
   const { ops, store, data } = SIDEC;
   const { el } = SIDEC.ui;
 
-  const STATUS_ORDER = { em_voo: 0, atribuida: 1, fila: 2, pouso_emergencia: 3, outro_meio: 4, entregue: 5 };
+  const STATUS_ORDER = { em_voo: 0, atribuida: 1, fila: 2, pouso_emergencia: 3, outro_meio: 4, convencional: 5, entregue: 6 };
   const $ = (id) => doc.getElementById(id);
   const place = (state, id) => (ops.findPoint(state, id) || { nome: id }).nome;
 
@@ -263,6 +263,7 @@
 
   /* Relógio da simulação: conclui voos e atualiza o progresso. */
   function loop() {
+    if (document.hidden) return; // aba oculta: não gasta CPU; o estado é recalculado ao voltar
     const state = store.get();
     if (ops.tick(state, Date.now()).length) store.update(() => null);
     else render(state);

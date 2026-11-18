@@ -1,4 +1,4 @@
-/* SIDEC Delivery — vitrine, carrinho, escolha da entrega e acompanhamento do voo.
+/* SADEC Delivery — vitrine, carrinho, escolha da entrega e acompanhamento do voo.
    O pedido vira uma entrega P4 no mesmo motor (SIDEC.ops) e estado (SIDEC.store) da central. */
 (function (root) {
   'use strict';
@@ -126,14 +126,14 @@
         const e = ops.createOrder(s, {
           prioridade: 4, pesoKg: sum.pesoKg, origemId: lojaId, destinoId: bairroId,
           carga: 'Delivery — ' + loja().nome + ' (' + sum.qtd + (sum.qtd === 1 ? ' item)' : ' itens)'),
-          solicitante: 'Cliente SIDEC Delivery (fictício)'
+          solicitante: 'Cliente SADEC Delivery (fictício)'
         });
         s.deliveryAtual = {
           id: e.id, lojaId, bairroId, modo: m, minutos: q[m].minutos, totalCents: total,
           linhas: sum.linhas.map((l) => ({ nome: l.nome, qtd: l.qtd, subtotalCents: l.subtotalCents })),
           preparoAte: Date.now() + PREPARO_DEMO_MS
         };
-        if (m === 'convencional') Object.assign(e, { status: 'outro_meio', motivo: 'Cliente escolheu a entrega convencional (ilustrativa).' });
+        if (m === 'convencional') ops.markConventional(s, e.id);
         else ops.dispatch(s, e.id);
         return e;
       });
@@ -220,7 +220,7 @@
     if (e.status === 'em_voo' && !reduced.matches && !frame) frame = root.requestAnimationFrame(animate);
 
     const drone = e.droneId ? ops.byId(state.drones, e.droneId) : null;
-    const dados = [fact('Pedido', e.id), fact('Entrega', p.modo === 'drone' ? 'Drone SIDEC' : 'Convencional')];
+    const dados = [fact('Pedido', e.id), fact('Entrega', p.modo === 'drone' ? 'Drone SADEC' : 'Convencional')];
     if (p.modo === 'drone') dados.push(fact('Drone', drone ? drone.nome : 'Aguardando'));
     if (e.status === 'em_voo') dados.push(fact('Bateria', String(ops.sensorReading(state, e, now).bateria).replace('.', ',') + '%'));
     dados.push(fact('Previsão ilustrativa', 'cerca de ' + p.minutos + ' min'));
@@ -240,6 +240,7 @@
 
   /* Decolagem automática após o preparo e avanço do voo, como faria a operação da loja. */
   function loop() {
+    if (document.hidden) return; // aba oculta: não gasta CPU; o estado é recalculado ao voltar
     const now = Date.now();
     const state = store.get();
     const p = state.deliveryAtual;

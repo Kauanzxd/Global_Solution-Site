@@ -352,6 +352,7 @@
   }
 
   function loop() {
+    if (document.hidden) return; // aba oculta: não gasta CPU; o estado é recalculado ao voltar
     const state = store.get();
     if (ops.tick(state, Date.now()).length) store.update(() => null);
     else render(state);

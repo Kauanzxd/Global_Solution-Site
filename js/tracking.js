@@ -80,9 +80,11 @@
   /* ---------- Painéis ---------- */
   function steps(e) {
     const labels = ['Pedido', 'Priorização', 'Seleção do drone', 'Rota segura', 'Monitoramento', 'Entrega'];
-    const doneUntil = { fila: 1, outro_meio: 2, atribuida: 3, em_voo: 4, pouso_emergencia: 4, entregue: 6 }[e.status];
+    const doneUntil = { fila: 1, convencional: 1, outro_meio: 2, atribuida: 4, em_voo: 4, pouso_emergencia: 4, entregue: 6 }[e.status];
     return labels.map((label, i) => {
       let st = i < doneUntil ? 'done' : (i === doneUntil ? 'current' : 'todo');
+      if (e.status === 'atribuida' && i === 4) st = 'todo'; // rota pronta; o monitoramento só começa na decolagem
+      if (e.status === 'convencional' && i >= 1) st = 'todo';
       if (e.status === 'outro_meio' && i === 2) st = 'fail';
       if (e.status === 'pouso_emergencia' && i === 4) st = 'alert';
       return { label, st };
@@ -150,10 +152,11 @@
     ];
     $('telemetry').replaceChildren(...items.map(([k, v]) => el('div', { class: k === 'Temperatura' && temp && !temp.ok ? 'is-alert' : '' }, [el('dt', { text: k }), el('dd', { class: 'mono', text: v })])));
     const alert = $('temp-alert');
-    const msg = temp && !temp.ok && e.status === 'em_voo' ? temp.mensagem : '';
+    // Texto estável (sem o valor que muda a cada segundo) para o leitor de tela anunciar uma vez só.
+    const msg = temp && !temp.ok && e.status === 'em_voo' ? 'Temperatura fora da faixa de 2 a 8 °C. Equipe médica avisada.' : '';
     if (alert.textContent !== msg) alert.textContent = msg;
     alert.classList.toggle('is-visible', Boolean(msg));
-    if (msg && !e.alertaTemp) store.update((s) => { const x = ops.byId(s.entregas, e.id); x.alertaTemp = true; ops.addLog(s, e.id + ': ' + msg, 'erro'); });
+    if (msg && !e.alertaTemp) store.update((s) => { const x = ops.byId(s.entregas, e.id); x.alertaTemp = true; ops.addLog(s, e.id + ': ' + temp.mensagem, 'erro'); });
   }
 
   /* ---------- Seleção ---------- */
@@ -228,6 +231,7 @@
   store.subscribe((s) => { lastKey = ''; render(s); });
   render(store.get());
   setInterval(() => {
+    if (document.hidden) return; // aba oculta: não gasta CPU
     const state = store.get();
     if (ops.tick(state, Date.now()).length) store.update(() => null);
     else render(state);

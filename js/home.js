@@ -7,6 +7,7 @@
 
   /* Painel do hero: lê o mesmo estado usado pela central e pelo rastreamento. */
   function renderStrip() {
+    if (document.hidden) return; // aba oculta: não gasta CPU
     const state = store.get();
     ops.tick(state, Date.now());
     const fila = ops.sortQueue(state);
