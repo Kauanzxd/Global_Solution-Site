@@ -788,3 +788,15 @@ body.control {
 /* Pedido da Central (API): ação de concluir só aparece nesse modo */
 .trk-api-only { display: none; }
 body.is-api .trk-api-only { display: inline-flex; }
+
+/* Central integrada (API) */
+#api-central { grid-column: 1 / -1; }
+.api-estado { margin-bottom: 12px; padding: 10px 14px; border: 1px dashed var(--night-4); border-radius: 14px; font-size: var(--t-sm); color: var(--night-soft); }
+.api-estado.is-online { border-style: solid; border-color: rgb(76 201 138 / 0.4); color: var(--ok-on-dark); }
+.api-corpo { display: grid; gap: 16px; }
+.api-corpo[hidden] { display: none; }
+.api-corpo .qlist { max-height: 22rem; }
+.api-drones { display: flex; flex-direction: column; gap: 6px; }
+.api-drone { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 14px; background: rgb(255 255 255 / 0.04); font-size: var(--t-sm); }
+.api-drone__info { color: var(--night-soft); }
+@media (min-width: 900px) { .api-corpo { grid-template-columns: 3fr 2fr; } }

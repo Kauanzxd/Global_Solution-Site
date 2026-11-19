@@ -140,6 +140,25 @@
         <ol class="log" id="log-list" role="log" aria-live="polite"></ol>
       </section>
 
+      <section class="panel" id="api-central" aria-labelledby="api-title">
+        <div class="panel__head panel__head--row">
+          <h2 id="api-title" class="panel__title">Central integrada (API · SQLite · Java · Python)</h2>
+          <button class="btn btn--light btn--sm" type="button" data-api-acao="processar" data-api-fila>Processar fila (Java)</button>
+        </div>
+        <p class="api-estado" id="api-estado" role="status">Verificando a API de integração…</p>
+        <div class="api-corpo" id="api-corpo" hidden>
+          <div>
+            <h3 class="panel__hint">Pedidos gravados</h3>
+            <ol class="qlist" id="api-pedidos"></ol>
+          </div>
+          <div>
+            <h3 class="panel__hint">Drones no banco</h3>
+            <ul class="api-drones" id="api-drones"></ul>
+          </div>
+        </div>
+        <div class="scenario-result" id="api-msg" role="status" aria-live="polite"></div>
+      </section>
+
       <section class="panel" id="frota" aria-labelledby="frota-title">
         <div class="panel__head">
           <h2 id="frota-title" class="panel__title">Frota</h2>
@@ -213,5 +232,7 @@
   <script src="js/drone-avatar.js" defer></script>
   <script src="js/chatbot.js" defer></script>
   <script src="js/central.js" defer></script>
+  <script src="js/api.js" defer></script>
+  <script src="js/central-api.js" defer></script>
 </body>
 </html>
