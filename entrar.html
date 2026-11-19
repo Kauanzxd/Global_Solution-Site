@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar — SADEC</title>
+  <meta name="description" content="Tela de acesso demonstrativa do SADEC. Nenhum dado é verificado, enviado ou guardado.">
+  <link rel="icon" href="assets/icons/drone-bot.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body data-page="entrar" class="login-page">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <div class="login">
+    <section class="login__art" aria-label="SADEC">
+      <img class="login__bg" src="assets/images/grao.jpg" alt="" width="1200" height="900">
+      <img class="login__bg login__bg--clouds" src="assets/images/nuvens.jpg" alt="" width="1200" height="900">
+      <span class="login__shade" aria-hidden="true"></span>
+      <span class="login__cross" aria-hidden="true"></span>
+      <a class="login__brand" href="index.html"><img src="assets/icons/drone-cinza.svg" alt="" width="42" height="42"><span>SADEC</span></a>
+      <p class="login__giant" aria-hidden="true">SADEC</p>
+      <div class="login__foot">
+        <p class="login__slogan">Rotas aéreas para o que não pode esperar.</p>
+        <p class="login__legal">© SADEC · protótipo acadêmico da FIAP Global Solution 2026. Nenhum acesso aqui é real.</p>
+      </div>
+    </section>
+
+    <main id="conteudo" class="login__panel">
+      <div class="login__top">
+        <a class="login__back" href="index.html" id="login-home">← Voltar ao site</a>
+        <button class="login__back" type="button" id="login-back" hidden>← Voltar</button>
+        <p class="muted">Novo por aqui? <a href="faq.html#contato">Pedir acesso</a></p>
+      </div>
+
+      <form class="login__step" id="login-form" novalidate data-step="form">
+        <h1 id="page-title" tabindex="-1">Entrar</h1>
+        <p class="muted login__lead">Escolha como você usa o SADEC.</p>
+        <div class="segmented login__profiles" role="radiogroup" aria-label="Perfil de acesso">
+          <button type="button" role="radio" aria-checked="true" data-profile="saude">Unidade de saúde</button>
+          <button type="button" role="radio" aria-checked="false" data-profile="cliente" tabindex="-1">Cliente</button>
+          <button type="button" role="radio" aria-checked="false" data-profile="operador" tabindex="-1">Operador</button>
+        </div>
+        <p class="login__dest" id="login-dest">Você vai para o SADEC Saúde</p>
+
+        <p class="form-status is-error" id="login-errors" role="alert" hidden>Confira os campos destacados.</p>
+
+        <div class="field" id="field-user">
+          <label for="login-user" id="login-user-label">E-mail institucional</label>
+          <input class="input" id="login-user" name="usuario" type="text" autocomplete="email" maxlength="120" placeholder="nome@unidade.org" aria-describedby="login-user-error">
+          <p class="field__error" id="login-user-error"></p>
+        </div>
+
+        <div class="field" id="field-pw">
+          <div class="login__pw-head"><label for="login-pw">Senha</label><button class="login__link" type="button" id="login-forgot">Esqueci a senha</button></div>
+          <div class="login__pw">
+            <input class="input" id="login-pw" name="senha" type="password" autocomplete="current-password" minlength="8" maxlength="64" placeholder="Mínimo de 8 caracteres" aria-describedby="login-pw-error">
+            <button class="login__eye" type="button" id="login-eye" aria-label="Mostrar senha" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+            </button>
+          </div>
+          <p class="field__error" id="login-pw-error">A senha tem pelo menos 8 caracteres.</p>
+        </div>
+        <p class="login__info" id="login-forgot-msg" role="status" hidden>Na versão real, enviaríamos um link de redefinição. Aqui é só demonstração.</p>
+
+        <label class="check" for="login-keep"><input id="login-keep" type="checkbox" checked><span>Manter conectado neste dispositivo</span></label>
+
+        <button class="btn btn--primary login__submit" type="submit">Entrar</button>
+        <div class="login__or" aria-hidden="true"><span>ou</span></div>
+        <button class="btn btn--ghost login__submit" type="button" id="login-demo">Entrar com acesso de demonstração</button>
+        <p class="login__note">Protótipo: não use uma senha real. Os dados não saem do seu navegador.</p>
+      </form>
+
+      <form class="login__step" id="code-form" novalidate data-step="code" hidden>
+        <span class="login__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M11 18h2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+        <h1 class="login__title" tabindex="-1" id="code-title">Confirme que é você</h1>
+        <p class="muted" id="code-msg">Enviamos um código ao celular da sua unidade. Toda conta de saúde usa verificação em duas etapas.</p>
+        <div class="field" id="field-code">
+          <label for="login-code">Código de 6 dígitos</label>
+          <input class="input login__code mono" id="login-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" aria-describedby="login-code-error">
+          <p class="field__error" id="login-code-error">Digite os 6 números do código.</p>
+        </div>
+        <button class="btn btn--primary login__submit" type="submit">Confirmar</button>
+        <p class="muted login__resend">Não recebeu? <button class="login__link" type="button" id="login-resend">Reenviar código</button> · demonstração: qualquer 6 números servem</p>
+        <p class="login__info" id="login-resend-msg" role="status" hidden>Demonstração: nenhum código é enviado.</p>
+      </form>
+
+      <div class="login__step login__center" data-step="bio" hidden>
+        <span class="login__scan" aria-hidden="true"><span class="login__scan-line"></span></span>
+        <h1 class="login__title" tabindex="-1" id="bio-title">Acesso rápido e seguro</h1>
+        <p class="muted">Na próxima vez, entre com Face ID ou digital deste aparelho, sem digitar a senha.</p>
+        <button class="btn btn--primary login__submit" type="button" id="bio-yes">Ativar agora</button>
+        <button class="btn btn--ghost login__submit" type="button" id="bio-no">Talvez depois</button>
+      </div>
+
+      <div class="login__step login__center" data-step="done" hidden>
+        <span class="login__done-check" aria-hidden="true"></span>
+        <h1 class="login__title" tabindex="-1" id="done-title">Tudo pronto!</h1>
+        <p class="muted" id="done-msg">Acesso de demonstração liberado.</p>
+        <a class="btn btn--primary login__submit" id="done-cta" href="saude/index.html">Abrir o SADEC Saúde</a>
+        <button class="btn btn--ghost login__submit" type="button" id="login-exit">Sair e voltar ao início</button>
+      </div>
+
+      <ol class="login__dots" id="login-dots" aria-label="Etapas do acesso"></ol>
+    </main>
+  </div>
+
+  <script src="js/entrar.js" defer></script>
+</body>
+</html>

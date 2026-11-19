@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Missão P1 · Transporte de órgão — SADEC</title>
+  <meta name="description" content="Missão P1 demonstrativa do SADEC: janela de preservação, corredor exclusivo, temperatura, reserva de bateria e cadeia de custódia. Simulação com instituições fictícias.">
+  <link rel="icon" href="assets/icons/drone-bot.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/drone-bot.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body data-page="orgaos">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="site-header">
+    <div class="container site-header__bar">
+      <a class="brand" href="index.html" aria-label="SADEC, página inicial">
+        <img class="brand__mark" src="assets/icons/drone-bot.svg" alt="" width="42" height="42">
+        <span class="brand__name">SADEC</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="nav-toggle__bars" aria-hidden="true"></span>
+        <span class="visually-hidden">Abrir menu</span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Principal">
+        <ul class="site-nav__list">
+          <li><a href="index.html">Início</a></li>
+          <li><a href="como-funciona.html">Como funciona</a></li>
+          <li><a href="saude/index.html">Saúde</a></li>
+          <li><a href="delivery/index.html">Delivery</a></li>
+          <li><a href="rastreamento.html">Rastrear</a></li>
+          <li><a href="faq.html">Ajuda</a></li>
+          <li class="site-nav__extra"><a href="central.html">Central de Operações</a></li>
+          <li class="site-nav__extra"><a href="orgaos.html" aria-current="page">Missão P1 · Órgãos</a></li>
+          <li class="site-nav__extra"><a href="sobre.html">Sobre</a></li>
+          <li class="site-nav__extra"><a href="drone-bot.html">Drone Bot</a></li>
+          <li class="site-nav__extra"><a href="integrantes.html">Integrantes</a></li>
+          <li class="site-nav__extra"><a href="entrar.html">Entrar</a></li>
+        </ul>
+      </nav>
+      <div class="site-header__end">
+        <span class="tag tag--demo">Dados ilustrativos</span>
+        <a class="btn btn--primary btn--sm site-header__cta" href="entrar.html">Entrar</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="conteudo" class="mission" data-mission>
+    <section class="mission__head container" aria-labelledby="page-title">
+      <div class="mission__bar">
+        <span class="prio-chip prio-chip--lg prio-chip--1">P1</span>
+        <div class="mission__id">
+          <span>Transporte de órgão · prioridade máxima</span>
+          <span class="mono muted">P1-0412</span>
+        </div>
+        <span class="tag tag--demo">Simulação</span>
+        <a class="tag tag--soft mission__back" href="central.html">Central de Operações</a>
+      </div>
+      <h1 id="page-title">Rim · Hospital A → Centro transplantador B</h1>
+      <p class="muted">Instituições fictícias · contêiner LC-0412 · drone SDC-07 · operador dedicado da Central</p>
+      <div class="mission__actions">
+        <button class="btn btn--primary" type="button" data-demo-action="call">Ligar para equipe receptora</button>
+        <button class="btn btn--danger" type="button" data-demo-action="abort">Abortar e pousar</button>
+      </div>
+      <p class="form-status" id="mission-status" role="status"></p>
+
+      <ol class="mission__steps" aria-label="Etapas da missão">
+        <li class="is-done"><span class="mission__dot" aria-hidden="true"></span><span>Captação confirmada</span><span class="mono muted">11:58</span></li>
+        <li class="is-done"><span class="mission__dot" aria-hidden="true"></span><span>Lacre e custódia</span><span class="mono muted">13:52</span></li>
+        <li class="is-done"><span class="mission__dot" aria-hidden="true"></span><span>Decolagem</span><span class="mono muted">14:01</span></li>
+        <li class="is-now"><span class="mission__dot" aria-hidden="true"></span><span>Em voo · ponto <span data-mission-cp>2</span> de 3</span><span class="mono muted">agora</span></li>
+        <li><span class="mission__dot" aria-hidden="true"></span><span>Pouso no Centro B</span><span class="mono muted">~14:17</span></li>
+        <li><span class="mission__dot" aria-hidden="true"></span><span>Entrega à equipe cirúrgica</span><span class="mono muted">—</span></li>
+      </ol>
+    </section>
+
+    <div class="container mission__grid">
+      <section class="card mission__window" aria-labelledby="w-title">
+        <div class="card__head"><h2 id="w-title">Janela de preservação</h2><span class="tag tag--soft">Limite definido pela equipe médica</span></div>
+        <dl class="mission__stats">
+          <div><dt>Em preservação há</dt><dd class="mono" data-mission-elapsed>2 h 26</dd></div>
+          <div><dt>Chegada prevista</dt><dd class="mono">14:17</dd></div>
+          <div><dt>Margem até o limite</dt><dd>Definida pela equipe</dd></div>
+        </dl>
+        <div class="window-bar" aria-hidden="true"><span class="window-bar__fill" data-mission-window></span></div>
+        <p class="muted mission__note">O SADEC não avalia a viabilidade do órgão. O limite vem da equipe de captação e aparece aqui só como referência.</p>
+      </section>
+
+      <section class="card mission__route card--dark" aria-labelledby="r-title">
+        <div class="card__head"><h2 id="r-title">Corredor 03 exclusivo</h2><span class="mono" data-mission-km>6,1 / 9,8 km</span></div>
+        <svg class="corridor corridor--mission" viewBox="0 0 480 220" role="img" aria-label="Rota ilustrativa do Hospital A ao Centro B pelo corredor 03, com zonas de pouso seguro">
+          <path class="corridor__path" id="mission-path" d="M30 180 C 110 180, 150 90, 240 100 S 390 40, 450 36"/>
+          <circle class="corridor__cp" cx="30" cy="180" r="7"/><circle class="corridor__cp" cx="150" cy="128" r="6"/><circle class="corridor__cp" cx="330" cy="62" r="6"/><circle class="corridor__cp corridor__cp--end" cx="450" cy="36" r="8"/>
+          <rect class="corridor__lz" x="96" y="140" width="14" height="14" rx="3"/><rect class="corridor__lz" x="250" y="118" width="14" height="14" rx="3"/><rect class="corridor__lz" x="380" y="70" width="14" height="14" rx="3"/>
+          <circle class="corridor__pulse" data-mission-drone-pulse cx="300" cy="78" r="16"/>
+          <circle class="corridor__drone" data-mission-drone cx="300" cy="78" r="10"/>
+        </svg>
+        <p class="corridor__legend"><span><span class="corridor__key corridor__key--cp"></span>Ponto de controle</span><span><span class="corridor__key corridor__key--lz"></span>Zona de pouso seguro</span></p>
+      </section>
+
+      <section class="card" aria-labelledby="t-title">
+        <div class="card__head"><h2 id="t-title">Temperatura do contêiner</h2><span class="tag tag--soft">Faixa 2–8 °C</span></div>
+        <p class="mission__big"><span class="mono" data-mission-temp>4,1</span><span class="muted">°C</span></p>
+        <ul class="chips-row"><li class="tag tag--soft mono">mín. 3,9</li><li class="tag tag--soft mono">máx. 4,4</li><li class="status status--done">Lacre íntegro</li></ul>
+      </section>
+
+      <section class="card" aria-labelledby="b-title">
+        <div class="card__head"><h2 id="b-title">Autonomia de bateria</h2><span class="mono">78% · 34 min</span></div>
+        <div class="battery" role="img" aria-label="Bateria de 78%: consumo da rota de 30%, reserva obrigatória de 9% e margem de 39%">
+          <span class="battery__seg battery__seg--route">Consumo · 30%</span>
+          <span class="battery__seg battery__seg--reserve">Reserva · 9%</span>
+          <span class="battery__seg battery__seg--margin">Margem · 39%</span>
+        </div>
+        <p class="muted mission__note">Regra P1: só decola se consumo × 1,3 ≤ bateria. Aqui: 30% × 1,3 = 39% ≤ 78%. Se a margem chegar a zero, o operador é alertado antes do drone agir.</p>
+      </section>
+
+      <section class="card" aria-labelledby="s-title">
+        <div class="card__head"><h2 id="s-title">Segurança da rota</h2><span class="status status--done">5 de 5 ok</span></div>
+        <ul class="checks">
+          <li><span class="checks__ok" aria-hidden="true"></span><span>Corredor exclusivo · P3 e P4 não decolados redirecionados</span><span class="mono muted">14:00</span></li>
+          <li><span class="checks__ok" aria-hidden="true"></span><span>Vento 14 km/h · limite 35</span><span class="mono muted">14:06</span></li>
+          <li><span class="checks__ok" aria-hidden="true"></span><span>3 zonas de pouso seguro livres</span><span class="mono muted">14:05</span></li>
+          <li><span class="checks__ok" aria-hidden="true"></span><span>Link de comando redundante</span><span class="mono muted">14:06</span></li>
+          <li><span class="checks__ok" aria-hidden="true"></span><span>Espaço aéreo · procedimento a definir com DECEA</span><span class="mono muted">13:55</span></li>
+        </ul>
+      </section>
+
+      <section class="card" aria-labelledby="d-title">
+        <div class="card__head"><h2 id="d-title">Destino</h2><span class="tag tag--demo">Instituição fictícia</span></div>
+        <dl class="kv">
+          <div><dt>Hospital</dt><dd>Centro transplantador B</dd></div>
+          <div><dt>Ponto de pouso</dt><dd>Plataforma H-01 · cobertura</dd></div>
+          <div><dt>Equipe receptora</dt><dd>Responsável a definir · aguardando</dd></div>
+          <div><dt>Abertura</dt><dd>Código + leitura do lacre</dd></div>
+        </dl>
+      </section>
+
+      <section class="card mission__custody" aria-labelledby="c-title">
+        <div class="card__head"><h2 id="c-title">Cadeia de custódia</h2><span class="tag tag--soft">Registro somente de leitura</span></div>
+        <ol class="custody">
+          <li><span class="mono muted">14:06:30</span><span>SDC-07 passou o ponto 2 · 4,1 °C · lacre íntegro</span><span class="muted">sistema</span></li>
+          <li><span class="mono muted">14:01:05</span><span>Decolagem autorizada pelo operador dedicado</span><span class="muted">operador</span></li>
+          <li><span class="mono muted">13:55:40</span><span>Corredor 03 reservado · P3 e P4 não decolados redirecionados</span><span class="muted">sistema</span></li>
+          <li><span class="mono muted">13:52:12</span><span>Contêiner LC-0412 lacrado e entregue ao drone · 4,0 °C</span><span class="muted">captação</span></li>
+          <li><span class="mono muted">11:58:03</span><span>Pedido P1 confirmado por ligação com a Central</span><span class="muted">Hospital A</span></li>
+        </ol>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="site-footer__grid">
+        <div class="site-footer__brand">
+          <a class="brand" href="index.html"><img class="brand__mark" src="assets/icons/drone-bot.svg" alt="" width="42" height="42"><span class="brand__name">SADEC</span></a>
+          <p>Sistema Autônomo de Drones de Cuidado e Entrega. Projeto acadêmico da FIAP Global Solution 2026.</p>
+        </div>
+        <div>
+          <h2>Operação</h2>
+          <ul><li><a href="como-funciona.html">Como funciona</a></li><li><a href="central.html">Central de Operações</a></li><li><a href="rastreamento.html">Rastrear uma entrega</a></li><li><a href="orgaos.html">Missão P1 · Órgãos</a></li></ul>
+        </div>
+        <div>
+          <h2>Serviços</h2>
+          <ul><li><a href="saude/index.html">SADEC Saúde</a></li><li><a href="delivery/index.html">SADEC Delivery</a></li><li><a href="drone-bot.html">Drone Bot</a></li></ul>
+        </div>
+        <div>
+          <h2>Projeto</h2>
+          <ul><li><a href="sobre.html">Sobre</a></li><li><a href="faq.html">Perguntas frequentes</a></li><li><a href="faq.html#contato">Contato</a></li><li><a href="integrantes.html">Integrantes</a></li><li><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório</a></li></ul>
+        </div>
+      </div>
+      <p class="site-footer__legal">O SADEC é um protótipo acadêmico conceitual. Não opera comercialmente, não controla drones reais, não possui parcerias hospitalares e não tem integração com plataformas de delivery. Frota, rotas, telemetria e missões são simulações com dados fictícios. Uma operação real dependeria de autorização da ANAC e do DECEA.</p>
+    </div>
+  </footer>
+
+  <nav class="tabbar" aria-label="Atalhos">
+    <a class="tabbar__item" href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5v-5H9v5H4z"/></svg><span>Início</span></a>
+    <a class="tabbar__item" href="saude/index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg><span>Saúde</span></a>
+    <a class="tabbar__item" href="delivery/index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Delivery</span></a>
+    <a class="tabbar__item" href="rastreamento.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11Z"/><circle cx="12" cy="10" r="2.2"/></svg><span>Rastrear</span></a>
+    <button class="tabbar__item" type="button" data-open-menu aria-controls="site-nav"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg><span>Menu</span></button>
+  </nav>
+
+  <script src="js/ui.js" defer></script>
+  <script src="js/operations.js" defer></script>
+  <script src="js/data.js" defer></script>
+  <script src="js/state.js" defer></script>
+  <script src="js/drone-avatar.js" defer></script>
+  <script src="js/chatbot.js" defer></script>
+  <script src="js/orgaos.js" defer></script>
+</body>
+</html>

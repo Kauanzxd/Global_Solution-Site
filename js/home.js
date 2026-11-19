@@ -11,21 +11,27 @@
     const state = store.get();
     ops.tick(state, Date.now());
     const fila = ops.sortQueue(state);
-    doc.querySelectorAll('#hero-queue [data-count]').forEach((dd) => {
-      const n = fila.filter((e) => e.prioridade === Number(dd.getAttribute('data-count'))).length;
-      dd.textContent = n + (n === 1 ? ' na fila' : ' na fila');
-    });
-    const voo = state.entregas.find((e) => e.status === 'em_voo');
-    const flight = doc.getElementById('hero-flight');
-    const progress = doc.getElementById('hero-progress');
+    const voo = state.entregas.find((x) => x.status === 'em_voo');
+    const prio = doc.getElementById('hero-flight-prio');
+    if (!prio) return;
+    const lugar = (id) => (ops.byId(state.filiais, id) || ops.byId(state.locais, id) || {}).nome || id;
     if (voo) {
-      const d = ops.byId(state.drones, voo.droneId);
-      const p = Math.round(ops.flightProgress(voo, Date.now()) * 100);
-      flight.textContent = 'Em voo: ' + voo.id + ' · ' + d.nome + ' · ' + p + '%';
-      progress.value = p;
+      const p = ops.flightProgress(voo, Date.now());
+      const restS = Math.max(0, Math.ceil(((1 - p) * voo.duracaoMs) / 1000));
+      prio.textContent = 'P' + voo.prioridade;
+      prio.setAttribute('data-prio', String(voo.prioridade));
+      doc.getElementById('hero-flight').textContent = 'Em voo · ' + voo.carga;
+      doc.getElementById('hero-flight-sub').textContent = lugar(voo.origemId) + ' → ' + lugar(voo.destinoId) + ' · em trânsito';
+      doc.getElementById('hero-flight-min').textContent = Math.floor(restS / 60) + ':' + String(restS % 60).padStart(2, '0');
+      doc.getElementById('hero-progress').value = Math.round(p * 100);
     } else {
-      flight.textContent = 'Nenhum drone em voo. Decole uma entrega na Central.';
-      progress.value = 0;
+      const prox = fila[0];
+      prio.textContent = prox ? 'P' + prox.prioridade : '—';
+      prio.setAttribute('data-prio', prox ? String(prox.prioridade) : '0');
+      doc.getElementById('hero-flight').textContent = prox ? 'Próximo da fila · ' + prox.carga : 'Fila vazia';
+      doc.getElementById('hero-flight-sub').textContent = 'Nenhum drone em voo. Decole uma entrega na Central.';
+      doc.getElementById('hero-flight-min').textContent = fila.length + ' na fila';
+      doc.getElementById('hero-progress').value = 0;
     }
   }
 

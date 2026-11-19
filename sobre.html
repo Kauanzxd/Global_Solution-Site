@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sobre o SADEC — problema, objetivo e proposta</title>
   <meta name="description" content="Descrição, problema, objetivo e proposta de valor do SADEC, rede conceitual de drones de entrega e cuidado.">
+  <link rel="icon" href="assets/icons/drone-bot.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
@@ -20,8 +21,8 @@
   <header class="site-header">
     <div class="container site-header__bar">
       <a class="brand" href="index.html" aria-label="SADEC, página inicial">
+        <img class="brand__mark" src="assets/icons/drone-bot.svg" alt="" width="42" height="42">
         <span class="brand__name">SADEC</span>
-        <span class="brand__tag">Drones de entrega e cuidado</span>
       </a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
         <span class="nav-toggle__bars" aria-hidden="true"></span>
@@ -30,16 +31,23 @@
       <nav id="site-nav" class="site-nav" aria-label="Principal">
         <ul class="site-nav__list">
           <li><a href="index.html">Início</a></li>
-          <li><a href="sobre.html" aria-current="page">Sobre</a></li>
-          <li><a href="central.html">Central</a></li>
-          <li><a href="rastreamento.html">Rastreamento</a></li>
+          <li><a href="como-funciona.html">Como funciona</a></li>
           <li><a href="saude/index.html">Saúde</a></li>
           <li><a href="delivery/index.html">Delivery</a></li>
-          <li><a href="faq.html">FAQ</a></li>
-          <li><a href="integrantes.html">Integrantes</a></li>
-          <li><a class="site-nav__cta" href="contato.html">Contato</a></li>
+          <li><a href="rastreamento.html">Rastrear</a></li>
+          <li><a href="faq.html">Ajuda</a></li>
+          <li class="site-nav__extra"><a href="central.html">Central de Operações</a></li>
+          <li class="site-nav__extra"><a href="orgaos.html">Missão P1 · Órgãos</a></li>
+          <li class="site-nav__extra"><a href="sobre.html" aria-current="page">Sobre</a></li>
+          <li class="site-nav__extra"><a href="drone-bot.html">Drone Bot</a></li>
+          <li class="site-nav__extra"><a href="integrantes.html">Integrantes</a></li>
+          <li class="site-nav__extra"><a href="entrar.html">Entrar</a></li>
         </ul>
       </nav>
+      <div class="site-header__end">
+        <span class="tag tag--demo">Dados ilustrativos</span>
+        <a class="btn btn--primary btn--sm site-header__cta" href="entrar.html">Entrar</a>
+      </div>
     </div>
   </header>
 
@@ -128,21 +136,33 @@
     <div class="container">
       <div class="site-footer__grid">
         <div class="site-footer__brand">
-          <a class="brand" href="index.html"><span class="brand__name">SADEC</span></a>
-          <p>A tecnologia que entrega. O cuidado que transforma.</p>
+          <a class="brand" href="index.html"><img class="brand__mark" src="assets/icons/drone-bot.svg" alt="" width="42" height="42"><span class="brand__name">SADEC</span></a>
+          <p>Sistema Autônomo de Drones de Cuidado e Entrega. Projeto acadêmico da FIAP Global Solution 2026.</p>
         </div>
         <div>
-          <h2>Navegação</h2>
-          <ul><li><a href="sobre.html">Sobre</a></li><li><a href="central.html">Central</a></li><li><a href="rastreamento.html">Rastreamento</a></li><li><a href="faq.html">FAQ</a></li></ul>
+          <h2>Operação</h2>
+          <ul><li><a href="como-funciona.html">Como funciona</a></li><li><a href="central.html">Central de Operações</a></li><li><a href="rastreamento.html">Rastrear uma entrega</a></li><li><a href="orgaos.html">Missão P1 · Órgãos</a></li></ul>
+        </div>
+        <div>
+          <h2>Serviços</h2>
+          <ul><li><a href="saude/index.html">SADEC Saúde</a></li><li><a href="delivery/index.html">SADEC Delivery</a></li><li><a href="drone-bot.html">Drone Bot</a></li></ul>
         </div>
         <div>
           <h2>Projeto</h2>
-          <ul><li><a href="integrantes.html">Integrantes</a></li><li><a href="contato.html">Contato</a></li><li><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório</a></li></ul>
+          <ul><li><a href="sobre.html">Sobre</a></li><li><a href="faq.html">Perguntas frequentes</a></li><li><a href="faq.html#contato">Contato</a></li><li><a href="integrantes.html">Integrantes</a></li><li><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório</a></li></ul>
         </div>
       </div>
-      <p class="site-footer__legal">Projeto acadêmico — FIAP Global Solution 2026. Conceito e simulações com dados fictícios; o site não controla drones reais e não coleta dados pessoais. Operações reais dependem de autorização da ANAC e do DECEA.</p>
+      <p class="site-footer__legal">O SADEC é um protótipo acadêmico conceitual. Não opera comercialmente, não controla drones reais, não possui parcerias hospitalares e não tem integração com plataformas de delivery. Frota, rotas, telemetria e missões são simulações com dados fictícios. Uma operação real dependeria de autorização da ANAC e do DECEA.</p>
     </div>
   </footer>
+
+  <nav class="tabbar" aria-label="Atalhos">
+    <a class="tabbar__item" href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5v-5H9v5H4z"/></svg><span>Início</span></a>
+    <a class="tabbar__item" href="saude/index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg><span>Saúde</span></a>
+    <a class="tabbar__item" href="delivery/index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Delivery</span></a>
+    <a class="tabbar__item" href="rastreamento.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11Z"/><circle cx="12" cy="10" r="2.2"/></svg><span>Rastrear</span></a>
+    <button class="tabbar__item" type="button" data-open-menu aria-controls="site-nav"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg><span>Menu</span></button>
+  </nav>
 
   <script src="js/ui.js" defer></script>
   <script src="js/operations.js" defer></script>

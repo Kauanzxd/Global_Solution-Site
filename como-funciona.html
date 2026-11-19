@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Como funciona — SADEC</title>
+  <meta name="description" content="Do pedido à confirmação: os seis passos de uma missão do SADEC e o que acontece quando algo sai do plano. Missão ilustrativa.">
+  <link rel="icon" href="assets/icons/drone-bot.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/drone-bot.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body data-page="como-funciona">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="site-header">
+    <div class="container site-header__bar">
+      <a class="brand" href="index.html" aria-label="SADEC, página inicial">
+        <img class="brand__mark" src="assets/icons/drone-bot.svg" alt="" width="42" height="42">
+        <span class="brand__name">SADEC</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="nav-toggle__bars" aria-hidden="true"></span>
+        <span class="visually-hidden">Abrir menu</span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Principal">
+        <ul class="site-nav__list">
+          <li><a href="index.html">Início</a></li>
+          <li><a href="como-funciona.html" aria-current="page">Como funciona</a></li>
+          <li><a href="saude/index.html">Saúde</a></li>
+          <li><a href="delivery/index.html">Delivery</a></li>
+          <li><a href="rastreamento.html">Rastrear</a></li>
+          <li><a href="faq.html">Ajuda</a></li>
+          <li class="site-nav__extra"><a href="central.html">Central de Operações</a></li>
+          <li class="site-nav__extra"><a href="orgaos.html">Missão P1 · Órgãos</a></li>
+          <li class="site-nav__extra"><a href="sobre.html">Sobre</a></li>
+          <li class="site-nav__extra"><a href="drone-bot.html">Drone Bot</a></li>
+          <li class="site-nav__extra"><a href="integrantes.html">Integrantes</a></li>
+          <li class="site-nav__extra"><a href="entrar.html">Entrar</a></li>
+        </ul>
+      </nav>
+      <div class="site-header__end">
+        <span class="tag tag--demo">Dados ilustrativos</span>
+        <a class="btn btn--primary btn--sm site-header__cta" href="entrar.html">Entrar</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="conteudo" class="how">
+    <section class="page-hero" aria-labelledby="page-title">
+      <div class="container">
+        <span class="tag">Processo de transporte</span>
+        <h1 id="page-title">Do pedido à confirmação, em seis passos.</h1>
+        <p class="lead">Acompanhe uma missão do protótipo: um lote de insulina saindo de uma farmácia hospitalar para uma unidade básica de saúde. É uma missão P3, e mostra também o que acontece se algo mais urgente aparecer.</p>
+        <span class="tag tag--demo">Missão ilustrativa · instituições fictícias</span>
+      </div>
+    </section>
+
+    <section class="container how__actors" aria-labelledby="actors-title">
+      <h2 id="actors-title" class="visually-hidden">Quem atua em cada passo</h2>
+      <ol class="actors">
+        <li><span class="mono">1</span><span>Solicitação</span><span class="muted">Solicitante</span></li>
+        <li><span class="mono">2</span><span>Análise</span><span class="muted">Sistema SADEC</span></li>
+        <li><span class="mono">3</span><span>Seleção</span><span class="muted">Sistema SADEC</span></li>
+        <li><span class="mono">4</span><span>Transporte</span><span class="muted">Drone e operador</span></li>
+        <li><span class="mono">5</span><span>Confirmação</span><span class="muted">Recebedor</span></li>
+        <li><span class="mono">6</span><span>Monitoramento</span><span class="muted">Operador da Central</span></li>
+      </ol>
+    </section>
+
+    <div class="container how__steps">
+      <section class="step reveal" aria-labelledby="s1-title">
+        <div class="step__copy"><span class="step__num mono">1</span><h2 id="s1-title">Solicitação</h2><p class="muted">A farmácia informa o que vai, de onde, para onde e até quando. O tipo de carga é escolhido numa lista fechada: é ele que define a prioridade.</p></div>
+        <div class="card step__demo">
+          <div class="step__demo-head"><span class="mono">Pedido SAU-2291</span><span class="status">Rascunho</span></div>
+          <dl class="kv">
+            <div><dt>Tipo de carga</dt><dd>Medicamento termolábil · insulina</dd></div>
+            <div><dt>Origem</dt><dd>Farmácia Hospitalar · Unidade A</dd></div>
+            <div><dt>Destino</dt><dd>UBS Jardim Leste · Unidade B</dd></div>
+            <div><dt>Condição</dt><dd class="mono">2 °C a 8 °C · 1,4 kg</dd></div>
+            <div><dt>Chegar até</dt><dd class="mono">14:30</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="step reveal" aria-labelledby="s2-title">
+        <div class="step__copy"><span class="step__num mono">2</span><h2 id="s2-title">Análise</h2><p class="muted">O sistema classifica a missão e confere quatro condições. Se alguma falhar, o pedido volta com o motivo e uma alternativa: outro horário, outro corredor ou transporte terrestre.</p></div>
+        <div class="card step__demo">
+          <ul class="checks">
+            <li><span class="checks__ok" aria-hidden="true"></span><span>Tipo de carga · termolábil</span><span class="prio prio--3">P3</span></li>
+            <li><span class="checks__ok" aria-hidden="true"></span><span>Vento no corredor</span><span class="mono muted">18 / máx. 35 km/h</span></li>
+            <li><span class="checks__ok" aria-hidden="true"></span><span>Espaço aéreo</span><span class="mono muted">corredor 03 livre</span></li>
+            <li><span class="checks__ok" aria-hidden="true"></span><span>Janela de tempo</span><span class="mono muted">1 h 50 livre</span></li>
+          </ul>
+          <p class="step__result">Liberada para seleção do drone</p>
+        </div>
+      </section>
+
+      <section class="step reveal" aria-labelledby="s3-title">
+        <div class="step__copy"><span class="step__num mono">3</span><h2 id="s3-title">Seleção do drone</h2><p class="muted">O mais próximo nem sempre é o escolhido. Contam a bateria depois da reserva obrigatória, a capacidade de carga e o contêiner térmico. Sem drone elegível, a Central indica transporte alternativo.</p></div>
+        <div class="card step__demo">
+          <ul class="pick">
+            <li class="pick__item pick__item--out"><span class="mono">SDC-11 · 0,8 km · 31%</span><span class="status status--fail">Descartado</span><span class="muted">Bateria abaixo do consumo + reserva</span></li>
+            <li class="pick__item pick__item--in"><span class="mono">SDC-03 · 2,1 km · 84%</span><span class="status status--done">Selecionado</span><span class="muted">Contêiner térmico e capacidade conferidos</span></li>
+            <li class="pick__item pick__item--out"><span class="mono">SDC-14 · 3,6 km · 92%</span><span class="status status--fail">Descartado</span><span class="muted">Sem contêiner térmico</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="step reveal" aria-labelledby="s4-title">
+        <div class="step__copy"><span class="step__num mono">4</span><h2 id="s4-title">Transporte</h2><p class="muted">O voo segue um corredor fixo com pontos de controle. Entre eles há zonas de pouso seguro já validadas: se algo mudar no ar, o drone não improvisa.</p></div>
+        <figure class="card step__demo step__demo--dark">
+          <svg class="corridor" viewBox="0 0 480 200" role="img" aria-label="Corredor aéreo ilustrativo com três pontos de controle e duas zonas de pouso seguro">
+            <path class="corridor__path" d="M30 160 C 120 160, 140 60, 240 70 S 380 40, 450 40"/>
+            <path class="corridor__done" d="M30 160 C 120 160, 140 60, 240 70"/>
+            <circle class="corridor__cp" cx="30" cy="160" r="7"/><circle class="corridor__cp" cx="240" cy="70" r="7"/><circle class="corridor__cp corridor__cp--end" cx="450" cy="40" r="7"/>
+            <rect class="corridor__lz" x="140" y="120" width="16" height="16" rx="3"/><rect class="corridor__lz" x="340" y="78" width="16" height="16" rx="3"/>
+            <circle class="corridor__drone" cx="240" cy="70" r="11"/>
+          </svg>
+          <figcaption class="corridor__legend"><span><span class="corridor__key corridor__key--cp"></span>Ponto de controle</span><span><span class="corridor__key corridor__key--lz"></span>Zona de pouso seguro</span><span class="tag tag--demo">Ilustrativo</span></figcaption>
+        </figure>
+      </section>
+
+      <section class="step reveal" aria-labelledby="s5-title">
+        <div class="step__copy"><span class="step__num mono">5</span><h2 id="s5-title">Confirmação de entrega</h2><p class="muted">O contêiner só abre com o código da missão. O recebimento fica registrado com responsável, horário, destinatário, identificação da carga e estado da entrega.</p></div>
+        <div class="card step__demo">
+          <ol class="timeline">
+            <li><span class="timeline__dot" aria-hidden="true"></span><span>Pouso no ponto da UBS</span><span class="mono muted">13:52</span></li>
+            <li><span class="timeline__dot" aria-hidden="true"></span><span>Código informado pela enfermeira responsável</span><span class="mono muted">13:54</span></li>
+            <li><span class="timeline__dot" aria-hidden="true"></span><span>Lacre íntegro · 5,2 °C · carga SAU-2291 entregue</span><span class="mono muted">13:54</span></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="step reveal" aria-labelledby="s6-title">
+        <div class="step__copy"><span class="step__num mono">6</span><h2 id="s6-title">Monitoramento e cuidado</h2><p class="muted">A missão termina para quem recebe, não para o sistema. O registro de temperatura fica no pedido, o drone volta para inspeção e qualquer desvio gera uma revisão.</p></div>
+        <figure class="card step__demo">
+          <figcaption class="step__demo-head"><span>Temperatura · SAU-2291</span><span class="status status--done">Dentro da faixa</span></figcaption>
+          <svg class="temp" viewBox="0 0 400 120" role="img" aria-label="Gráfico ilustrativo: temperatura entre 4,0 e 5,4 graus durante 44 minutos, dentro da faixa de 2 a 8 graus">
+            <rect class="temp__band" x="0" y="20" width="400" height="80" rx="10"/>
+            <polyline class="temp__line" points="0,70 40,66 80,62 120,64 160,58 200,55 240,52 280,56 320,50 360,47 400,45"/>
+          </svg>
+          <ul class="chips-row"><li class="tag tag--soft">44 min de voo</li><li class="tag tag--soft mono">4,0–5,4 °C</li><li class="tag tag--soft">Drone em inspeção</li></ul>
+        </figure>
+      </section>
+    </div>
+
+    <section class="section" aria-labelledby="ex-title">
+      <div class="container">
+        <div class="section__head"><div><h2 id="ex-title">Quando algo sai do plano.</h2><p class="lead">Cada exceção tem resposta definida antes do voo, e alguém que é avisado.</p></div></div>
+        <ul class="exceptions">
+          <li class="card--flat reveal"><h3>Chega um P1 durante esta P3</h3><p class="muted">A P3 segue se já estiver no ar; outro drone vai para o P1. Uma P4 que ainda não decolou cede o drone e volta para a fila.</p><span class="tag">Avisa: Central e solicitante P1</span></li>
+          <li class="card--flat reveal"><h3>Bateria abaixo da reserva</h3><p class="muted">Desvio para a zona de pouso seguro mais próxima, registro da ocorrência e envio de um drone substituto. O drone segue para manutenção.</p><span class="tag">Avisa: operador, solicitante, recebedor</span></li>
+          <li class="card--flat reveal"><h3>Vento acima do limite</h3><p class="muted">Decolagens suspensas no corredor; pedidos recebem nova janela ou alternativa terrestre.</p><span class="tag">Avisa: solicitantes afetados</span></li>
+          <li class="card--flat reveal"><h3>Temperatura fora da faixa</h3><p class="muted">Alerta imediato; com o registro em mãos, o recebedor decide se a carga pode ser usada.</p><span class="tag">Avisa: solicitante e recebedor</span></li>
+        </ul>
+        <div class="how__cta">
+          <a class="btn btn--primary" href="rastreamento.html">Ver uma missão no rastreamento
+            <svg class="btn__arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></a>
+          <a class="btn btn--ghost" href="orgaos.html">Como funciona uma missão P1</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="site-footer__grid">
+        <div class="site-footer__brand">
+          <a class="brand" href="index.html"><img class="brand__mark" src="assets/icons/drone-bot.svg" alt="" width="42" height="42"><span class="brand__name">SADEC</span></a>
+          <p>Sistema Autônomo de Drones de Cuidado e Entrega. Projeto acadêmico da FIAP Global Solution 2026.</p>
+        </div>
+        <div>
+          <h2>Operação</h2>
+          <ul><li><a href="como-funciona.html">Como funciona</a></li><li><a href="central.html">Central de Operações</a></li><li><a href="rastreamento.html">Rastrear uma entrega</a></li><li><a href="orgaos.html">Missão P1 · Órgãos</a></li></ul>
+        </div>
+        <div>
+          <h2>Serviços</h2>
+          <ul><li><a href="saude/index.html">SADEC Saúde</a></li><li><a href="delivery/index.html">SADEC Delivery</a></li><li><a href="drone-bot.html">Drone Bot</a></li></ul>
+        </div>
+        <div>
+          <h2>Projeto</h2>
+          <ul><li><a href="sobre.html">Sobre</a></li><li><a href="faq.html">Perguntas frequentes</a></li><li><a href="faq.html#contato">Contato</a></li><li><a href="integrantes.html">Integrantes</a></li><li><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório</a></li></ul>
+        </div>
+      </div>
+      <p class="site-footer__legal">O SADEC é um protótipo acadêmico conceitual. Não opera comercialmente, não controla drones reais, não possui parcerias hospitalares e não tem integração com plataformas de delivery. Frota, rotas, telemetria e missões são simulações com dados fictícios. Uma operação real dependeria de autorização da ANAC e do DECEA.</p>
+    </div>
+  </footer>
+
+  <nav class="tabbar" aria-label="Atalhos">
+    <a class="tabbar__item" href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5v-5H9v5H4z"/></svg><span>Início</span></a>
+    <a class="tabbar__item" href="saude/index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg><span>Saúde</span></a>
+    <a class="tabbar__item" href="delivery/index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Delivery</span></a>
+    <a class="tabbar__item" href="rastreamento.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11Z"/><circle cx="12" cy="10" r="2.2"/></svg><span>Rastrear</span></a>
+    <button class="tabbar__item" type="button" data-open-menu aria-controls="site-nav"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg><span>Menu</span></button>
+  </nav>
+
+  <script src="js/ui.js" defer></script>
+  <script src="js/operations.js" defer></script>
+  <script src="js/data.js" defer></script>
+  <script src="js/state.js" defer></script>
+  <script src="js/drone-avatar.js" defer></script>
+  <script src="js/chatbot.js" defer></script>
+</body>
+</html>

@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Perguntas frequentes — SADEC</title>
-  <meta name="description" content="Perguntas frequentes sobre o SADEC: prioridades, segurança, regulação, dados e modelo de negócio.">
+  <title>Ajuda — SADEC</title>
+  <meta name="description" content="Perguntas frequentes sobre o SADEC e formulário de contato com a equipe do projeto acadêmico.">
+  <link rel="icon" href="assets/icons/drone-bot.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
@@ -20,8 +21,8 @@
   <header class="site-header">
     <div class="container site-header__bar">
       <a class="brand" href="index.html" aria-label="SADEC, página inicial">
+        <img class="brand__mark" src="assets/icons/drone-bot.svg" alt="" width="42" height="42">
         <span class="brand__name">SADEC</span>
-        <span class="brand__tag">Drones de entrega e cuidado</span>
       </a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
         <span class="nav-toggle__bars" aria-hidden="true"></span>
@@ -30,78 +31,187 @@
       <nav id="site-nav" class="site-nav" aria-label="Principal">
         <ul class="site-nav__list">
           <li><a href="index.html">Início</a></li>
-          <li><a href="sobre.html">Sobre</a></li>
-          <li><a href="central.html">Central</a></li>
-          <li><a href="rastreamento.html">Rastreamento</a></li>
+          <li><a href="como-funciona.html">Como funciona</a></li>
           <li><a href="saude/index.html">Saúde</a></li>
           <li><a href="delivery/index.html">Delivery</a></li>
-          <li><a href="faq.html" aria-current="page">FAQ</a></li>
-          <li><a href="integrantes.html">Integrantes</a></li>
-          <li><a class="site-nav__cta" href="contato.html">Contato</a></li>
+          <li><a href="rastreamento.html">Rastrear</a></li>
+          <li><a href="faq.html" aria-current="page">Ajuda</a></li>
+          <li class="site-nav__extra"><a href="central.html">Central de Operações</a></li>
+          <li class="site-nav__extra"><a href="orgaos.html">Missão P1 · Órgãos</a></li>
+          <li class="site-nav__extra"><a href="sobre.html">Sobre</a></li>
+          <li class="site-nav__extra"><a href="drone-bot.html">Drone Bot</a></li>
+          <li class="site-nav__extra"><a href="integrantes.html">Integrantes</a></li>
+          <li class="site-nav__extra"><a href="entrar.html">Entrar</a></li>
         </ul>
       </nav>
+      <div class="site-header__end">
+        <span class="tag tag--demo">Dados ilustrativos</span>
+        <a class="btn btn--primary btn--sm site-header__cta" href="entrar.html">Entrar</a>
+      </div>
     </div>
   </header>
 
   <main id="conteudo">
-    <section class="page-hero" aria-labelledby="page-title">
-      <div class="container">
-        <p class="eyebrow">Perguntas frequentes</p>
-        <h1 id="page-title">O que você precisa saber sobre o SADEC.</h1>
+    <section class="page-hero help-hero" aria-labelledby="page-title">
+      <div class="container help-hero__inner">
+        <div>
+          <p class="eyebrow">Ajuda</p>
+          <h1 id="page-title">Perguntas antes de decolar.</h1>
+        </div>
+        <p class="help-alert" role="note">
+          <span class="help-alert__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 2.5 20h19L12 3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 10v4.5M12 17.2v.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+          <span><strong>Emergência real?</strong> Ligue para o SAMU no <strong>192</strong>. Este protótipo não atende pedidos reais.</span>
+        </p>
       </div>
     </section>
 
-    <div class="container faq-layout">
-      <aside class="faq-aside" aria-label="Ajuda adicional">
-        <p>Não encontrou sua dúvida? O Drone Bot responde sobre prioridades, segurança e rastreamento, ou use o formulário de contato.</p>
-        <a class="btn btn--ghost" href="contato.html">Falar com a equipe</a>
-      </aside>
+    <section class="container help-faq" aria-labelledby="faq-title">
+      <h2 id="faq-title">Perguntas frequentes</h2>
+      <div class="segmented help-tabs" role="tablist" aria-label="Assuntos" data-tabs>
+        <button type="button" role="tab" id="tab-projeto" aria-controls="faq-projeto" aria-selected="true">O projeto</button>
+        <button type="button" role="tab" id="tab-saude" aria-controls="faq-saude" aria-selected="false" tabindex="-1">Saúde</button>
+        <button type="button" role="tab" id="tab-delivery" aria-controls="faq-delivery" aria-selected="false" tabindex="-1">Delivery</button>
+        <button type="button" role="tab" id="tab-seguranca" aria-controls="faq-seguranca" aria-selected="false" tabindex="-1">Segurança</button>
+      </div>
 
-      <section aria-labelledby="faq-list-title">
-        <h2 id="faq-list-title" class="visually-hidden">Lista de perguntas</h2>
-        <div class="accordion" data-accordion>
-          <div class="accordion__item">
-            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-1" id="faq-1-btn">O SADEC já opera drones de verdade?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
-            <div class="accordion__panel" id="faq-1" role="region" aria-labelledby="faq-1-btn"><div><p>Não. O SADEC é um projeto acadêmico da FIAP Global Solution 2026. Toda a frota, as rotas e a telemetria exibidas no site são simulações com dados fictícios. O site não controla nenhum drone real.</p></div></div>
-          </div>
-          <div class="accordion__item">
-            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-2" id="faq-2-btn">Como a central decide qual entrega vai primeiro?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
-            <div class="accordion__panel" id="faq-2" role="region" aria-labelledby="faq-2-btn"><div><p>Pela prioridade: P1 Órgãos, P2 Emergência, P3 Saúde e P4 Comercial. Pedidos com a mesma prioridade seguem a ordem de chegada. Você pode testar isso na Central.</p></div></div>
-          </div>
-          <div class="accordion__item">
-            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-3" id="faq-3-btn">Uma emergência pode cancelar uma entrega comercial?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
-            <div class="accordion__panel" id="faq-3" role="region" aria-labelledby="faq-3-btn"><div><p>Pode reorganizar uma entrega comercial que ainda não decolou: o drone é realocado e o pedido comercial volta para a fila. Uma entrega que já está em voo é sempre concluída antes.</p></div></div>
-          </div>
-          <div class="accordion__item">
-            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-4" id="faq-4-btn">Por que órgãos exigem 30% de reserva de bateria?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
-            <div class="accordion__panel" id="faq-4" role="region" aria-labelledby="faq-4-btn"><div><p>Porque não há margem para erro. A central calcula o consumo estimado da rota e só libera o voo se a bateria cobrir esse consumo mais 30%. Se nenhum drone atender, o sistema indica outro meio de transporte.</p></div></div>
-          </div>
-          <div class="accordion__item">
-            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-5" id="faq-5-btn">O que acontece se o drone falhar no ar?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
-            <div class="accordion__panel" id="faq-5" role="region" aria-labelledby="faq-5-btn"><div><p>Com bateria insuficiente ou falha de motor, ele busca a zona de pouso seguro mais próxima da rota. Em falha grave, aciona paraquedas, luzes e alertas sonoros. A carga fica aguardando resgate por uma equipe ou outro drone.</p></div></div>
-          </div>
-          <div class="accordion__item">
-            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-6" id="faq-6-btn">Como a temperatura de medicamentos e órgãos é controlada?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
-            <div class="accordion__panel" id="faq-6" role="region" aria-labelledby="faq-6-btn"><div><p>O compartimento térmico tem sensores de temperatura. Se a leitura sair da faixa definida para a carga, a equipe médica recebe um alerta imediato. No site, isso é demonstrado no Rastreamento.</p></div></div>
-          </div>
-          <div class="accordion__item">
-            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-7" id="faq-7-btn">O drone substitui ambulâncias e helicópteros?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
-            <div class="accordion__panel" id="faq-7" role="region" aria-labelledby="faq-7-btn"><div><p>Não. É um meio complementar, limitado por peso, autonomia, clima, zonas de pouso e regras da ANAC e do DECEA.</p></div></div>
-          </div>
-          <div class="accordion__item">
-            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-8" id="faq-8-btn">Como as entregas comerciais ajudam a saúde?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
-            <div class="accordion__panel" id="faq-8" role="region" aria-labelledby="faq-8-btn"><div><p>Pelo subsídio cruzado: parte da taxa de cada entrega comercial compõe um fundo que ajuda a financiar as rotas de saúde e emergência, junto com contratos públicos e institucionais.</p></div></div>
-          </div>
-          <div class="accordion__item">
-            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-9" id="faq-9-btn">iFood, Shopee ou AliExpress são parceiros do SADEC?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
-            <div class="accordion__panel" id="faq-9" role="region" aria-labelledby="faq-9-btn"><div><p>Não. Essas empresas são citadas apenas como parcerias potenciais. Não existe parceria, integração ou autorização oficial.</p></div></div>
-          </div>
-          <div class="accordion__item">
-            <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-10" id="faq-10-btn">O site guarda meus dados?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
-            <div class="accordion__panel" id="faq-10" role="region" aria-labelledby="faq-10-btn"><div><p>Não. O formulário de contato só valida os campos no navegador e nada é enviado. A simulação guarda apenas dados fictícios no armazenamento local do seu navegador, que você pode restaurar na Central.</p></div></div>
-          </div>
+      <div class="accordion" id="faq-projeto" role="tabpanel" aria-labelledby="tab-projeto" data-accordion>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="true" aria-controls="faq-1" id="faq-1-btn">O SADEC já está operando?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel is-open" id="faq-1" role="region" aria-labelledby="faq-1-btn"><div><p>Não. O SADEC é um protótipo acadêmico conceitual da FIAP Global Solution 2026. Nenhum drone está voando, nenhuma entrega é feita e todas as missões mostradas são simulações com dados ilustrativos.</p></div></div>
         </div>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-2" id="faq-2-btn">O projeto tem parceria com hospitais?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-2" role="region" aria-labelledby="faq-2-btn"><div><p>Não há parcerias firmadas. Hospitais e unidades citados nas telas são fictícios e servem apenas para demonstrar o fluxo de uma missão.</p></div></div>
+        </div>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-3" id="faq-3-btn">Por que misturar saúde e entregas comerciais?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-3" role="region" aria-labelledby="faq-3-btn"><div><p>Porque uma frota dedicada só a emergências ficaria ociosa grande parte do tempo. A hipótese do projeto é que entregas comerciais, sempre em prioridade mais baixa, ajudariam a custear a operação de saúde (subsídio cruzado).</p></div></div>
+        </div>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-4" id="faq-4-btn">O site guarda meus dados?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-4" role="region" aria-labelledby="faq-4-btn"><div><p>Não. O formulário só valida os campos no navegador e nada é enviado. A simulação guarda apenas dados fictícios no armazenamento local do seu navegador, que você pode restaurar na Central.</p></div></div>
+        </div>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-5" id="faq-5-btn">Quem desenvolveu o SADEC?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-5" role="region" aria-labelledby="faq-5-btn"><div><p>Uma equipe de estudantes da FIAP, turma 1TDSPB. Nomes, RMs e links estão na página <a href="integrantes.html">Integrantes</a>.</p></div></div>
+        </div>
+      </div>
+
+      <div class="accordion" id="faq-saude" role="tabpanel" aria-labelledby="tab-saude" data-accordion hidden>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-6" id="faq-6-btn">Quem poderia solicitar um transporte médico?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-6" role="region" aria-labelledby="faq-6-btn"><div><p>No modelo proposto, unidades de saúde cadastradas e profissionais autorizados. Cidadãos pedem apenas medicamentos de uso contínuo (P3); P1 e P2 vêm de hospitais, da Central de Transplantes e da Defesa Civil.</p></div></div>
+        </div>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-7" id="faq-7-btn">Como a prioridade é definida?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-7" role="region" aria-labelledby="faq-7-btn"><div><p>Pelo tipo de carga, escolhido numa lista fechada: órgãos são sempre P1, emergências P2, saúde programada P3 e comercial P4. O solicitante não pode elevar a prioridade. Empates seguem a ordem de chegada.</p></div></div>
+        </div>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-8" id="faq-8-btn">E se a temperatura sair da faixa durante o voo?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-8" role="region" aria-labelledby="faq-8-btn"><div><p>A Central e a equipe médica são alertadas na hora, e o registro de temperatura acompanha a carga para que a equipe clínica decida sobre o uso.</p></div></div>
+        </div>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-9" id="faq-9-btn">O drone substitui ambulâncias e helicópteros?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-9" role="region" aria-labelledby="faq-9-btn"><div><p>Não. É um meio complementar, limitado por peso, autonomia, clima, zonas de pouso e regras da ANAC e do DECEA.</p></div></div>
+        </div>
+      </div>
+
+      <div class="accordion" id="faq-delivery" role="tabpanel" aria-labelledby="tab-delivery" data-accordion hidden>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-10" id="faq-10-btn">O SADEC Delivery é integrado ao iFood?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-10" role="region" aria-labelledby="faq-10-btn"><div><p>Não. O SADEC Delivery é uma interface conceitual. Não existe integração nem parceria com iFood, Shopee, AliExpress ou qualquer plataforma ou loja real; elas aparecem só como parcerias potenciais.</p></div></div>
+        </div>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-11" id="faq-11-btn">Por que minha entrega pode atrasar?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-11" role="region" aria-labelledby="faq-11-btn"><div><p>Entregas comerciais são P4 e usam drones livres. Se um transporte P1 ou P2 precisar do drone antes da decolagem, seu pedido volta para a fila. Depois que o drone decola, a entrega nunca é interrompida.</p></div></div>
+        </div>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-12" id="faq-12-btn">Os preços e lojas são reais?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-12" role="region" aria-labelledby="faq-12-btn"><div><p>Não. Lojas, produtos e preços são fictícios e servem apenas para demonstrar a experiência de compra.</p></div></div>
+        </div>
+      </div>
+
+      <div class="accordion" id="faq-seguranca" role="tabpanel" aria-labelledby="tab-seguranca" data-accordion hidden>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-13" id="faq-13-btn">O SADEC tem autorização da ANAC ou do DECEA?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-13" role="region" aria-labelledby="faq-13-btn"><div><p>Não. Uma operação real dependeria dessas autorizações. O protótipo descreve os requisitos de segurança que um sistema assim precisaria cumprir.</p></div></div>
+        </div>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-14" id="faq-14-btn">Por que órgãos exigem 30% de reserva de bateria?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-14" role="region" aria-labelledby="faq-14-btn"><div><p>Porque não há margem para erro. A Central só libera o voo se o consumo da rota × 1,3 couber na bateria. Se nenhum drone atender, o sistema indica transporte alternativo.</p></div></div>
+        </div>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-15" id="faq-15-btn">O que acontece se o drone falhar no ar?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-15" role="region" aria-labelledby="faq-15-btn"><div><p>Ele pousa na zona segura mais próxima da rota. Em falha grave, aciona paraquedas, luzes e alerta sonoro. A ocorrência é registrada e o drone vai para manutenção; só volta à frota depois de liberado.</p></div></div>
+        </div>
+        <div class="accordion__item">
+          <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-16" id="faq-16-btn">Alguém supervisiona os voos?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
+          <div class="accordion__panel" id="faq-16" role="region" aria-labelledby="faq-16-btn"><div><p>Sim. Toda missão é acompanhada pela Central, e missões P1 e P2 têm um operador humano dedicado com autoridade para abortar o voo.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="container help-bottom">
+      <section class="help-contact" id="contato" aria-labelledby="form-title">
+        <h2 id="form-title">Fale com a equipe</h2>
+        <p class="muted">Para professores, pesquisadores, imprensa e quem quiser contribuir. Campos com <span class="req">*</span> são obrigatórios.</p>
+        <form class="contact-form" id="contact-form" novalidate>
+          <div class="contact-form__row">
+            <div class="field">
+              <label for="nome">Nome <span class="req" aria-hidden="true">*</span></label>
+              <input class="input" id="nome" name="nome" type="text" autocomplete="name" maxlength="80" placeholder="Como devemos te chamar" required aria-describedby="nome-error">
+              <p class="field__error" id="nome-error"></p>
+            </div>
+            <div class="field">
+              <label for="email">E-mail <span class="req" aria-hidden="true">*</span></label>
+              <input class="input" id="email" name="email" type="email" autocomplete="email" maxlength="120" placeholder="nome@dominio.com" required aria-describedby="email-error">
+              <p class="field__error" id="email-error"></p>
+            </div>
+          </div>
+          <div class="field">
+            <label for="assunto">Você é <span class="req" aria-hidden="true">*</span></label>
+            <select class="input" id="assunto" name="assunto" required aria-describedby="assunto-error">
+              <option value="">Selecione…</option>
+              <option value="pesquisa">Professor(a) ou pesquisador(a)</option>
+              <option value="saude">Profissional de saúde</option>
+              <option value="estudante">Estudante</option>
+              <option value="imprensa">Imprensa</option>
+              <option value="outro">Outro</option>
+            </select>
+            <p class="field__error" id="assunto-error"></p>
+          </div>
+          <div class="field">
+            <label for="mensagem">Mensagem <span class="req" aria-hidden="true">*</span></label>
+            <textarea class="input" id="mensagem" name="mensagem" maxlength="1000" required aria-describedby="mensagem-hint mensagem-error"></textarea>
+            <p class="field__hint" id="mensagem-hint">Mínimo de 20 caracteres. Não inclua dados pessoais sensíveis ou informações médicas.</p>
+            <p class="field__error" id="mensagem-error"></p>
+          </div>
+          <div class="field">
+            <label class="check" for="consentimento">
+              <input id="consentimento" name="consentimento" type="checkbox" required aria-describedby="consentimento-error">
+              <span>Entendo que este é um formulário acadêmico demonstrativo e que nenhum dado será enviado ou armazenado. <span class="req" aria-hidden="true">*</span></span>
+            </label>
+            <p class="field__error" id="consentimento-error"></p>
+          </div>
+          <div class="contact-form__foot">
+            <button class="btn btn--primary" type="submit">Enviar mensagem</button>
+            <span class="counter mono" data-counter aria-hidden="true">0/1000</span>
+          </div>
+          <p class="form-status" role="status" tabindex="-1"></p>
+          <p class="login__note">Demonstração: os dados não saem do seu navegador.</p>
+        </form>
       </section>
+
+      <aside class="help-about" aria-labelledby="about-title">
+        <h2 id="about-title">Sobre o projeto</h2>
+        <p class="muted">Um estudo acadêmico, não uma empresa.</p>
+        <dl>
+          <div><dt>Instituição</dt><dd>FIAP · Global Solution 2026 · CitizenTech</dd></div>
+          <div><dt>Equipe</dt><dd>Turma 1TDSPB · <a href="integrantes.html">ver integrantes</a></dd></div>
+          <div><dt>Atendimento</dt><dd>Drone Bot nesta página (demonstração por regras). Telegram com áudio previsto, ainda não disponível.</dd></div>
+          <div><dt>Código</dt><dd><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório no GitHub</a></dd></div>
+        </dl>
+      </aside>
     </div>
   </main>
 
@@ -109,21 +219,33 @@
     <div class="container">
       <div class="site-footer__grid">
         <div class="site-footer__brand">
-          <a class="brand" href="index.html"><span class="brand__name">SADEC</span></a>
-          <p>A tecnologia que entrega. O cuidado que transforma.</p>
+          <a class="brand" href="index.html"><img class="brand__mark" src="assets/icons/drone-bot.svg" alt="" width="42" height="42"><span class="brand__name">SADEC</span></a>
+          <p>Sistema Autônomo de Drones de Cuidado e Entrega. Projeto acadêmico da FIAP Global Solution 2026.</p>
         </div>
         <div>
-          <h2>Navegação</h2>
-          <ul><li><a href="sobre.html">Sobre</a></li><li><a href="central.html">Central</a></li><li><a href="rastreamento.html">Rastreamento</a></li><li><a href="faq.html">FAQ</a></li></ul>
+          <h2>Operação</h2>
+          <ul><li><a href="como-funciona.html">Como funciona</a></li><li><a href="central.html">Central de Operações</a></li><li><a href="rastreamento.html">Rastrear uma entrega</a></li><li><a href="orgaos.html">Missão P1 · Órgãos</a></li></ul>
+        </div>
+        <div>
+          <h2>Serviços</h2>
+          <ul><li><a href="saude/index.html">SADEC Saúde</a></li><li><a href="delivery/index.html">SADEC Delivery</a></li><li><a href="drone-bot.html">Drone Bot</a></li></ul>
         </div>
         <div>
           <h2>Projeto</h2>
-          <ul><li><a href="integrantes.html">Integrantes</a></li><li><a href="contato.html">Contato</a></li><li><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório</a></li></ul>
+          <ul><li><a href="sobre.html">Sobre</a></li><li><a href="faq.html">Perguntas frequentes</a></li><li><a href="faq.html#contato">Contato</a></li><li><a href="integrantes.html">Integrantes</a></li><li><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório</a></li></ul>
         </div>
       </div>
-      <p class="site-footer__legal">Projeto acadêmico — FIAP Global Solution 2026. Conceito e simulações com dados fictícios; o site não controla drones reais e não coleta dados pessoais. Operações reais dependem de autorização da ANAC e do DECEA.</p>
+      <p class="site-footer__legal">O SADEC é um protótipo acadêmico conceitual. Não opera comercialmente, não controla drones reais, não possui parcerias hospitalares e não tem integração com plataformas de delivery. Frota, rotas, telemetria e missões são simulações com dados fictícios. Uma operação real dependeria de autorização da ANAC e do DECEA.</p>
     </div>
   </footer>
+
+  <nav class="tabbar" aria-label="Atalhos">
+    <a class="tabbar__item" href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5v-5H9v5H4z"/></svg><span>Início</span></a>
+    <a class="tabbar__item" href="saude/index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg><span>Saúde</span></a>
+    <a class="tabbar__item" href="delivery/index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Delivery</span></a>
+    <a class="tabbar__item" href="rastreamento.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11Z"/><circle cx="12" cy="10" r="2.2"/></svg><span>Rastrear</span></a>
+    <button class="tabbar__item" type="button" data-open-menu aria-controls="site-nav"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg><span>Menu</span></button>
+  </nav>
 
   <script src="js/ui.js" defer></script>
   <script src="js/operations.js" defer></script>
@@ -131,5 +253,6 @@
   <script src="js/state.js" defer></script>
   <script src="js/drone-avatar.js" defer></script>
   <script src="js/chatbot.js" defer></script>
+  <script src="js/form-validation.js" defer></script>
 </body>
 </html>
