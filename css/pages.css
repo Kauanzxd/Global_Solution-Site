@@ -815,10 +815,22 @@
 @keyframes login-float { 50% { translate: 0 -14px; } }
 @keyframes login-scan { 0%, 100% { translate: 0 -34px; } 50% { translate: 0 34px; } }
 
+.login__faceid { display: none; color: var(--blue); }
+.login__faceid svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Celular (modelo): imagem de marca no topo com o SADEC gigante; Face ID no lugar do acesso de demonstração */
 @media (max-width: 759px) {
-  .login__giant { display: none; }
-  .login__art { min-height: 240px; }
-  .login__profiles { flex-wrap: nowrap; }
+  .login__art { min-height: 320px; }
+  .login__giant { top: 50%; translate: 0 -50%; font-size: clamp(4.5rem, 24vw, 7rem); }
+  .login__brand { display: none; }
+  .login__slogan { display: none; }
+  .login__legal { display: none; }
+  .login__foot { margin-top: auto; }
+  .login__foot::before { content: "SADEC"; font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; letter-spacing: -0.03em; }
+  .login__faceid { display: inline-flex; gap: 10px; }
+  #login-demo { display: none; }
+  .login__art, .login__panel { min-width: 0; }
+  .login__profiles { flex-wrap: nowrap; overflow-x: auto; }
   .login__profiles button { padding-inline: 10px; font-size: var(--t-label); }
 }
 

@@ -73,12 +73,16 @@
         <button class="btn btn--primary login__submit" type="submit">Entrar</button>
         <div class="login__or" aria-hidden="true"><span>ou</span></div>
         <button class="btn btn--ghost login__submit" type="button" id="login-demo">Entrar com acesso de demonstração</button>
+        <button class="btn btn--ghost login__submit login__faceid" type="button" id="login-faceid">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M9 9.5v1M15 9.5v1M12 9.5v3.5h-1M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg>
+          Entrar com Face ID
+        </button>
         <p class="login__note">Protótipo: não use uma senha real. Os dados não saem do seu navegador.</p>
       </form>
 
       <form class="login__step" id="code-form" novalidate data-step="code" hidden>
         <span class="login__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M11 18h2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
-        <h1 class="login__title" tabindex="-1" id="code-title">Confirme que é você</h1>
+        <h2 class="login__title" tabindex="-1" id="code-title">Confirme que é você</h2>
         <p class="muted" id="code-msg">Enviamos um código ao celular da sua unidade. Toda conta de saúde usa verificação em duas etapas.</p>
         <div class="field" id="field-code">
           <label for="login-code">Código de 6 dígitos</label>
@@ -92,7 +96,7 @@
 
       <div class="login__step login__center" data-step="bio" hidden>
         <span class="login__scan" aria-hidden="true"><span class="login__scan-line"></span></span>
-        <h1 class="login__title" tabindex="-1" id="bio-title">Acesso rápido e seguro</h1>
+        <h2 class="login__title" tabindex="-1" id="bio-title">Acesso rápido e seguro</h2>
         <p class="muted">Na próxima vez, entre com Face ID ou digital deste aparelho, sem digitar a senha.</p>
         <button class="btn btn--primary login__submit" type="button" id="bio-yes">Ativar agora</button>
         <button class="btn btn--ghost login__submit" type="button" id="bio-no">Talvez depois</button>
@@ -100,7 +104,7 @@
 
       <div class="login__step login__center" data-step="done" hidden>
         <span class="login__done-check" aria-hidden="true"></span>
-        <h1 class="login__title" tabindex="-1" id="done-title">Tudo pronto!</h1>
+        <h2 class="login__title" tabindex="-1" id="done-title">Tudo pronto!</h2>
         <p class="muted" id="done-msg">Acesso de demonstração liberado.</p>
         <a class="btn btn--primary login__submit" id="done-cta" href="saude/index.html">Abrir o SADEC Saúde</a>
         <button class="btn btn--ghost login__submit" type="button" id="login-exit">Sair e voltar ao início</button>

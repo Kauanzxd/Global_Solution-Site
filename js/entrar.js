@@ -122,6 +122,9 @@
     toCode();
   });
 
+  /* Face ID de demonstração (celular): o navegador não acessa biometria aqui; o fluxo segue para o código, que é sempre exigido */
+  $('login-faceid').addEventListener('click', () => $('login-demo').click());
+
   $('login-forgot').addEventListener('click', () => { $('login-forgot-msg').hidden = false; });
   $('login-eye').addEventListener('click', () => {
     const pw = $('login-pw');
