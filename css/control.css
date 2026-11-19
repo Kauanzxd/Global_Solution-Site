@@ -799,4 +799,10 @@ body.is-api .trk-api-only { display: inline-flex; }
 .api-drones { display: flex; flex-direction: column; gap: 6px; }
 .api-drone { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 14px; background: rgb(255 255 255 / 0.04); font-size: var(--t-sm); }
 .api-drone__info { color: var(--night-soft); }
-@media (min-width: 900px) { .api-corpo { grid-template-columns: 3fr 2fr; } }
+.api-codigos { display: grid; gap: 8px; }
+.api-conta { font-size: var(--t-sm); color: var(--night-soft); }
+.api-conta a { color: inherit; }
+.api-codigos__form { display: flex; flex-wrap: wrap; gap: 8px; }
+.api-codigos__form[hidden] { display: none; }
+.api-codigos__form .input { flex: 1 1 16rem; min-width: 0; padding-right: 40px; border-color: rgb(255 255 255 / 0.14); background-repeat: no-repeat; background-position: right 14px center; }
+@media (min-width: 900px) { .api-corpo { grid-template-columns: 3fr 2fr; } .api-codigos { grid-column: 1 / -1; } }

@@ -155,6 +155,16 @@
             <h3 class="panel__hint">Drones no banco</h3>
             <ul class="api-drones" id="api-drones"></ul>
           </div>
+          <div class="api-codigos" id="codigos">
+            <h3 class="panel__hint">Códigos de autorização de órgão (P1)</h3>
+            <p class="api-conta" id="api-conta"></p>
+            <form class="api-codigos__form" id="codigo-form" novalidate hidden>
+              <label class="visually-hidden" for="codigo-hospital">Hospital que fará o transporte</label>
+              <select class="input" id="codigo-hospital"></select>
+              <button class="btn btn--light btn--sm" type="submit">Emitir código</button>
+            </form>
+            <ul class="api-drones" id="codigo-lista"></ul>
+          </div>
         </div>
         <div class="scenario-result" id="api-msg" role="status" aria-live="polite"></div>
       </section>
