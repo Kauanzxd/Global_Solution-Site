@@ -25,11 +25,11 @@ Oferecer um meio **complementar** de transporte para cargas críticas, com regra
 | `index.html` | Apresentação, fila da Central ao vivo, etapas de uma missão (abas), prioridades, linha do dia da frota, simulador de subsídio, segurança, impacto e ODS |
 | `como-funciona.html` | Os seis passos de uma missão ilustrativa (P3) e as respostas para exceções |
 | `sobre.html` | Descrição, problema, objetivo, proposta de valor, público, regulação (ANAC/DECEA, LGPD) e integração com as disciplinas |
-| `central.html` | Central de Operações: mapa da frota com drones em movimento, fila por prioridade, frota, nova solicitação, cenários de teste e registro operacional |
+| `central.html` | Central de Operações: alterna entre **rede real** (pedidos da API no mapa de ruas de São Paulo) e **simulação** (cidade-modelo). Indicadores, mapa ao vivo com o voo mais urgente, fila com decolar/concluir, frota com bateria, alertas, registro, códigos de órgão, nova solicitação e cenários de teste |
 | `rastreamento.html` | Mapa esquemático, etapas, telemetria simulada, demonstrações de pane e **registro de recebimento** |
 | `orgaos.html` | Missão P1 demonstrativa: janela de preservação, corredor exclusivo, temperatura, reserva de bateria e cadeia de custódia |
 | `saude/index.html` | **SADEC Saúde**: pedidos por perfil (cidadão P3, hospital P1 com pré-checagem de autonomia, operador P2), rastreamento médico, simuladores e tutorial |
-| `delivery/index.html` | **SADEC Delivery**: restaurantes fictícios, sacola, comparação drone × entrega convencional, pedido P4 na mesma Central e acompanhamento do voo |
+| `delivery/index.html` | **SADEC Delivery**: restaurantes fictícios, sacola, comparação drone × entrega convencional, pedido P4 na mesma Central e acompanhamento do voo no mapa de ruas reais, com atalho fixo para o pedido |
 | `drone-bot.html` | Conversa com o Drone Bot e atalhos para as cinco intenções |
 | `faq.html` | **Ajuda**: perguntas frequentes por assunto (abas + accordion) e formulário de contato validado em JavaScript, com mensagens de erro e de sucesso |
 | `integrantes.html` | Nome, RM, turma, foto, GitHub e LinkedIn dos integrantes |
@@ -39,6 +39,7 @@ Oferecer um meio **complementar** de transporte para cargas críticas, com regra
 1. Fila ordenada por prioridade: **P1 → P2 → P3 → P4**; empate pela ordem de chegada.
 2. P1 e P2 podem antecipar uma entrega comercial **antes da decolagem**; entrega **em voo** nunca é realocada.
 3. Órgão só decola se `consumo da rota × 1,3 ≤ bateria` (reserva de 30%). Demais cargas: 15% (ilustrativo).
+   Voo em tempo real: cruzeiro de 48 km/h (1 km a cada 75 s) e consumo de cerca de 3% por km, ou seja, uns 2,4% por minuto; drone parado na base recarrega cerca de 3% por minuto.
 4. A Central escolhe o drone **disponível** mais próximo da filial adequada, com carga e autonomia suficientes; se não houver, indica **transporte alternativo**.
 5. Pane de motor ou bateria: pouso na **zona segura mais próxima da rota**. Falha grave: paraquedas, luzes e alerta sonoro. A ocorrência é registrada e o drone segue para **resgate e manutenção**; só volta à frota depois de liberado.
 6. Temperatura fora de 2–8 °C: alerta à equipe médica.
@@ -154,11 +155,11 @@ Nenhuma chave fica no código, no fluxo ou no banco. A API escuta só em `127.0.
 ### Contas (uma conta para o portal, o SADEC Saúde e o SADEC Delivery)
 - Cadastro e login em `entrar.html`, gravados no SQLite pela API. Senha guardada só como hash **scrypt** com sal; o login gera um token aleatório e o banco guarda apenas o hash SHA-256 dele. "Manter conectado" vale 30 dias (sem ele, 12 horas e só até fechar o navegador).
 - Perfis: **cliente** (Delivery e remédios), **unidade de saúde** (escolhe o hospital da rede no cadastro) e **operador** (criado só pela Central, não pelo cadastro público).
-- O cabeçalho do portal, o Saúde e o Delivery mostram a conta conectada. No Delivery, com a API ligada e conta de cliente, o pedido também é gravado na Central (P4) e pode ser seguido no mapa real.
+- O cabeçalho do portal, o Saúde e o Delivery mostram a conta conectada. No Delivery, com a API ligada e conta de cliente, o pedido também é gravado na Central (P4) e acompanhado ali mesmo no mapa de ruas reais: a loja libera a decolagem quando o preparo termina e o cliente confirma o recebimento depois da chegada prevista (só no próprio pedido comercial; a Central pode fazer as duas ações em qualquer pedido).
 - O código de 6 dígitos, o Face ID e "Esqueci a senha" continuam **simulados** (nenhum SMS ou e-mail é enviado).
 - Contas de demonstração (fictícias, criadas pela migração 002), todas com a senha `sadec2026`: `operador@sadec.demo`, `hospital@sadec.demo` (Hospital das Clínicas) e `cliente@sadec.demo`.
 
-Transporte de órgão: o operador entra na Central, emite o código para o hospital (painel "Central integrada") e o informa ao hospital; a equipe entra com a conta da unidade de saúde e digita o código no pedido de órgão do SADEC Saúde. O código é consumido na mesma transação que grava o pedido.
+Transporte de órgão: o operador entra na Central, emite o código para o hospital (painel "Códigos de órgão", no modo rede real) e o informa ao hospital; a equipe entra com a conta da unidade de saúde e digita o código no pedido de órgão do SADEC Saúde. O código é consumido na mesma transação que grava o pedido.
 
 ### Endpoints
 | Método | Rota | O que faz |
@@ -174,6 +175,7 @@ Transporte de órgão: o operador entra na Central, emite o código para o hospi
 | POST | `/api/fila/processar` | Ordena a fila pela Java e despacha os pendentes |
 | GET | `/api/drones` · `/api/locais` | Frota; locais com latitude e longitude (181 unidades do CNES listadas no `sadec.py`, bairros e filiais) |
 | POST | `/api/drones/:codigo/recuperacao` | `concluir_resgate`, `concluir_manutencao` ou `liberar` |
+| GET | `/api/eventos` | Histórico recente de pedidos e drones (registro da Central) |
 | GET/POST | `/sadec` · `/sadec/mensagem` | Webchat original e mensagens do chatbot |
 | GET | `/sadec/widget.js` · `/sadec/widget.css` | Widget incorporável (`<script src="http://localhost:1880/sadec/widget.js">`) |
 
@@ -192,7 +194,7 @@ POST /api/pedidos
 ### Testes
 | Comando | O que cobre |
 |---|---|
-| `npm test` | 44 testes do site + 12 testes de integração: contas, sessões, códigos de órgão, P1/P2, rotas com coordenadas (pulados se Python/Java não estiverem configurados) |
+| `npm test` | 44 testes do site + 13 testes de integração: contas, sessões, códigos de órgão, P1/P2, rotas com coordenadas, decolagem e recebimento pelo dono do pedido (pulados se Python/Java não estiverem configurados) |
 | `python Python/test_sadec_integracao.py` | 13 testes: distância, bateria, reserva de 30%, limite exato, entrada inválida, CLI |
 | `java -cp Java/SADEC/out br.com.fiap.sadec.integracao.IntegracaoTeste` | 19 testes: fila P1–P4, empate, preempção, comercial em voo, bateria, pane, resgate, manutenção, liberação |
 
@@ -206,7 +208,7 @@ POST /api/pedidos
 | ![Início](docs/capturas/inicio.png) | ![Chatbot](docs/capturas/chatbot.png) | ![Saúde no celular](docs/capturas/saude-celular.png) |
 
 ### Limitações e o que é simulado
-- No rastreamento de um pedido da Central (código `SD`), o mapa usa ruas reais do **OpenStreetMap** (precisa de internet; atribuição "© OpenStreetMap contributors" no mapa) e as coordenadas gravadas no banco. Não há drone real: a posição em voo é **estimada** pelo horário da decolagem e pela distância, e a telemetria (temperatura, vibração) só existe no modo simulado. Os códigos `SDC-` continuam na cidade-modelo fictícia.
+- No rastreamento de um pedido da Central (código `SD`), o mapa usa ruas reais do **OpenStreetMap** (precisa de internet; atribuição "© OpenStreetMap contributors" no mapa) e as coordenadas gravadas no banco. Não há drone real: a posição e a bateria em voo são **estimadas** pelo horário da decolagem, pela distância e pela autonomia do drone (cruzeiro de 48 km/h), e a telemetria (temperatura, vibração) só existe no modo simulado. Os códigos `SDC-` continuam na cidade-modelo fictícia.
 - Nomes e endereços de hospitais vêm do CNES (dados públicos) e servem só para localização no mapa. Drones, pedidos, contas de demonstração e lojas são **fictícios**. Não há parceria com hospitais, órgãos públicos ou plataformas de delivery.
 - As contas são de demonstração acadêmica (banco local, sem recuperação de senha nem verificação de e-mail). O Delivery calcula preço e anima o voo na simulação; com conta conectada, o pedido também é gravado na Central.
 - O chatbot usa a **Groq** (Whisper e LLM) quando há chave configurada. **Não** implementa IBM watsonx Assistant; a conformidade com esse requisito depende de validação com o professor.
