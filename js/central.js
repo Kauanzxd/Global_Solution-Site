@@ -19,6 +19,16 @@
   const acked = new Set();  // alertas reconhecidos nesta sessão
   const batHistory = new Map();
 
+  /* Recria uma lista só quando a estrutura muda: evita que leitores de tela reanunciem tudo
+     a cada segundo e preserva o foco nos botões. Valores ao vivo são atualizados no lugar. */
+  const lastKeys = {};
+  function keyed(id, key, build) {
+    if (lastKeys[id] === key) return false;
+    lastKeys[id] = key;
+    build();
+    return true;
+  }
+
   function statusBadge(status) {
     return el('span', { class: 'status status--' + status, text: ops.STATUS[status] });
   }
@@ -33,7 +43,7 @@
 
   /* ---------- Fila (lista compacta com filtro P1–P4) ---------- */
   function queueStatus(e, pos, now) {
-    if (e.status === 'em_voo') return el('span', { class: 'qlist__eta mono qlist__eta--p' + e.prioridade, text: mmss(remainingS(e, now)) });
+    if (e.status === 'em_voo') return el('span', { class: 'qlist__eta mono qlist__eta--p' + e.prioridade, 'data-eta': e.id, text: mmss(remainingS(e, now)) });
     if (e.status === 'atribuida') return el('button', { type: 'button', class: 'btn btn--light btn--sm', 'data-launch': e.id, text: 'Decolar' });
     if (e.status === 'fila') return el('span', { class: 'qlist__state', text: '#' + pos + ' · aguarda drone' });
     return el('span', { class: 'qlist__state qlist__state--' + e.status, text: ops.STATUS[e.status].toLowerCase() });
@@ -46,7 +56,8 @@
       STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || a.prioridade - b.prioridade || a.ordem - b.ordem);
     const shown = rows.filter((e) => !filtro || e.prioridade === filtro);
     $('fila-count').textContent = shown.length + ' de ' + rows.length;
-    $('queue-body').replaceChildren(...(shown.length ? shown.map((e) => el('li', { class: 'qlist__row qlist__row--' + e.status }, [
+    const key = filtro + '|' + shown.map((e) => e.id + e.status + (e.motivo || '') + (pos.get(e.id) || '')).join(',');
+    if (!keyed('fila', key, () => $('queue-body').replaceChildren(...(shown.length ? shown.map((e) => el('li', { class: 'qlist__row qlist__row--' + e.status }, [
       el('span', { class: 'prio-chip prio-chip--' + e.prioridade, text: 'P' + e.prioridade }),
       el('a', { class: 'qlist__main', href: 'rastreamento.html?id=' + e.id }, [
         el('span', { class: 'qlist__title', text: e.carga }),
@@ -54,7 +65,12 @@
       ]),
       queueStatus(e, pos.get(e.id), now),
       e.motivo ? el('p', { class: 'qlist__reason', text: e.motivo }) : null
-    ])) : [el('li', { class: 'qlist__empty', text: 'Nenhuma entrega com essa prioridade.' })]));
+    ])) : [el('li', { class: 'qlist__empty', text: 'Nenhuma entrega com essa prioridade.' })])))) {
+      shown.filter((e) => e.status === 'em_voo').forEach((e) => {
+        const n = doc.querySelector('[data-eta="' + e.id + '"]');
+        if (n) n.textContent = mmss(remainingS(e, now));
+      });
+    }
   }
 
   /* ---------- Voo prioritário (cartão sobre o mapa / primeiro no celular) ---------- */
@@ -104,7 +120,8 @@
       const top = topFlight(state);
       selectedDrone = top ? top.droneId : (list[0] ? list[0].id : null);
     }
-    $('mission-list').replaceChildren(...(list.length ? list.map((d) => {
+    const key = selectedDrone + '|' + list.map((d) => d.id + d.status + d.entregaId).join(',');
+    if (!keyed('missoes', key, () => $('mission-list').replaceChildren(...(list.length ? list.map((d) => {
       const e = ops.byId(state.entregas, d.entregaId);
       const b = Math.round(liveBattery(state, d, now));
       return el('li', {}, el('button', { type: 'button', class: 'missions__card', 'aria-pressed': String(d.id === selectedDrone), 'data-drone': d.id, 'data-prio': String(e.prioridade) }, [
@@ -113,7 +130,17 @@
         el('span', { class: 'missions__foot' }, [el('span', { text: d.status === 'em_voo' ? 'Em voo' : 'Aguarda decolagem' }), el('span', { class: 'mono', text: b + '%' })]),
         el('span', { class: 'missions__bar' }, svgEl('svg', { viewBox: '0 0 100 4', preserveAspectRatio: 'none', 'aria-hidden': 'true' }, [svgEl('rect', { width: '100', height: '4', rx: '2', class: 'missions__track' }), svgEl('rect', { width: String(b), height: '4', rx: '2', class: 'missions__fill' })]))
       ]));
-    }) : [el('li', { class: 'qlist__empty', text: 'Nenhum drone em missão. Processe a fila para despachar.' })]));
+    }) : [el('li', { class: 'qlist__empty', text: 'Nenhum drone em missão. Processe a fila para despachar.' })])))) {
+      list.forEach((d) => {
+        const card = doc.querySelector('[data-drone="' + d.id + '"]');
+        if (!card) return;
+        const fresh = spark(d.id).firstChild;
+        card.querySelector('.missions__spark').replaceChildren(fresh);
+        const b = Math.round(liveBattery(state, d, now));
+        card.querySelector('.missions__foot .mono').textContent = b + '%';
+        card.querySelector('.missions__fill').setAttribute('width', String(b));
+      });
+    }
   }
 
   /* ---------- Autonomia e rota do drone selecionado ---------- */
@@ -187,8 +214,9 @@
       const e = d.entregaId ? ops.byId(state.entregas, d.entregaId) : null;
       if (e && e.status === 'em_voo') {
         const b = liveBattery(state, d, now);
-        if (b < 35) list.push({ id: 'bt-' + d.id + '-' + e.id, kind: 'aviso', label: 'Bateria · ' + d.nome + ' · P' + e.prioridade, text: Math.round(b) + '% — cobre a rota restante e o pouso alternativo.' });
+        if (b < 35) list.push({ id: 'bt-' + d.id + '-' + e.id, kind: 'aviso', label: 'Bateria · ' + d.nome + ' · P' + e.prioridade, text: 'Abaixo de 35% — acompanhe a rota restante e o pouso alternativo.' });
       }
+      if (d.status === 'aguardando_liberacao') list.push({ id: 'lb-' + d.id, kind: 'aviso', label: 'Aguardando liberação · ' + d.nome, text: 'Inspeção concluída. O drone só volta à frota depois de liberado.', release: d.id });
       if (d.status === 'manutencao') list.push({ id: 'mn-' + d.id, kind: 'info', label: 'Manutenção · ' + d.nome, text: 'Fora da frota até ser liberado pela equipe.' });
     });
     return list.filter((a) => !acked.has(a.id));
@@ -204,13 +232,16 @@
     $('alert-list').replaceChildren(...(list.length ? list.map((a) => el('li', { class: 'alerts__item alerts__item--' + a.kind }, [
       el('p', { class: 'alerts__label', text: a.label }),
       el('p', { class: 'alerts__text', text: a.text }),
-      el('button', { type: 'button', class: 'btn btn--light btn--sm', 'data-ack': a.id, text: 'Reconhecer' })
+      a.release
+        ? el('button', { type: 'button', class: 'btn btn--light btn--sm', 'data-release': a.release, text: 'Liberar drone' })
+        : el('button', { type: 'button', class: 'btn btn--light btn--sm', 'data-ack': a.id, text: 'Reconhecer' })
     ])) : [el('li', { class: 'qlist__empty', text: 'Nada pendente. Tudo sob controle.' })]));
   }
 
   /* ---------- Frota ---------- */
   function renderFleet(state) {
-    $('fleet-list').replaceChildren(...state.drones.map((d) => {
+    const key = state.drones.map((d) => d.id + d.status + (d.entregaId || '')).join(',');
+    if (!keyed('frota', key, () => $('fleet-list').replaceChildren(...state.drones.map((d) => {
       const filial = ops.byId(state.filiais, d.filialId);
       return el('li', { class: 'fleet__item fleet__item--' + d.status }, [
         el('div', { class: 'fleet__top' }, [
@@ -221,15 +252,28 @@
         el('div', { class: 'fleet__battery' }, [
           // bateria em 5 segmentos; a cor indica o nível (verde, âmbar, vermelho)
           el('span', {
-            class: 'fleet__cells', role: 'meter', 'aria-label': 'Bateria de ' + d.nome,
+            class: 'fleet__cells', role: 'meter', 'data-bat': d.id, 'aria-label': 'Bateria de ' + d.nome,
             'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(d.bateria)),
             'data-level': d.bateria < 35 ? 'low' : (d.bateria < 60 ? 'mid' : 'high')
           }, [0, 1, 2, 3, 4].map((i) => el('span', { class: 'fleet__cell' + (d.bateria > i * 20 ? ' is-on' : '') }))),
           el('span', { class: 'mono fleet__pct', text: Math.round(d.bateria) + '%' })
         ]),
-        el('p', { class: 'fleet__meta mono', text: filial.nome + ' · carga máx. ' + d.cargaMaxKg + ' kg · ' + d.consumoKm + '%/km' + (d.entregaId ? ' · ' + d.entregaId : '') })
+        el('p', { class: 'fleet__meta mono', text: filial.nome + ' · carga máx. ' + d.cargaMaxKg + ' kg · ' + d.consumoKm + '%/km' + (d.entregaId ? ' · ' + d.entregaId : '') }),
+        d.status === 'aguardando_liberacao'
+          ? el('button', { type: 'button', class: 'btn btn--light btn--sm fleet__release', 'data-release': d.id, text: 'Liberar drone' })
+          : null
       ]);
-    }));
+    })))) return;
+    // bateria muda a cada segundo: atualiza só os segmentos e o percentual
+    state.drones.forEach((d) => {
+      const m = doc.querySelector('#fleet-list [data-bat="' + d.id + '"]');
+      if (!m) return;
+      const b = Math.round(d.bateria);
+      m.setAttribute('aria-valuenow', String(b));
+      m.setAttribute('data-level', d.bateria < 35 ? 'low' : (d.bateria < 60 ? 'mid' : 'high'));
+      m.querySelectorAll('.fleet__cell').forEach((c, i) => c.classList.toggle('is-on', d.bateria > i * 20));
+      m.nextElementSibling.textContent = b + '%';
+    });
   }
 
   function renderLog(state) {
@@ -238,6 +282,8 @@
       $('log-list').replaceChildren(el('li', { class: 'log__empty', text: 'Nenhuma decisão registrada ainda. Processe a fila ou rode um cenário.' }));
       return;
     }
+    if (lastKeys.log === list.length + (list[0] && list[0].msg)) return;
+    lastKeys.log = list.length + (list[0] && list[0].msg);
     $('log-list').replaceChildren(...list.slice(0, 14).map((l) => el('li', { class: 'log__item log__item--' + l.tipo, text: l.msg })));
   }
 
@@ -483,6 +529,13 @@
       if (!b) return;
       selectedDrone = b.getAttribute('data-drone');
       render(store.get());
+    });
+    doc.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-release]');
+      if (!b) return;
+      const r = store.update((s) => ops.releaseDrone(s, b.getAttribute('data-release'), Date.now()));
+      $('ops-msg').replaceChildren(el('p', { class: 'scenario-result__outcome ' + (r.ok ? 'is-ok' : 'is-alert'), text: r.ok ? 'Drone liberado e devolvido à frota. Evento registrado no histórico.' : r.motivo }));
+      $('fleet-list').focus();
     });
     $('alert-list').addEventListener('click', (e) => {
       const b = e.target.closest('[data-ack]');

@@ -709,3 +709,4 @@ select.input {
   body:has(.tabbar) .chat { bottom: calc(92px + env(safe-area-inset-bottom)); }
   body:has(.tabbar) .tour { bottom: calc(92px + env(safe-area-inset-bottom)); }
 }
+.status--aguardando_liberacao { background: var(--p2-bg); color: var(--p2-ink); }
