@@ -310,7 +310,7 @@
     "type": "function",
     "z": "sadec_tab",
     "name": "4 Analisar Pedido / Contexto",
-    "func": "// 4 Analisar Pedido: decide o que fazer com a intenção e as entidades.\n// Saída 1 -> 5 BD Consulta (leitura) | Saída 2 -> 5.1 BD Gravação | Saída 3 -> 7 resposta direta\nif (!msg.payload || !msg.payload.chatId) return [null, null, null];\n\nconst chatId = msg.payload.chatId;\nconst rawText = msg.payload.content ? String(msg.payload.content).trim() : \"\";\nconst textLower = rawText.toLowerCase();\n\n// ---------- Valores aceitos (os mesmos do prompt do nó 3) ----------\nconst INTENCOES = [\"rastrear_entrega\", \"pedir_remedio\", \"solicitar_transporte_urgente\", \"reagendar_entrega\",\n    \"reportar_problema\", \"saudacao\", \"ajuda\", \"despedida\", \"desconhecido\"];\nconst TIPOS_CARGA = [\"orgao\", \"remedio\", \"kit_emergencia\", \"exame\", \"encomenda\"];\nconst PRIORIDADES = [\"nivel_1_orgaos\", \"nivel_2_emergencia\", \"nivel_3_saude\", \"nivel_4_comercial\"];\nconst BAIRROS = [\"Capão Redondo\", \"Jardim Ângela\", \"Brasilândia\", \"Paraisópolis\", \"Itaquera\", \"Parelheiros\", \"Centro\", \"Mooca\"];\nconst HOSPITAIS = [\"Hospital das Clínicas\", \"InCor\", \"Santa Casa\", \"Hospital São Paulo\", \"Hospital do Servidor Público\"];\nconst HORARIOS = [\"manha\", \"tarde\", \"noite\"];\nconst NOME_HORARIO = { manha: \"manhã\", tarde: \"tarde\", noite: \"noite\" };\n\nconst mensagemBoasVindas = \"Olá! 👋 Eu sou o Assistente SADEC, do Sistema Autônomo de Drones de Entrega e Cuidado: a rede de drones que leva órgãos, \" +\n    \"remédios e ajuda em emergências para quem mais precisa.\\n\\n\" +\n    \"Posso:\\n• rastrear sua entrega\\n• pedir seu remédio de uso contínuo\\n• solicitar transporte urgente\\n\" +\n    \"• reagendar uma entrega\\n• registrar um problema\\n\\n\" +\n    \"Você pode escrever ou mandar áudio. Para ouvir as respostas em áudio, diga \\\"responda em áudio\\\" (ou /audio).\";\nconst mensagemAjuda = \"Exemplos do que você pode dizer:\\n• \\\"Onde está a entrega SD1001?\\\"\\n• \\\"Quero pedir meu remédio no Capão Redondo\\\"\\n\" +\n    \"• \\\"Precisamos levar um rim para o InCor\\\"\\n• \\\"Reagendar o SD1002 para a noite\\\"\\n• \\\"Tem um drone caído na minha rua\\\"\";\nconst mensagemNaoEntendi = \"Desculpe, não entendi. Posso rastrear uma entrega, pedir remédio, solicitar transporte urgente, \" +\n    \"reagendar uma entrega ou registrar um problema. Diga /ajuda para ver exemplos.\";\n\n// Só aceita valores da lista (protege o banco de qualquer texto inesperado vindo da IA)\nfunction valor(v, lista) {\n    if (v === null || v === undefined) return null;\n    const s = String(v).trim();\n    return lista.includes(s) ? s : null;\n}\n\n// Para gravar texto livre no banco: dobra as aspas simples (evita quebrar o SQL).\nfunction seguro(t) {\n    return String(t).replace(/'/g, \"''\");\n}\n\nfunction responder(texto) {\n    msg.payload.type = \"message\";\n    msg.payload.content = texto;\n    return [null, null, msg];\n}\n\n// ---------- Memória da conversa (variáveis de contexto por chat) ----------\n// memoria_  = dados já informados: bairro, hospital, tipo de urgência, horário e último código\n// espera_   = o que o bot perguntou por último (bairro, hospital, codigo, horario)\n// pendente_ = intenção que estava sendo atendida quando o bot perguntou algo\n// formato_  = \"texto\" ou \"audio\": como a pessoa quer receber as respostas (usado no nó 7)\nlet memoria = flow.get(\"memoria_\" + chatId) || {};\nconst espera = flow.get(\"espera_\" + chatId) || null;\nconst pendente = flow.get(\"pendente_\" + chatId) || null;\n\nfunction salvarMemoria() {\n    flow.set(\"memoria_\" + chatId, memoria);\n}\nfunction limparEspera() {\n    flow.set(\"espera_\" + chatId, null);\n    flow.set(\"pendente_\" + chatId, null);\n}\nfunction perguntar(oQue, intencaoAtual, texto) {\n    salvarMemoria();\n    flow.set(\"espera_\" + chatId, oQue);\n    flow.set(\"pendente_\" + chatId, intencaoAtual);\n    return responder(texto);\n}\nfunction limparConversa() {\n    memoria = {};\n    salvarMemoria();\n    limparEspera();\n}\n\n// Leitura no banco: o SQL vai em msg.topic e os valores em msg.payload (lista, na ordem dos $).\nfunction consultarBanco(acao, sql, valores) {\n    msg.acao = acao;\n    msg.topic = sql;\n    msg.telegramContext = msg.payload;\n    msg.payload = valores;\n    return [msg, null, null];\n}\n// Gravação no banco (INSERT/UPDATE): o SQL vai em msg.topic.\nfunction gravarBanco(acao, sql) {\n    msg.acao = acao;\n    msg.topic = sql;\n    msg.telegramContext = msg.payload;\n    return [null, msg, null];\n}\n\n// Código de rastreio para pedidos novos: SD + 5 números\nfunction novoCodigo() {\n    return \"SD\" + String(Date.now()).slice(-5);\n}\n\nif ([\"/start\", \"inicio\", \"início\", \"reiniciar\"].includes(textLower)) {\n    limparConversa();\n    return responder(mensagemBoasVindas);\n}\n\n// ---------- Resultado da IA (nó 3) + atalhos sem IA ----------\nconst ai = msg.ai || {};\nlet intencao = valor(ai.intencao, INTENCOES) || \"desconhecido\";\nlet novoFormato = valor(ai.formato, [\"audio\", \"texto\"]);\n\nif ([\"oi\", \"olá\", \"ola\"].includes(textLower)) intencao = \"saudacao\";\nif ([\"/help\", \"/ajuda\"].includes(textLower)) intencao = \"ajuda\";\nif (textLower === \"/audio\") novoFormato = \"audio\";\nif (textLower === \"/texto\") novoFormato = \"texto\";\n\nconst novo = {\n    tipo_carga: valor(ai.tipo_carga, TIPOS_CARGA),\n    prioridade: valor(ai.prioridade, PRIORIDADES),\n    bairro: valor(ai.bairro, BAIRROS),\n    hospital: valor(ai.hospital, HOSPITAIS),\n    horario: valor(ai.horario, HORARIOS)\n};\n// Respostas de uma palavra que pularam a IA\nif (textLower === \"manhã\" || textLower === \"manha\") novo.horario = \"manha\";\nif (textLower === \"tarde\" || textLower === \"noite\") novo.horario = textLower;\n\n// O código de rastreio é lido direto do texto (padrão SD + 4 ou 5 números), sem IA.\nconst achou = rawText.toUpperCase().match(/SD\\s?-?(\\d{4,5})/);\nconst codigo = achou ? \"SD\" + achou[1] : null;\n\nconst trouxeDado = codigo || Object.keys(novo).some(function (k) { return novo[k]; });\n\n// ---------- Variável de contexto: resposta em áudio ou em texto ----------\nif (novoFormato) {\n    flow.set(\"formato_\" + chatId, novoFormato);\n    if ([\"desconhecido\", \"saudacao\", \"ajuda\"].includes(intencao)) {\n        return responder(novoFormato === \"audio\"\n            ? \"Combinado! A partir de agora respondo em áudio. Para voltar ao texto, diga \\\"responda em texto\\\" (ou /texto).\"\n            : \"Combinado! A partir de agora respondo em texto.\");\n    }\n}\n\n// Resposta curta a uma pergunta do bot (ex.: \"Itaquera\" depois de \"Em qual bairro?\"):\n// a intenção é a que estava pendente.\nif (intencao === \"desconhecido\" && trouxeDado && espera && pendente) {\n    intencao = pendente;\n}\n// Só o código, sem pergunta pendente (ex.: \"SD1004\"): entende como rastreio.\nif (intencao === \"desconhecido\" && codigo && !espera) {\n    intencao = \"rastrear_entrega\";\n}\nconst continuacao = (intencao === pendente);\n\n// ---------- Saudação, ajuda e despedida ----------\nif (intencao === \"saudacao\") {\n    limparEspera();\n    return responder(\"Olá! Em que posso ajudar? Posso rastrear, pedir remédio, solicitar transporte urgente, reagendar ou registrar um problema.\");\n}\nif (intencao === \"ajuda\") {\n    return responder(mensagemAjuda);\n}\nif (intencao === \"despedida\") {\n    limparConversa();\n    return responder(\"Por nada! O SADEC está sempre por aqui. Até mais!\");\n}\n\n// ---------- 1) Rastrear entrega ----------\nif (intencao === \"rastrear_entrega\") {\n    const cod = codigo || memoria.ultimo_codigo;\n    if (!cod) {\n        return perguntar(\"codigo\", intencao, \"Qual é o código de rastreio? Ele começa com SD, por exemplo SD1001.\");\n    }\n    memoria.ultimo_codigo = cod;\n    salvarMemoria();\n    limparEspera();\n    return consultarBanco(\"rastrear\",\n        \"SELECT CD_Rastreio, NM_Destino, TP_Carga, NR_Prioridade, ST_Status, DS_Periodo, CD_Drone, NR_Previsao_Min \" +\n        \"FROM tbl_entrega WHERE CD_Rastreio = $codigo\", [cod]);\n}\n\n// ---------- 2) Pedir remédio (modo Saúde, nível 3) ----------\nif (intencao === \"pedir_remedio\") {\n    // VARIÁVEL DE CONTEXTO: se a pessoa já disse o bairro antes, o bot lembra.\n    const bairro = novo.bairro || memoria.bairro;\n    if (!bairro) {\n        return perguntar(\"bairro\", intencao, \"Claro! A entrega de remédios de uso contínuo tem prioridade nível 3 (Saúde). \" +\n            \"Em qual bairro você mora? Atendemos: \" + BAIRROS.join(\", \") + \".\");\n    }\n    const periodo = novo.horario || \"manha\";\n    const cod = novoCodigo();\n    msg.dados = { codigo: cod, bairro: bairro, periodo: periodo, lembrouBairro: !novo.bairro };\n    memoria.bairro = bairro;\n    memoria.ultimo_codigo = cod;\n    salvarMemoria();\n    limparEspera();\n    return gravarBanco(\"remedio_registrado\",\n        \"INSERT INTO tbl_entrega (CD_Rastreio, NR_Chat, NM_Destino, TP_Carga, NR_Prioridade, ST_Status, DS_Periodo, DT_Pedido) \" +\n        \"VALUES ('\" + cod + \"', '\" + seguro(chatId) + \"', '\" + bairro + \"', 'remedio', 3, 'aguardando', '\" + periodo + \"', \" +\n        \"datetime('now', 'localtime'))\");\n}\n\n// ---------- 3) Transporte urgente: órgão (nível 1) ou emergência (nível 2) ----------\nif (intencao === \"solicitar_transporte_urgente\") {\n    let tipo = null;\n    if (novo.tipo_carga === \"orgao\" || novo.prioridade === \"nivel_1_orgaos\") tipo = \"orgao\";\n    else if (novo.tipo_carga || novo.prioridade) tipo = \"emergencia\";\n    else if (continuacao && memoria.tipo_urgente) tipo = memoria.tipo_urgente;\n    else tipo = novo.hospital ? \"orgao\" : \"emergencia\";\n    memoria.tipo_urgente = tipo;\n\n    let destino, fator, prioridade, carga;\n    if (tipo === \"orgao\") {\n        destino = novo.hospital || (continuacao ? memoria.hospital : null);\n        if (!destino) {\n            return perguntar(\"hospital\", intencao, \"Transporte de órgão tem prioridade máxima (nível 1) e é pedido por hospitais \" +\n                \"e pela Central Estadual de Transplantes. Qual é o hospital de destino? Atendemos: \" + HOSPITAIS.join(\", \") + \".\");\n        }\n        memoria.hospital = destino;\n        fator = 1.3;          // REGRA: para órgãos, a bateria precisa cobrir a rota com 30% de folga\n        prioridade = 1;\n        carga = \"orgao\";\n    } else {\n        destino = novo.bairro || memoria.bairro;\n        if (!destino) {\n            return perguntar(\"bairro\", intencao, \"Entendi, é uma emergência (nível 2). Se houver risco de vida, ligue também \" +\n                \"para a Defesa Civil (199) ou o SAMU (192). Em qual bairro você está?\");\n        }\n        memoria.bairro = destino;\n        fator = 1.0;\n        prioridade = 2;\n        carga = \"kit_emergencia\";\n    }\n    salvarMemoria();\n    limparEspera();\n    msg.dados = { codigo: novoCodigo(), destino: destino, prioridade: prioridade, carga: carga, fator: fator };\n\n    // REGRA DA FILA: nível 1 e 2 podem usar um drone livre OU um drone de entrega comercial que ainda\n    // não decolou. Drone já em voo comercial termina a entrega (não entra na busca).\n    // A bateria precisa cobrir ida e volta (distância x 2) vezes o fator de folga.\n    return consultarBanco(\"escolher_drone\",\n        \"SELECT d.CD_Drone, d.ST_Status, d.NR_Bateria_Pct, \" +\n        \"ROUND(d.NR_Autonomia_Km * d.NR_Bateria_Pct / 100.0, 1) AS alcance_km, l.NR_Distancia_Km \" +\n        \"FROM tbl_drone d, tbl_local l \" +\n        \"WHERE l.NM_Local = $destino AND d.ST_Status IN ('livre', 'aguardando_comercial') \" +\n        \"AND d.NR_Autonomia_Km * d.NR_Bateria_Pct / 100.0 >= l.NR_Distancia_Km * 2 * $fator \" +\n        \"ORDER BY CASE d.ST_Status WHEN 'livre' THEN 0 ELSE 1 END, d.NR_Bateria_Pct DESC LIMIT 1\",\n        [destino, fator]);\n}\n\n// ---------- 4) Reagendar entrega ----------\nif (intencao === \"reagendar_entrega\") {\n    if (novo.horario) memoria.horario = novo.horario;\n    const horario = novo.horario || (continuacao ? memoria.horario : null);\n    const cod = codigo || memoria.ultimo_codigo;\n    if (!cod) {\n        return perguntar(\"codigo\", intencao, \"Qual é o código da entrega que você quer reagendar? Ex.: SD1002.\");\n    }\n    memoria.ultimo_codigo = cod;\n    if (!horario) {\n        return perguntar(\"horario\", intencao, \"Para qual período você quer reagendar a entrega \" + cod + \": manhã, tarde ou noite?\");\n    }\n    delete memoria.horario;\n    salvarMemoria();\n    limparEspera();\n    msg.dados = { codigo: cod, horario: horario };\n    // Primeiro confere o status: só dá para reagendar o que ainda não decolou (ver nó 6).\n    return consultarBanco(\"conferir_reagendamento\",\n        \"SELECT CD_Rastreio, ST_Status, NR_Prioridade FROM tbl_entrega WHERE CD_Rastreio = $codigo\", [cod]);\n}\n\n// ---------- 5) Reportar problema ----------\nif (intencao === \"reportar_problema\") {\n    const cod = codigo || memoria.ultimo_codigo || null;\n    limparEspera();\n    msg.dados = { codigo: cod };\n    return gravarBanco(\"ocorrencia_registrada\",\n        \"INSERT INTO tbl_ocorrencia (NR_Chat, CD_Rastreio, DS_Relato, DT_Registro) VALUES ('\" + seguro(chatId) + \"', \" +\n        (cod ? \"'\" + cod + \"'\" : \"NULL\") + \", '\" + seguro(rawText.substring(0, 500)) + \"', datetime('now', 'localtime'))\");\n}\n\n// ---------- Não entendeu ----------\n// Se o bot estava esperando uma resposta, explica o que é aceito (como um \"anything_else\").\nif (espera === \"bairro\") return responder(\"Não reconheci o bairro. Atendemos: \" + BAIRROS.join(\", \") + \".\");\nif (espera === \"hospital\") return responder(\"Não encontrei esse hospital na rede piloto. Atendemos: \" + HOSPITAIS.join(\", \") +\n    \". Para outros hospitais, a Central de Transplantes deve acionar helicóptero ou ambulância.\");\nif (espera === \"codigo\") return responder(\"Não encontrei um código válido. Ele começa com SD e tem números, por exemplo SD1001.\");\nif (espera === \"horario\") return responder(\"Não entendi o período. Responda com manhã, tarde ou noite.\");\n\nlimparEspera();\nreturn responder(mensagemNaoEntendi);\n",
+    "func": "// 4 Analisar Pedido: decide o que fazer com a intenção e as entidades.\n// Rastreio e pedido de remédio usam o núcleo comum da API (global sadecApi): o mesmo banco, os mesmos códigos\n// SD e a mesma decisão da Central Java usados pelo site. O chatbot não escolhe drone por conta própria.\nconst api = global.get(\"sadecApi\");\nconst NOME_STATUS = { aguardando: \"na fila\", atribuida: \"com drone reservado, aguardando decolagem\", em_voo: \"em voo monitorado\",\n    entregue: \"entregue\", reagendada: \"reagendada\", outro_meio: \"encaminhada a outro meio de transporte\", aguardando_resgate: \"aguardando resgate após pouso seguro\" };\n// Saída 1 -> 5 BD Consulta (leitura) | Saída 2 -> 5.1 BD Gravação | Saída 3 -> 7 resposta direta\nif (!msg.payload || !msg.payload.chatId) return [null, null, null];\n\nconst chatId = msg.payload.chatId;\nconst rawText = msg.payload.content ? String(msg.payload.content).trim() : \"\";\nconst textLower = rawText.toLowerCase();\n\n// ---------- Valores aceitos (os mesmos do prompt do nó 3) ----------\nconst INTENCOES = [\"rastrear_entrega\", \"pedir_remedio\", \"solicitar_transporte_urgente\", \"reagendar_entrega\",\n    \"reportar_problema\", \"saudacao\", \"ajuda\", \"despedida\", \"desconhecido\"];\nconst TIPOS_CARGA = [\"orgao\", \"remedio\", \"kit_emergencia\", \"exame\", \"encomenda\"];\nconst PRIORIDADES = [\"nivel_1_orgaos\", \"nivel_2_emergencia\", \"nivel_3_saude\", \"nivel_4_comercial\"];\nconst BAIRROS = [\"Capão Redondo\", \"Jardim Ângela\", \"Brasilândia\", \"Paraisópolis\", \"Itaquera\", \"Parelheiros\", \"Centro\", \"Mooca\"];\nconst HOSPITAIS = [\"Hospital das Clínicas\", \"InCor\", \"Santa Casa\", \"Hospital São Paulo\", \"Hospital do Servidor Público\"];\nconst HORARIOS = [\"manha\", \"tarde\", \"noite\"];\nconst NOME_HORARIO = { manha: \"manhã\", tarde: \"tarde\", noite: \"noite\" };\n\nconst mensagemBoasVindas = \"Olá! 👋 Eu sou o Assistente SADEC, do Sistema Autônomo de Drones de Entrega e Cuidado: a rede de drones que leva órgãos, \" +\n    \"remédios e ajuda em emergências para quem mais precisa.\\n\\n\" +\n    \"Posso:\\n• rastrear sua entrega\\n• pedir seu remédio de uso contínuo\\n• solicitar transporte urgente\\n\" +\n    \"• reagendar uma entrega\\n• registrar um problema\\n\\n\" +\n    \"Você pode escrever ou mandar áudio. Para ouvir as respostas em áudio, diga \\\"responda em áudio\\\" (ou /audio).\";\nconst mensagemAjuda = \"Exemplos do que você pode dizer:\\n• \\\"Onde está a entrega SD1001?\\\"\\n• \\\"Quero pedir meu remédio no Capão Redondo\\\"\\n\" +\n    \"• \\\"Precisamos levar um rim para o InCor\\\"\\n• \\\"Reagendar o SD1002 para a noite\\\"\\n• \\\"Tem um drone caído na minha rua\\\"\";\nconst mensagemNaoEntendi = \"Desculpe, não entendi. Posso rastrear uma entrega, pedir remédio, solicitar transporte urgente, \" +\n    \"reagendar uma entrega ou registrar um problema. Diga /ajuda para ver exemplos.\";\n\n// Só aceita valores da lista (protege o banco de qualquer texto inesperado vindo da IA)\nfunction valor(v, lista) {\n    if (v === null || v === undefined) return null;\n    const s = String(v).trim();\n    return lista.includes(s) ? s : null;\n}\n\n// Para gravar texto livre no banco: dobra as aspas simples (evita quebrar o SQL).\nfunction seguro(t) {\n    return String(t).replace(/'/g, \"''\");\n}\n\nfunction responder(texto) {\n    msg.payload.type = \"message\";\n    msg.payload.content = texto;\n    return [null, null, msg];\n}\n\n// ---------- Memória da conversa (variáveis de contexto por chat) ----------\n// memoria_  = dados já informados: bairro, hospital, tipo de urgência, horário e último código\n// espera_   = o que o bot perguntou por último (bairro, hospital, codigo, horario)\n// pendente_ = intenção que estava sendo atendida quando o bot perguntou algo\n// formato_  = \"texto\" ou \"audio\": como a pessoa quer receber as respostas (usado no nó 7)\nlet memoria = flow.get(\"memoria_\" + chatId) || {};\nconst espera = flow.get(\"espera_\" + chatId) || null;\nconst pendente = flow.get(\"pendente_\" + chatId) || null;\n\nfunction salvarMemoria() {\n    flow.set(\"memoria_\" + chatId, memoria);\n}\nfunction limparEspera() {\n    flow.set(\"espera_\" + chatId, null);\n    flow.set(\"pendente_\" + chatId, null);\n}\nfunction perguntar(oQue, intencaoAtual, texto) {\n    salvarMemoria();\n    flow.set(\"espera_\" + chatId, oQue);\n    flow.set(\"pendente_\" + chatId, intencaoAtual);\n    return responder(texto);\n}\nfunction limparConversa() {\n    memoria = {};\n    salvarMemoria();\n    limparEspera();\n}\n\n// Leitura no banco: o SQL vai em msg.topic e os valores em msg.payload (lista, na ordem dos $).\nfunction consultarBanco(acao, sql, valores) {\n    msg.acao = acao;\n    msg.topic = sql;\n    msg.telegramContext = msg.payload;\n    msg.payload = valores;\n    return [msg, null, null];\n}\n// Gravação no banco (INSERT/UPDATE): o SQL vai em msg.topic.\nfunction gravarBanco(acao, sql) {\n    msg.acao = acao;\n    msg.topic = sql;\n    msg.telegramContext = msg.payload;\n    return [null, msg, null];\n}\n\n\nif ([\"/start\", \"inicio\", \"início\", \"reiniciar\"].includes(textLower)) {\n    limparConversa();\n    return responder(mensagemBoasVindas);\n}\n\n// ---------- Resultado da IA (nó 3) + atalhos sem IA ----------\nconst ai = msg.ai || {};\nlet intencao = valor(ai.intencao, INTENCOES) || \"desconhecido\";\nlet novoFormato = valor(ai.formato, [\"audio\", \"texto\"]);\n\nif ([\"oi\", \"olá\", \"ola\"].includes(textLower)) intencao = \"saudacao\";\nif ([\"/help\", \"/ajuda\"].includes(textLower)) intencao = \"ajuda\";\nif (textLower === \"/audio\") novoFormato = \"audio\";\nif (textLower === \"/texto\") novoFormato = \"texto\";\n\nconst novo = {\n    tipo_carga: valor(ai.tipo_carga, TIPOS_CARGA),\n    prioridade: valor(ai.prioridade, PRIORIDADES),\n    bairro: valor(ai.bairro, BAIRROS),\n    hospital: valor(ai.hospital, HOSPITAIS),\n    horario: valor(ai.horario, HORARIOS)\n};\n// Respostas de uma palavra que pularam a IA\nif (textLower === \"manhã\" || textLower === \"manha\") novo.horario = \"manha\";\nif (textLower === \"tarde\" || textLower === \"noite\") novo.horario = textLower;\n\n// O código de rastreio é lido direto do texto (padrão SD + 4 ou 5 números), sem IA.\nconst achou = rawText.toUpperCase().match(/SD\\s?-?(\\d{4,5})/);\nconst codigo = achou ? \"SD\" + achou[1] : null;\n\nconst trouxeDado = codigo || Object.keys(novo).some(function (k) { return novo[k]; });\n\n// ---------- Variável de contexto: resposta em áudio ou em texto ----------\nif (novoFormato) {\n    flow.set(\"formato_\" + chatId, novoFormato);\n    if ([\"desconhecido\", \"saudacao\", \"ajuda\"].includes(intencao)) {\n        return responder(novoFormato === \"audio\"\n            ? \"Combinado! A partir de agora respondo em áudio. Para voltar ao texto, diga \\\"responda em texto\\\" (ou /texto).\"\n            : \"Combinado! A partir de agora respondo em texto.\");\n    }\n}\n\n// Resposta curta a uma pergunta do bot (ex.: \"Itaquera\" depois de \"Em qual bairro?\"):\n// a intenção é a que estava pendente.\nif (intencao === \"desconhecido\" && trouxeDado && espera && pendente) {\n    intencao = pendente;\n}\n// Só o código, sem pergunta pendente (ex.: \"SD1004\"): entende como rastreio.\nif (intencao === \"desconhecido\" && codigo && !espera) {\n    intencao = \"rastrear_entrega\";\n}\nconst continuacao = (intencao === pendente);\n\n// ---------- Saudação, ajuda e despedida ----------\nif (intencao === \"saudacao\") {\n    limparEspera();\n    return responder(\"Olá! Em que posso ajudar? Posso rastrear, pedir remédio, solicitar transporte urgente, reagendar ou registrar um problema.\");\n}\nif (intencao === \"ajuda\") {\n    return responder(mensagemAjuda);\n}\nif (intencao === \"despedida\") {\n    limparConversa();\n    return responder(\"Por nada! O SADEC está sempre por aqui. Até mais!\");\n}\n\n// ---------- 1) Rastrear entrega ----------\nif (intencao === \"rastrear_entrega\") {\n    const cod = codigo || memoria.ultimo_codigo;\n    if (!cod) {\n        return perguntar(\"codigo\", intencao, \"Qual é o código de rastreio? Ele começa com SD, por exemplo SD1001.\");\n    }\n    memoria.ultimo_codigo = cod;\n    salvarMemoria();\n    limparEspera();\n    try {\n        const p = api.obterPedido(cod);\n        let t = \"📦 Entrega \" + p.codigo + \" (P\" + p.prioridade + \", \" + p.tipo_carga + \" para \" + p.destino + \"): \" + (NOME_STATUS[p.status] || p.status) + \".\";\n        if (p.drone_codigo) t += \" Drone: \" + p.drone_codigo + \".\";\n        if (p.motivo) t += \" Motivo: \" + p.motivo;\n        if (p.recebimento) t += \" Recebido por \" + p.recebimento.destinatario + \" (\" + p.recebimento.estado_carga + \").\";\n        if (p.eventos && p.eventos.length) t += \"\\nÚltimo evento: \" + p.eventos[p.eventos.length - 1].descricao;\n        return responder(t);\n    } catch (e) {\n        return responder(e.status === 404 ? \"Não encontrei a entrega \" + cod + \". Confira o código (ex.: SD1001).\" : \"Não consegui consultar agora. Tente de novo em instantes.\");\n    }\n}\n\n// ---------- 2) Pedir remédio (modo Saúde, nível 3) ----------\nif (intencao === \"pedir_remedio\") {\n    // VARIÁVEL DE CONTEXTO: se a pessoa já disse o bairro antes, o bot lembra.\n    const bairro = novo.bairro || memoria.bairro;\n    if (!bairro) {\n        return perguntar(\"bairro\", intencao, \"Claro! A entrega de remédios de uso contínuo tem prioridade nível 3 (Saúde). \" +\n            \"Em qual bairro você mora? Atendemos: \" + BAIRROS.join(\", \") + \".\");\n    }\n    const periodo = novo.horario || \"manha\";\n    memoria.bairro = bairro;\n    salvarMemoria();\n    limparEspera();\n    try {\n        const r = api.criarPedido({ tipo_carga: \"remedio\", destino: bairro, periodo: periodo, canal: \"chatbot\", chat: String(chatId),\n            solicitante: { tipo: \"cidadao\", nome: \"Chatbot (\" + (msg.canal || \"web\") + \")\" } });\n        memoria.ultimo_codigo = r.pedido.codigo;\n        salvarMemoria();\n        let t = \"💊 Pedido de remédio registrado!\\nCódigo: \" + r.pedido.codigo + \"\\nBairro: \" + bairro + \"\\nPrioridade: nível 3 (Saúde)\";\n        t += r.pedido.drone_codigo ? \"\\nDrone reservado: \" + r.pedido.drone_codigo + \" (decola após confirmação da Central).\" : \"\\nSituação: \" + (NOME_STATUS[r.pedido.status] || r.pedido.status) + \".\";\n        if (!novo.bairro) t += \"\\n(Usei o bairro que você informou antes.)\";\n        return responder(t + \"\\nSimulação acadêmica: nenhum remédio real é enviado.\");\n    } catch (e) {\n        return responder(\"Não consegui registrar o pedido agora (\" + (e.status ? e.message : \"erro interno\") + \").\");\n    }\n}\n\n// ---------- 3) Transporte urgente: órgão (nível 1) ou emergência (nível 2) ----------\nif (intencao === \"solicitar_transporte_urgente\") {\n    let tipo = null;\n    if (novo.tipo_carga === \"orgao\" || novo.prioridade === \"nivel_1_orgaos\") tipo = \"orgao\";\n    else if (novo.tipo_carga || novo.prioridade) tipo = \"emergencia\";\n    else if (continuacao && memoria.tipo_urgente) tipo = memoria.tipo_urgente;\n    else tipo = novo.hospital ? \"orgao\" : \"emergencia\";\n    memoria.tipo_urgente = tipo;\n\n    let destino, fator, prioridade, carga;\n    if (tipo === \"orgao\") {\n        destino = novo.hospital || (continuacao ? memoria.hospital : null);\n        if (!destino) {\n            return perguntar(\"hospital\", intencao, \"Transporte de órgão tem prioridade máxima (nível 1) e é pedido por hospitais \" +\n                \"e pela Central Estadual de Transplantes. Qual é o hospital de destino? Atendemos: \" + HOSPITAIS.join(\", \") + \".\");\n        }\n        memoria.hospital = destino;\n        fator = 1.3;          // REGRA: para órgãos, a bateria precisa cobrir a rota com 30% de folga\n        prioridade = 1;\n        carga = \"orgao\";\n    } else {\n        destino = novo.bairro || memoria.bairro;\n        if (!destino) {\n            return perguntar(\"bairro\", intencao, \"Entendi, é uma emergência (nível 2). Se houver risco de vida, ligue também \" +\n                \"para a Defesa Civil (199) ou o SAMU (192). Em qual bairro você está?\");\n        }\n        memoria.bairro = destino;\n        fator = 1.0;\n        prioridade = 2;\n        carga = \"kit_emergencia\";\n    }\n    salvarMemoria();\n    limparEspera();\n    // REGRA DE AUTORIZAÇÃO: o chatbot público não despacha P1 nem P2. O pedido é feito pela unidade autorizada\n    // (hospital / Central de Transplantes para órgãos; Defesa Civil / município para emergências) na Central SADEC,\n    // onde a Central Java decide o drone. Aqui só orientamos (sem gravar nem escolher drone).\n    return responder((prioridade === 1\n        ? \"🫀 Transporte de órgão (nível 1) para \" + destino + \": o pedido precisa vir do hospital ou da Central de Transplantes, \" +\n          \"pelo canal autorizado da Central SADEC. Assim que for registrado, a Central reserva o drone com 30% de reserva de bateria.\"\n        : \"🚨 Emergência (nível 2) em \" + destino + \": a solicitação é feita pela Defesa Civil ou pelo município na Central SADEC. \" +\n          \"Se houver risco de vida, ligue agora para o SAMU (192) ou a Defesa Civil (199).\") +\n        \"\\nO chatbot público não autoriza despacho de prioridade 1 ou 2.\");\n}\n\n// ---------- 4) Reagendar entrega ----------\nif (intencao === \"reagendar_entrega\") {\n    if (novo.horario) memoria.horario = novo.horario;\n    const horario = novo.horario || (continuacao ? memoria.horario : null);\n    const cod = codigo || memoria.ultimo_codigo;\n    if (!cod) {\n        return perguntar(\"codigo\", intencao, \"Qual é o código da entrega que você quer reagendar? Ex.: SD1002.\");\n    }\n    memoria.ultimo_codigo = cod;\n    if (!horario) {\n        return perguntar(\"horario\", intencao, \"Para qual período você quer reagendar a entrega \" + cod + \": manhã, tarde ou noite?\");\n    }\n    delete memoria.horario;\n    salvarMemoria();\n    limparEspera();\n    msg.dados = { codigo: cod, horario: horario };\n    // Primeiro confere o status: só dá para reagendar o que ainda não decolou (ver nó 6).\n    return consultarBanco(\"conferir_reagendamento\",\n        \"SELECT CD_Rastreio, ST_Status, NR_Prioridade FROM tbl_entrega WHERE CD_Rastreio = $codigo\", [cod]);\n}\n\n// ---------- 5) Reportar problema ----------\nif (intencao === \"reportar_problema\") {\n    const cod = codigo || memoria.ultimo_codigo || null;\n    limparEspera();\n    msg.dados = { codigo: cod };\n    return gravarBanco(\"ocorrencia_registrada\",\n        \"INSERT INTO tbl_ocorrencia (NR_Chat, CD_Rastreio, DS_Relato, DT_Registro) VALUES ('\" + seguro(chatId) + \"', \" +\n        (cod ? \"'\" + cod + \"'\" : \"NULL\") + \", '\" + seguro(rawText.substring(0, 500)) + \"', datetime('now', 'localtime'))\");\n}\n\n// ---------- Não entendeu ----------\n// Se o bot estava esperando uma resposta, explica o que é aceito (como um \"anything_else\").\nif (espera === \"bairro\") return responder(\"Não reconheci o bairro. Atendemos: \" + BAIRROS.join(\", \") + \".\");\nif (espera === \"hospital\") return responder(\"Não encontrei esse hospital na rede piloto. Atendemos: \" + HOSPITAIS.join(\", \") +\n    \". Para outros hospitais, a Central de Transplantes deve acionar helicóptero ou ambulância.\");\nif (espera === \"codigo\") return responder(\"Não encontrei um código válido. Ele começa com SD e tem números, por exemplo SD1001.\");\nif (espera === \"horario\") return responder(\"Não entendi o período. Responda com manhã, tarde ou noite.\");\n\nlimparEspera();\nreturn responder(mensagemNaoEntendi);\n",
     "outputs": 3,
     "timeout": 0,
     "noerr": 0,
@@ -575,7 +575,437 @@
   {
     "id": "db_cfg",
     "type": "sqlitedb",
-    "db": "C:\\SADEC\\SADEC_Chatbot.db",
+    "db": "${SADEC_DB}",
     "mode": "RWC"
+  },
+  {
+    "id": "sadec_api_tab",
+    "type": "tab",
+    "label": "SADEC - API de integração (site + Central)",
+    "disabled": false,
+    "info": "Endpoints JSON usados pelo site. Toda regra está no núcleo global sadecApi (ChatBot/node-red/lib/sadec-api.js):\nPython calcula distância e bateria, a CentralOperacao Java decide o drone e o SQLite guarda pedidos, eventos e recebimentos."
+  },
+  {
+    "id": "api_0_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "POST /api/pedidos",
+    "url": "/api/pedidos",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 60,
+    "wires": [
+      [
+        "api_0_fn"
+      ]
+    ]
+  },
+  {
+    "id": "api_0_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Criar pedido",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "func": "// Criar pedido: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.criarPedido(msg.payload) };\n    msg.statusCode = 201;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "x": 470,
+    "y": 60,
+    "wires": [
+      [
+        "api_0_out"
+      ]
+    ]
+  },
+  {
+    "id": "api_0_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 60,
+    "wires": []
+  },
+  {
+    "id": "api_1_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "GET /api/pedidos",
+    "url": "/api/pedidos",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 120,
+    "wires": [
+      [
+        "api_1_fn"
+      ]
+    ]
+  },
+  {
+    "id": "api_1_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Listar pedidos",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "func": "// Listar pedidos: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.listarPedidos() };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "x": 470,
+    "y": 120,
+    "wires": [
+      [
+        "api_1_out"
+      ]
+    ]
+  },
+  {
+    "id": "api_1_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 120,
+    "wires": []
+  },
+  {
+    "id": "api_2_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "GET /api/pedidos/:codigo",
+    "url": "/api/pedidos/:codigo",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 180,
+    "wires": [
+      [
+        "api_2_fn"
+      ]
+    ]
+  },
+  {
+    "id": "api_2_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Consultar pedido",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "func": "// Consultar pedido: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.obterPedido(msg.req.params.codigo) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "x": 470,
+    "y": 180,
+    "wires": [
+      [
+        "api_2_out"
+      ]
+    ]
+  },
+  {
+    "id": "api_2_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 180,
+    "wires": []
+  },
+  {
+    "id": "api_3_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "POST /api/pedidos/:codigo/decolar",
+    "url": "/api/pedidos/:codigo/decolar",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 240,
+    "wires": [
+      [
+        "api_3_fn"
+      ]
+    ]
+  },
+  {
+    "id": "api_3_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Decolar",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "func": "// Decolar: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.decolar(msg.req.params.codigo, (msg.payload || {}).responsavel) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "x": 470,
+    "y": 240,
+    "wires": [
+      [
+        "api_3_out"
+      ]
+    ]
+  },
+  {
+    "id": "api_3_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 240,
+    "wires": []
+  },
+  {
+    "id": "api_4_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "POST /api/pedidos/:codigo/concluir",
+    "url": "/api/pedidos/:codigo/concluir",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 300,
+    "wires": [
+      [
+        "api_4_fn"
+      ]
+    ]
+  },
+  {
+    "id": "api_4_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Concluir entrega",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "func": "// Concluir entrega: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.concluirEntrega(msg.req.params.codigo, (msg.payload || {}).responsavel) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "x": 470,
+    "y": 300,
+    "wires": [
+      [
+        "api_4_out"
+      ]
+    ]
+  },
+  {
+    "id": "api_4_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 300,
+    "wires": []
+  },
+  {
+    "id": "api_5_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "POST /api/pedidos/:codigo/recebimento",
+    "url": "/api/pedidos/:codigo/recebimento",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 360,
+    "wires": [
+      [
+        "api_5_fn"
+      ]
+    ]
+  },
+  {
+    "id": "api_5_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Registrar recebimento",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "func": "// Registrar recebimento: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.registrarRecebimento(msg.req.params.codigo, msg.payload) };\n    msg.statusCode = 201;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "x": 470,
+    "y": 360,
+    "wires": [
+      [
+        "api_5_out"
+      ]
+    ]
+  },
+  {
+    "id": "api_5_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 360,
+    "wires": []
+  },
+  {
+    "id": "api_6_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "POST /api/fila/processar",
+    "url": "/api/fila/processar",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 420,
+    "wires": [
+      [
+        "api_6_fn"
+      ]
+    ]
+  },
+  {
+    "id": "api_6_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Processar fila",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "func": "// Processar fila: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.processarFila() };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "x": 470,
+    "y": 420,
+    "wires": [
+      [
+        "api_6_out"
+      ]
+    ]
+  },
+  {
+    "id": "api_6_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 420,
+    "wires": []
+  },
+  {
+    "id": "api_7_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "GET /api/drones",
+    "url": "/api/drones",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 480,
+    "wires": [
+      [
+        "api_7_fn"
+      ]
+    ]
+  },
+  {
+    "id": "api_7_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Listar drones",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "func": "// Listar drones: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.listarDrones() };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "x": 470,
+    "y": 480,
+    "wires": [
+      [
+        "api_7_out"
+      ]
+    ]
+  },
+  {
+    "id": "api_7_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 480,
+    "wires": []
+  },
+  {
+    "id": "api_8_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "POST /api/drones/:codigo/recuperacao",
+    "url": "/api/drones/:codigo/recuperacao",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 540,
+    "wires": [
+      [
+        "api_8_fn"
+      ]
+    ]
+  },
+  {
+    "id": "api_8_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Recuperação / liberação de drone",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "func": "// Recuperação / liberação de drone: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.recuperarDrone(msg.req.params.codigo, (msg.payload || {}).acao, (msg.payload || {}).responsavel) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "x": 470,
+    "y": 540,
+    "wires": [
+      [
+        "api_8_out"
+      ]
+    ]
+  },
+  {
+    "id": "api_8_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 540,
+    "wires": []
   }
 ]

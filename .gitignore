@@ -17,3 +17,10 @@ ChatBot/backups/
 Java/SADEC/out/
 __pycache__/
 *.class
+
+# Node-RED: arquivos gerados em tempo de execução (o runtime guarda a chave de credenciais)
+ChatBot/node-red/.config.*
+ChatBot/node-red/.flows*.json*
+ChatBot/node-red/.sessions.json
+ChatBot/*_cred.json
+ChatBot/.fluxo-node-red-sadec*.backup

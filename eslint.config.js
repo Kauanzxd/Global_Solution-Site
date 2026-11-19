@@ -11,7 +11,7 @@ const rules = {
 };
 
 module.exports = [
-  { ignores: ['node_modules/**'] },
+  { ignores: ['**/node_modules/**', 'Java/**', 'ChatBot/node-red/.node-red-*', 'ChatBot/node-red/lib/vendor/**'] },
   js.configs.recommended,
   {
     files: ['js/**/*.js'],
@@ -23,7 +23,7 @@ module.exports = [
     rules
   },
   {
-    files: ['tests/**/*.js', 'scripts/**/*.js', 'eslint.config.js'],
+    files: ['tests/**/*.js', 'scripts/**/*.js', 'ChatBot/**/*.js', 'eslint.config.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'commonjs', globals: { ...globals.node } },
     rules
   }

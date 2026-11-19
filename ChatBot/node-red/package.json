@@ -1,0 +1,9 @@
+{
+  "name": "sadec-node-red",
+  "private": true,
+  "description": "Diretório de usuário do Node-RED do SADEC",
+  "dependencies": {
+    "node-red-contrib-telegrambot": "^19.0.5",
+    "node-red-node-sqlite": "^2.0.1"
+  }
+}
