@@ -9,32 +9,42 @@
   const MAX_QTD = 10;
 
   /* id da loja = id do local na cidade-modelo (SIDEC.data), para o motor calcular a rota. */
+  /* Restaurantes fictícios da identidade visual; img/logo/capa são arquivos de assets/images/food/. */
   const LOJAS = [
     {
-      id: 'C-02', nome: 'Restaurante Sabor da Vila', tipo: 'Comida caseira', preparoMin: 12,
+      id: 'C-03', nome: 'Burger House', tipo: 'Hambúrgueres', preparoMin: 10,
+      slogan: 'Sabor de verdade, em cada mordida.', logo: 'burger-house.svg', capa: 'cover-burger.jpg',
       itens: [
-        { id: 'escondidinho', nome: 'Escondidinho de mandioca', desc: 'Carne seca, purê de mandioca e queijo gratinado.', precoCents: 3290, pesoKg: 0.6 },
-        { id: 'salada', nome: 'Salada da casa', desc: 'Folhas, grão-de-bico, tomate e molho de ervas.', precoCents: 2490, pesoKg: 0.4 },
-        { id: 'suco-caju', nome: 'Suco de caju 500 ml', desc: 'Feito na hora, sem açúcar.', precoCents: 990, pesoKg: 0.55 },
-        { id: 'pudim', nome: 'Pudim de leite', desc: 'Fatia individual.', precoCents: 1250, pesoKg: 0.2 }
+        { id: 'double-cheese', nome: 'Double Cheese', desc: 'Dois smash, cheddar e cebola caramelizada.', precoCents: 3990, pesoKg: 0.42, img: 'burger-double-cheese.jpg' },
+        { id: 'fritas', nome: 'Batata frita', desc: 'Porção média, sal e páprica.', precoCents: 1690, pesoKg: 0.2, img: 'bh-fritas.jpg' },
+        { id: 'onion', nome: 'Onion rings', desc: 'Anéis de cebola com molho da casa.', precoCents: 1990, pesoKg: 0.22, img: 'bh-onion.jpg' },
+        { id: 'frango', nome: 'Frango crocante', desc: '8 tiras empanadas.', precoCents: 2490, pesoKg: 0.3, img: 'bh-frango.jpg' },
+        { id: 'shake-morango', nome: 'Milkshake de morango', desc: '400 ml com chantilly.', precoCents: 1890, pesoKg: 0.45, img: 'bh-shake.jpg' },
+        { id: 'refri', nome: 'Refrigerante de cola', desc: '400 ml com gelo.', precoCents: 890, pesoKg: 0.42, img: 'bh-refri.jpg' },
+        { id: 'fardo-refri', nome: 'Fardo de refrigerante (6 × 2 L)', desc: 'Pesado: passa do limite de carga dos drones e vai pela entrega convencional.', precoCents: 5490, pesoKg: 12.6 }
       ]
     },
     {
-      id: 'C-03', nome: 'Padaria Grão Dourado', tipo: 'Padaria e café', preparoMin: 6,
+      id: 'C-02', nome: 'Bella Pizza', tipo: 'Pizzaria', preparoMin: 15,
+      slogan: 'Mais que pizza, uma paixão.', logo: 'bella-pizza.svg', capa: 'cover-bella.jpg',
       itens: [
-        { id: 'pao-frances', nome: 'Pão francês (6 un.)', desc: 'Saído do forno a cada hora.', precoCents: 600, pesoKg: 0.3 },
-        { id: 'pao-queijo', nome: 'Pão de queijo (10 un.)', desc: 'Tamanho coquetel.', precoCents: 1400, pesoKg: 0.4 },
-        { id: 'bolo-fuba', nome: 'Bolo de fubá', desc: 'Inteiro, com erva-doce.', precoCents: 1800, pesoKg: 0.7 },
-        { id: 'cafe-coado', nome: 'Café coado 300 ml', desc: 'Em copo térmico lacrado.', precoCents: 750, pesoKg: 0.35 }
+        { id: 'pizza-pepperoni', nome: 'Pizza de pepperoni', desc: 'Grande, 8 fatias, muçarela.', precoCents: 6490, pesoKg: 0.9, img: 'bp-pizza.jpg' },
+        { id: 'fatia', nome: 'Fatia de pepperoni', desc: 'Individual, bem recheada.', precoCents: 1490, pesoKg: 0.18, img: 'bp-fatia.jpg' },
+        { id: 'carbonara', nome: 'Espaguete à carbonara', desc: '400 g, bacon e parmesão.', precoCents: 4290, pesoKg: 0.45, img: 'bp-massa.jpg' },
+        { id: 'salada-frango', nome: 'Salada de frango grelhado', desc: 'Folhas, tomate e frango.', precoCents: 3290, pesoKg: 0.35, img: 'bp-salada.jpg' },
+        { id: 'petit', nome: 'Petit gâteau', desc: 'Chocolate com morango.', precoCents: 2290, pesoKg: 0.2, img: 'bp-petit.jpg' }
       ]
     },
     {
-      id: 'C-01', nome: 'Mercado Bom Preço', tipo: 'Mercado', preparoMin: 8,
+      id: 'C-01', nome: 'Sakura Sushi', tipo: 'Japonês', preparoMin: 18,
+      slogan: 'Tradição e sabor em cada detalhe.', logo: 'sakura-sushi.svg', capa: 'cover-sakura.jpg',
       itens: [
-        { id: 'cafe-500', nome: 'Café torrado 500 g', desc: 'Moagem média.', precoCents: 2190, pesoKg: 0.5 },
-        { id: 'banana', nome: 'Banana-prata (1 kg)', desc: 'Cerca de 7 unidades.', precoCents: 798, pesoKg: 1 },
-        { id: 'pao-forma', nome: 'Pão de forma integral', desc: 'Pacote de 500 g.', precoCents: 949, pesoKg: 0.5 },
-        { id: 'agua-fardo', nome: 'Fardo de água (12 × 500 ml)', desc: 'Pesado: dois fardos passam do limite do drone.', precoCents: 1890, pesoKg: 6.2 }
+        { id: 'uramaki', nome: 'Uramaki de salmão', desc: '8 peças com gergelim.', precoCents: 3890, pesoKg: 0.25, img: 'ss-uramaki.jpg' },
+        { id: 'hotroll', nome: 'Hot roll', desc: '8 peças com molho tarê.', precoCents: 3690, pesoKg: 0.27, img: 'ss-hotroll.jpg' },
+        { id: 'nigiri', nome: 'Nigiri salmão e atum', desc: '6 peças.', precoCents: 3490, pesoKg: 0.2, img: 'ss-nigiri.jpg' },
+        { id: 'poke', nome: 'Poke de salmão', desc: 'Tigela de 450 g.', precoCents: 4690, pesoKg: 0.5, img: 'ss-poke.jpg' },
+        { id: 'limonada', nome: 'Limonada com hortelã', desc: '400 ml.', precoCents: 1290, pesoKg: 0.42, img: 'ss-limonada.jpg' },
+        { id: 'shake-chocolate', nome: 'Milkshake de chocolate', desc: '400 ml com biscoito.', precoCents: 1990, pesoKg: 0.45, img: 'ss-shake.jpg' }
       ]
     }
   ];

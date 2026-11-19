@@ -18,24 +18,61 @@
   let lastPhase = null;
 
   const loja = () => dl.LOJAS.find((l) => l.id === lojaId);
+  const FOOD = '../assets/images/food/';
   const cart = () => (carts[lojaId] = carts[lojaId] || {});
   const modoInput = (m) => doc.querySelector('input[name="modo"][value="' + m + '"]');
   const modo = () => (modoInput('drone').checked ? 'drone' : 'convencional');
   const announce = (msg) => { $('cart-anuncio').textContent = msg; };
 
   /* ---------- Lojas e cardápio ---------- */
+  /* ---------- Busca e filtro por tipo ---------- */
+  let tipo = '';
+  const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const termo = () => norm($('dl-busca').value.trim());
+  const lojaCasa = (l, t) => !t || norm(l.nome + ' ' + l.tipo).includes(t) || l.itens.some((i) => norm(i.nome).includes(t));
+
+  function applyFilters() {
+    const t = termo();
+    doc.querySelectorAll('#dl-lojas .store').forEach((s) => {
+      const l = dl.LOJAS.find((x) => x.id === s.querySelector('input').value);
+      s.hidden = !((!tipo || l.tipo === tipo) && lojaCasa(l, t));
+    });
+    doc.querySelectorAll('#dl-menu .dish').forEach((d) => {
+      d.hidden = Boolean(t) && !norm(d.querySelector('.dish__name').textContent + ' ' + loja().nome).includes(t);
+    });
+  }
+
+  function renderTipos() {
+    const tipos = [''].concat([...new Set(dl.LOJAS.map((l) => l.tipo))]);
+    $('dl-tipos').replaceChildren(...tipos.map((t) => el('button', { type: 'button', 'aria-pressed': String(t === tipo), 'data-tipo': t, text: t || 'Tudo' })));
+  }
+
+  /* Janela ilustrativa: próximo bloco de 15 min a partir de agora + 10 min */
+  function renderJanela() {
+    const t = new Date(Date.now() + 10 * 60000);
+    t.setMinutes(Math.ceil(t.getMinutes() / 5) * 5, 0, 0);
+    const f = (d) => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    $('dl-janela').textContent = f(t) + '–' + f(new Date(t.getTime() + 15 * 60000));
+  }
+
   function renderStores() {
     $('dl-lojas').replaceChildren(...dl.LOJAS.map((l) => el('label', { class: 'store' }, [
       el('input', { type: 'radio', name: 'loja', value: l.id, checked: l.id === lojaId }),
+      l.capa ? el('img', { class: 'store__cover', src: FOOD + l.capa, alt: '', width: '480', height: '240', loading: 'lazy' }) : null,
       el('span', { class: 'store__body' }, [
-        el('span', { class: 'store__name', text: l.nome }),
-        el('span', { class: 'store__meta', text: l.tipo + ', preparo de ' + l.preparoMin + ' min' })
+        l.logo ? el('img', { class: 'store__logo', src: FOOD + l.logo, alt: '', width: '48', height: '48' }) : null,
+        el('span', { class: 'store__text' }, [
+          el('span', { class: 'store__name', text: l.nome }),
+          el('span', { class: 'store__meta', text: l.tipo + ' · preparo de ' + l.preparoMin + ' min' }),
+          l.slogan ? el('span', { class: 'store__slogan', text: l.slogan }) : null
+        ])
       ])
     ])));
   }
 
   function renderMenu() {
-    $('dl-menu').replaceChildren(...loja().itens.map((item) => el('li', { class: 'dish' }, [
+    $('dl-menu').replaceChildren(...loja().itens.map((item) => el('li', { class: 'dish' + (item.img ? '' : ' dish--noimg') }, [
+      item.img ? el('img', { class: 'dish__img', src: FOOD + item.img, alt: item.nome, width: '320', height: '240', loading: 'lazy' }) : null,
       el('div', { class: 'dish__text' }, [
         el('h3', { class: 'dish__name', text: item.nome }),
         el('p', { class: 'dish__desc', text: item.desc }),
@@ -95,6 +132,18 @@
     $('cart-bar').hidden = sum.qtd === 0;
     $('bar-qtd').textContent = sum.qtd + (sum.qtd === 1 ? ' item' : ' itens');
     $('bar-total').textContent = dl.formatBRL(total);
+    const cap = dl.fleetCapacity(state.drones);
+    $('peso-txt').textContent = dl.kg(sum.pesoKg).replace(' kg', '') + ' / ' + dl.kg(cap);
+    $('peso-fill').setAttribute('width', String(Math.min(100, cap ? (sum.pesoKg / cap) * 100 : 0)));
+    $('peso-fill').classList.toggle('is-over', sum.pesoKg > cap);
+    $('tab-qtd').hidden = sum.qtd === 0;
+    $('tab-qtd').textContent = String(sum.qtd);
+    $('dl-where').textContent = $('dl-bairro').selectedOptions[0] ? $('dl-bairro').selectedOptions[0].textContent : '—';
+    doc.querySelectorAll('#dl-etapas li').forEach((li, i) => {
+      const cur = sum.qtd ? 1 : 0;
+      if (i === cur) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+      li.classList.toggle('is-done', i < cur);
+    });
     return { sum, q, total };
   }
 
@@ -265,12 +314,25 @@
 
     renderStores();
     renderMenu();
+    renderTipos();
+    renderJanela();
+    $('dl-busca').addEventListener('input', applyFilters);
+    $('dl-tipos').addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-tipo]');
+      if (!b) return;
+      tipo = b.getAttribute('data-tipo');
+      renderTipos();
+      applyFilters();
+    });
+    const busca = doc.querySelector('[data-focus-search]');
+    if (busca) busca.addEventListener('click', () => root.setTimeout(() => $('dl-busca').focus(), 0));
     renderCart(state);
     renderTrack(state, Date.now());
 
     $('dl-lojas').addEventListener('change', (ev) => {
       lojaId = ev.target.value;
       renderMenu();
+      applyFilters();
       renderCart(store.get());
     });
     $('dl-menu').addEventListener('click', (ev) => {

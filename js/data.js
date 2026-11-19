@@ -3,7 +3,7 @@
 (function (root) {
   'use strict';
   const SIDEC = (root.SIDEC = root.SIDEC || {});
-  const VERSION = 4;
+  const VERSION = 5;
 
   const GRADE = { largura: 20, altura: 16 };
 
@@ -26,9 +26,9 @@
         { id: 'U-01', nome: 'UBS Jardim Esperança', tipo: 'ubs', x: 2, y: 11 },
         { id: 'U-02', nome: 'UBS Morro Azul', tipo: 'ubs', x: 15, y: 14 },
         { id: 'FA-01', nome: 'Farmácia Vila Nova', tipo: 'farmacia', x: 12, y: 9 },
-        { id: 'C-01', nome: 'Mercado Bom Preço', tipo: 'comercio', x: 7, y: 12 },
-        { id: 'C-02', nome: 'Restaurante Sabor da Vila', tipo: 'comercio', x: 12, y: 10 },
-        { id: 'C-03', nome: 'Padaria Grão Dourado', tipo: 'comercio', x: 4, y: 8 },
+        { id: 'C-01', nome: 'Sakura Sushi', tipo: 'comercio', x: 7, y: 12 },
+        { id: 'C-02', nome: 'Bella Pizza', tipo: 'comercio', x: 12, y: 10 },
+        { id: 'C-03', nome: 'Burger House', tipo: 'comercio', x: 4, y: 8 },
         { id: 'B-01', nome: 'Vila Serena', tipo: 'bairro', x: 18, y: 2 },
         { id: 'B-02', nome: 'Parque das Águas', tipo: 'bairro', x: 3, y: 14 },
         { id: 'B-03', nome: 'Centro', tipo: 'bairro', x: 10, y: 7 },
@@ -54,7 +54,7 @@
       entregas: [
         { id: 'SDC-0001', prioridade: 3, carga: 'Losartana 50 mg — uso contínuo', pesoKg: 0.3, origemId: 'FA-01', destinoId: 'B-02', solicitante: 'Cidadão (fictício)', status: 'fila', droneId: null, ordem: 1, faixaTemp: null },
         { id: 'SDC-0002', prioridade: 2, carga: 'Água potável e kit de primeiros socorros', pesoKg: 4.5, origemId: 'F-SUL', destinoId: 'B-05', solicitante: 'Defesa Civil (simulação)', status: 'fila', droneId: null, ordem: 2, faixaTemp: null },
-        { id: 'SDC-0003', prioridade: 4, carga: 'Pedido de marketplace — eletrônico pequeno', pesoKg: 1.2, origemId: 'C-01', destinoId: 'B-04', solicitante: 'Parceiro comercial (fictício)', status: 'fila', droneId: null, ordem: 3, faixaTemp: null },
+        { id: 'SDC-0003', prioridade: 4, carga: 'Combinado de sushi — restaurante fictício', pesoKg: 1.2, origemId: 'C-01', destinoId: 'B-04', solicitante: 'Parceiro comercial (fictício)', status: 'fila', droneId: null, ordem: 3, faixaTemp: null },
         { id: 'SDC-0004', prioridade: 4, carga: 'Refeição — restaurante parceiro (fictício)', pesoKg: 1.8, origemId: 'C-02', destinoId: 'B-03', solicitante: 'Parceiro comercial (fictício)', status: 'fila', droneId: null, ordem: 4, faixaTemp: null },
         { id: 'SDC-0005', prioridade: 3, carga: 'Amostras de exames laboratoriais', pesoKg: 1, origemId: 'U-02', destinoId: 'H-03', solicitante: 'UBS Morro Azul', status: 'fila', droneId: null, ordem: 5, faixaTemp: { min: 2, max: 8 } }
       ]
