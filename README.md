@@ -122,7 +122,8 @@ Site (HTML/CSS/JS puro) ──fetch──▶ Node-RED (API + chatbot) ──▶ 
 - Só a **CentralOperacao Java** escolhe o drone (não há segundo motor de despacho; a função `escolher_drone()` do Python continua só no programa acadêmico).
 - O pedido fica `atribuida` com o drone reservado e **só entra em voo na decolagem** (`POST /api/pedidos/:codigo/decolar`).
 - Reserva do drone com `UPDATE` condicional dentro de transação: o mesmo drone não é despachado duas vezes.
-- Autorização: **P1** só hospital ou Central de Transplantes; **P2** só Defesa Civil ou município. O **chatbot público não autoriza P1 nem P2**.
+- Autorização: **P1** só hospital ou Central de Transplantes, com **conta de unidade de saúde** e um **código de autorização de órgão** emitido pela Central para aquele transporte (uso único, válido por 6 horas, vinculado ao hospital). **P2** só com conta de operador da Central (em nome da Defesa Civil ou do município). O **chatbot público não autoriza P1 nem P2**.
+- Decolar, concluir, processar a fila e liberar drones exigem conta de **operador**.
 - Drone em pouso de emergência, manutenção ou aguardando liberação **nunca** é despachado; não há volta automática à frota.
 - Recebimento grava responsável, destinatário, estado da carga e horário, e entra no histórico.
 
@@ -150,15 +151,28 @@ npm start
 
 Nenhuma chave fica no código, no fluxo ou no banco. A API escuta só em `127.0.0.1` e aceita CORS apenas de `http://localhost:5173`.
 
+### Contas (uma conta para o portal, o SADEC Saúde e o SADEC Delivery)
+- Cadastro e login em `entrar.html`, gravados no SQLite pela API. Senha guardada só como hash **scrypt** com sal; o login gera um token aleatório e o banco guarda apenas o hash SHA-256 dele. "Manter conectado" vale 30 dias (sem ele, 12 horas e só até fechar o navegador).
+- Perfis: **cliente** (Delivery e remédios), **unidade de saúde** (escolhe o hospital da rede no cadastro) e **operador** (criado só pela Central, não pelo cadastro público).
+- O cabeçalho do portal, o Saúde e o Delivery mostram a conta conectada. No Delivery, com a API ligada e conta de cliente, o pedido também é gravado na Central (P4) e pode ser seguido no mapa real.
+- O código de 6 dígitos, o Face ID e "Esqueci a senha" continuam **simulados** (nenhum SMS ou e-mail é enviado).
+- Contas de demonstração (fictícias, criadas pela migração 002), todas com a senha `sadec2026`: `operador@sadec.demo`, `hospital@sadec.demo` (Hospital das Clínicas) e `cliente@sadec.demo`.
+
+Transporte de órgão: o operador entra na Central, emite o código para o hospital (painel "Central integrada") e o informa ao hospital; a equipe entra com a conta da unidade de saúde e digita o código no pedido de órgão do SADEC Saúde. O código é consumido na mesma transação que grava o pedido.
+
 ### Endpoints
 | Método | Rota | O que faz |
 |---|---|---|
+| POST | `/api/contas` | Cria conta (cliente ou unidade de saúde) |
+| POST | `/api/sessoes` · `/api/sessoes/sair` | Login (devolve o token) e saída |
+| GET | `/api/conta` · `/api/meus-pedidos` | Conta da sessão e pedidos dela (`Authorization: Bearer <token>`) |
+| GET/POST | `/api/codigos-orgao` | Lista e emite códigos de autorização de órgão (operador) |
 | POST | `/api/pedidos` | Cria pedido: valida, Python calcula, Java decide, SQLite grava, evento registrado |
 | GET | `/api/pedidos` · `/api/pedidos/:codigo` | Lista / consulta com histórico e recebimento |
 | POST | `/api/pedidos/:codigo/decolar` · `/concluir` | Decolagem e conclusão da entrega |
 | POST | `/api/pedidos/:codigo/recebimento` | Responsável, destinatário e estado da carga |
 | POST | `/api/fila/processar` | Ordena a fila pela Java e despacha os pendentes |
-| GET | `/api/drones` · `/api/locais` | Frota e locais da rede piloto |
+| GET | `/api/drones` · `/api/locais` | Frota; locais com latitude e longitude (181 unidades do CNES listadas no `sadec.py`, bairros e filiais) |
 | POST | `/api/drones/:codigo/recuperacao` | `concluir_resgate`, `concluir_manutencao` ou `liberar` |
 | GET/POST | `/sadec` · `/sadec/mensagem` | Webchat original e mensagens do chatbot |
 | GET | `/sadec/widget.js` · `/sadec/widget.css` | Widget incorporável (`<script src="http://localhost:1880/sadec/widget.js">`) |
@@ -172,12 +186,13 @@ POST /api/pedidos
 ```
 
 ### Banco de dados
-`ChatBot/migracoes/migrar.py up|down` aplica ou desfaz a migração 001 (faz backup antes, roda em transação): novos estados de drone e de pedido, origem, distância, peso e solicitante no pedido, e as tabelas `tbl_evento` e `tbl_recebimento`. Para voltar aos dados demonstrativos depois de testar: pare a API e rode `git checkout -- ChatBot/SADEC_Chatbot.db`.
+`ChatBot/migracoes/migrar.py up|down` aplica ou desfaz a migração 001 (faz backup antes, roda em transação): novos estados de drone e de pedido, origem, distância, peso e solicitante no pedido, e as tabelas `tbl_evento` e `tbl_recebimento`.
+`ChatBot/migracoes/migrar_002.py up|down` aplica ou desfaz a migração 002: latitude, longitude e endereço dos locais; todas as unidades do CNES do `sadec.py` (distância até a filial mais próxima pelo `calcular_distancia()` do Python); coordenadas das filiais; e as tabelas `tbl_usuario`, `tbl_sessao` e `tbl_codigo_orgao`, com o dono de cada pedido. Para voltar aos dados demonstrativos depois de testar: pare a API e rode `git checkout -- ChatBot/SADEC_Chatbot.db`.
 
 ### Testes
 | Comando | O que cobre |
 |---|---|
-| `npm test` | 42 testes do site + 8 testes de integração (pulados se Python/Java não estiverem configurados) |
+| `npm test` | 44 testes do site + 12 testes de integração: contas, sessões, códigos de órgão, P1/P2, rotas com coordenadas (pulados se Python/Java não estiverem configurados) |
 | `python Python/test_sadec_integracao.py` | 13 testes: distância, bateria, reserva de 30%, limite exato, entrada inválida, CLI |
 | `java -cp Java/SADEC/out br.com.fiap.sadec.integracao.IntegracaoTeste` | 19 testes: fila P1–P4, empate, preempção, comercial em voo, bateria, pane, resgate, manutenção, liberação |
 
@@ -191,9 +206,8 @@ POST /api/pedidos
 | ![Início](docs/capturas/inicio.png) | ![Chatbot](docs/capturas/chatbot.png) | ![Saúde no celular](docs/capturas/saude-celular.png) |
 
 ### Limitações e o que é simulado
-- Frota, rotas, mapas, telemetria (bateria em voo, temperatura, vibração) e horários do mapa são **simulados**. Pedidos da API não transmitem posição em tempo real: o mapa e a telemetria aparecem só no modo simulado.
-- Hospitais, UBS, lojas, drones e pedidos são **fictícios**. Não há parceria com hospitais, órgãos públicos ou plataformas de delivery.
-- A escolha do perfil no SADEC Saúde e o login de `entrar.html` são **demonstrações**: não há autenticação real. A autorização de P1/P2 é aplicada pela API com base no tipo de solicitante informado.
-- O Delivery continua no modo simulado (não grava pedidos na API).
+- No rastreamento de um pedido da Central (código `SD`), o mapa usa ruas reais do **OpenStreetMap** (precisa de internet; atribuição "© OpenStreetMap contributors" no mapa) e as coordenadas gravadas no banco. Não há drone real: a posição em voo é **estimada** pelo horário da decolagem e pela distância, e a telemetria (temperatura, vibração) só existe no modo simulado. Os códigos `SDC-` continuam na cidade-modelo fictícia.
+- Nomes e endereços de hospitais vêm do CNES (dados públicos) e servem só para localização no mapa. Drones, pedidos, contas de demonstração e lojas são **fictícios**. Não há parceria com hospitais, órgãos públicos ou plataformas de delivery.
+- As contas são de demonstração acadêmica (banco local, sem recuperação de senha nem verificação de e-mail). O Delivery calcula preço e anima o voo na simulação; com conta conectada, o pedido também é gravado na Central.
 - O chatbot usa a **Groq** (Whisper e LLM) quando há chave configurada. **Não** implementa IBM watsonx Assistant; a conformidade com esse requisito depende de validação com o professor.
 - O programa de console Python guarda pedidos em listas na memória (não persistente) e tem a senha de emergência no próprio código, como na entrega da disciplina.
