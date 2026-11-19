@@ -397,10 +397,40 @@ function obterPedido(codigo) {
   } finally { db.close(); }
 }
 
+/* Horário da última decolagem de cada pedido (base da posição estimada no mapa). */
+function decolagens(db) {
+  return new Map(db.prepare("SELECT CD_Rastreio, MAX(DT_Evento) AS t FROM tbl_evento WHERE ST_Novo = 'em_voo' GROUP BY CD_Rastreio").all().map((r) => [r.CD_Rastreio, r.t]));
+}
+
 function listarPedidos() {
   const db = abrir();
   try {
-    return db.prepare('SELECT * FROM tbl_entrega ORDER BY NR_Prioridade, ID_Entrega').all().map(pedidoJson);
+    const dec = decolagens(db);
+    return db.prepare('SELECT * FROM tbl_entrega ORDER BY NR_Prioridade, ID_Entrega').all().map((l) => Object.assign(pedidoJson(l), {
+      rota: l.ST_Status === 'entregue' ? [] : rotaDoPedido(db, l), decolou_em: dec.get(l.CD_Rastreio) || null
+    }));
+  } finally { db.close(); }
+}
+
+/* Decolar e concluir: a Central (operador) sempre pode. O dono de um pedido comercial (P4) também:
+   a loja libera a decolagem quando o pedido fica pronto e o cliente confirma que recebeu,
+   mas só depois da chegada prevista (velocidade de referência de cruzeiro). */
+const VELOCIDADE_KMH = 48;
+function responsavelDaAcao(autorizacao, codigo, acao) {
+  const conta = exigirConta(autorizacao);
+  if (conta.perfil === 'operador') return conta.nome;
+  const db = abrir();
+  try {
+    const l = db.prepare('SELECT * FROM tbl_entrega WHERE CD_Rastreio = ?').get(String(codigo || '').toUpperCase());
+    if (!l) throw new ErroApi(404, 'Pedido ' + codigo + ' não encontrado.');
+    if (l.NR_Usuario !== conta.id || l.NR_Prioridade !== 4) throw new ErroApi(403, 'Só a Central ou o dono do pedido comercial pode fazer esta ação.');
+    if (acao === 'decolar') return 'Loja parceira (pedido de ' + conta.nome + ')';
+    const dec = decolagens(db).get(l.CD_Rastreio);
+    const chegada = dec ? new Date(dec.replace(' ', 'T')).getTime() + (l.NR_Distancia_Km || 0) / VELOCIDADE_KMH * 3600000 : 0;
+    if (l.ST_Status === 'em_voo' && Date.now() < chegada) {
+      throw new ErroApi(409, 'O drone ainda está a caminho. Confirme o recebimento depois da chegada prevista.');
+    }
+    return conta.nome + ' (cliente)';
   } finally { db.close(); }
 }
 
@@ -412,6 +442,14 @@ function listarLocais() {
     const filiais = db.prepare('SELECT * FROM tbl_filial ORDER BY ID_Filial').all()
       .map((f) => ({ nome: f.NM_Filial, tipo: 'filial', bairro: f.NM_Bairro, lat: f.NR_Latitude, lon: f.NR_Longitude }));
     return locais.concat(filiais);
+  } finally { db.close(); }
+}
+
+/* Histórico recente de todos os pedidos e drones (mais recente primeiro), para o painel da Central. */
+function listarEventos() {
+  const db = abrir();
+  try {
+    return db.prepare('SELECT * FROM tbl_evento ORDER BY ID_Evento DESC LIMIT 40').all().map(eventoJson);
   } finally { db.close(); }
 }
 
@@ -522,7 +560,7 @@ function recuperarDrone(codigoDrone, acao, responsavel) {
 
 module.exports = {
   CONFIG, ErroApi, AUTORIZADOS,
-  criarPedido, obterPedido, listarPedidos, listarDrones, listarLocais, processarFila,
-  decolar, concluirEntrega, registrarRecebimento, recuperarDrone,
+  criarPedido, obterPedido, listarPedidos, listarDrones, listarLocais, listarEventos, processarFila,
+  decolar, concluirEntrega, registrarRecebimento, recuperarDrone, responsavelDaAcao, VELOCIDADE_KMH,
   criarConta, entrar, sair, contaDaSessao, exigirConta, meusPedidos, emitirCodigoOrgao, listarCodigosOrgao
 };

@@ -754,7 +754,7 @@
     "initialize": "",
     "finalize": "",
     "libs": [],
-    "func": "// Decolar: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.decolar(msg.req.params.codigo, api.exigirConta(auth, [\"operador\"]).nome) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "func": "// Decolar: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.decolar(msg.req.params.codigo, api.responsavelDaAcao(auth, msg.req.params.codigo, \"decolar\")) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
     "x": 470,
     "y": 240,
     "wires": [
@@ -801,7 +801,7 @@
     "initialize": "",
     "finalize": "",
     "libs": [],
-    "func": "// Concluir entrega: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.concluirEntrega(msg.req.params.codigo, api.exigirConta(auth, [\"operador\"]).nome) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "func": "// Concluir entrega: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.concluirEntrega(msg.req.params.codigo, api.responsavelDaAcao(auth, msg.req.params.codigo, \"concluir\")) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
     "x": 470,
     "y": 300,
     "wires": [
@@ -960,6 +960,53 @@
     "headers": {},
     "x": 720,
     "y": 480,
+    "wires": []
+  },
+  {
+    "id": "api_10_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "GET /api/eventos",
+    "url": "/api/eventos",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 840,
+    "wires": [
+      [
+        "api_10_fn"
+      ]
+    ]
+  },
+  {
+    "id": "api_10_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Listar eventos",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "func": "// Listar eventos: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.listarEventos() };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "x": 470,
+    "y": 840,
+    "wires": [
+      [
+        "api_10_out"
+      ]
+    ]
+  },
+  {
+    "id": "api_10_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 840,
     "wires": []
   },
   {

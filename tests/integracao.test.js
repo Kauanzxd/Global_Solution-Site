@@ -122,6 +122,27 @@ test('P4 comercial de cliente e P3 de cidadão entram pela mesma API', { skip: p
   assert.throws(() => api.criarPedido({ tipo_carga: 'encomenda', destino: 'Lua', solicitante: { tipo: 'cliente' } }), (e) => e.status === 400);
 });
 
+test('dono do pedido comercial libera a decolagem e só confirma o recebimento depois da chegada prevista', { skip: pular }, () => {
+  const token = 'Bearer ' + api.entrar({ email: 'cliente@sadec.demo', senha: 'sadec2026' }).token;
+  const r = api.criarPedido({ tipo_carga: 'encomenda', destino: 'Mooca', origem: 'Burger House', solicitante: { tipo: 'cliente' }, peso_kg: 1 }, api.contaDaSessao(token));
+  const cod = r.pedido.codigo;
+  const lista = api.listarPedidos().find((p) => p.codigo === cod);
+  assert.ok(lista.rota.some((q) => q.tipo === 'destino'));
+  assert.equal(lista.decolou_em, null);
+  assert.throws(() => api.responsavelDaAcao(null, cod, 'decolar'), (e) => e.status === 401);
+  const outro = 'Bearer ' + api.entrar({ email: 'hospital@sadec.demo', senha: 'sadec2026' }).token;
+  assert.throws(() => api.responsavelDaAcao(outro, cod, 'decolar'), (e) => e.status === 403);
+  assert.match(api.responsavelDaAcao(token, cod, 'decolar'), /Loja parceira/);
+  api.decolar(cod, api.responsavelDaAcao(token, cod, 'decolar'));
+  assert.ok(api.listarPedidos().find((p) => p.codigo === cod).decolou_em);
+  const ultimo = api.listarEventos()[0];
+  assert.equal(ultimo.pedido_codigo, cod);
+  assert.match(ultimo.responsavel, /Loja parceira/);
+  // recém-decolado: a chegada prevista ainda não passou
+  assert.throws(() => api.responsavelDaAcao(token, cod, 'concluir'), (e) => e.status === 409);
+  assert.equal(api.responsavelDaAcao('Bearer ' + api.entrar({ email: 'operador@sadec.demo', senha: 'sadec2026' }).token, cod, 'concluir'), 'Operador da Central (demonstração)');
+});
+
 test('decolagem, entrega e recebimento com responsável, destinatário e estado ficam no histórico', { skip: pular }, () => {
   const r = api.criarPedido({ tipo_carga: 'remedio', destino: 'Mooca', solicitante: { tipo: 'farmacia', nome: 'Farmácia (fictícia)' } });
   const cod = r.pedido.codigo;
