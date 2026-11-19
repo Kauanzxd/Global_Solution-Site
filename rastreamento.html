@@ -5,23 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rastreamento — SADEC Control</title>
   <meta name="description" content="Rastreamento demonstrativo de entregas SADEC: mapa esquemático, etapas, telemetria e demonstrações de segurança.">
+  <link rel="icon" href="assets/icons/drone-bot.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/drone-bot.css">
   <link rel="stylesheet" href="css/control.css">
 </head>
-<body class="control" data-page="rastreamento">
+<body class="tracking" data-page="rastreamento">
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
   <header class="site-header">
     <div class="container site-header__bar">
       <a class="brand" href="index.html" aria-label="SADEC, página inicial">
+        <img class="brand__mark" src="assets/icons/drone-bot.svg" alt="" width="42" height="42">
         <span class="brand__name">SADEC</span>
-        <span class="brand__tag">Control · rastreamento</span>
       </a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
         <span class="nav-toggle__bars" aria-hidden="true"></span>
@@ -30,99 +31,199 @@
       <nav id="site-nav" class="site-nav" aria-label="Principal">
         <ul class="site-nav__list">
           <li><a href="index.html">Início</a></li>
-          <li><a href="sobre.html">Sobre</a></li>
-          <li><a href="central.html">Central</a></li>
-          <li><a href="rastreamento.html" aria-current="page">Rastreamento</a></li>
+          <li><a href="como-funciona.html">Como funciona</a></li>
           <li><a href="saude/index.html">Saúde</a></li>
           <li><a href="delivery/index.html">Delivery</a></li>
-          <li><a href="faq.html">FAQ</a></li>
-          <li><a href="integrantes.html">Integrantes</a></li>
-          <li><a class="site-nav__cta" href="contato.html">Contato</a></li>
+          <li><a href="rastreamento.html" aria-current="page">Rastrear</a></li>
+          <li><a href="faq.html">Ajuda</a></li>
+          <li class="site-nav__extra"><a href="central.html">Central de Operações</a></li>
+          <li class="site-nav__extra"><a href="orgaos.html">Missão P1 · Órgãos</a></li>
+          <li class="site-nav__extra"><a href="sobre.html">Sobre</a></li>
+          <li class="site-nav__extra"><a href="drone-bot.html">Drone Bot</a></li>
+          <li class="site-nav__extra"><a href="integrantes.html">Integrantes</a></li>
+          <li class="site-nav__extra"><a href="entrar.html">Entrar</a></li>
         </ul>
       </nav>
+      <div class="site-header__end">
+        <span class="tag tag--demo">Dados ilustrativos</span>
+        <a class="btn btn--primary btn--sm site-header__cta" href="entrar.html">Entrar</a>
+      </div>
     </div>
   </header>
 
-  <main id="conteudo" class="ops">
-    <section class="ops__bar" aria-labelledby="page-title">
-      <div class="container ops__bar-inner">
-        <div>
-          <p class="eyebrow eyebrow--light">SADEC Control · simulação</p>
-          <h1 id="page-title" class="ops__title">Rastreamento</h1>
+  <main id="conteudo" class="trk">
+    <div class="container">
+      <form class="trk-bar" id="busca" role="search" novalidate>
+        <h1 id="page-title" class="trk-bar__title">Rastrear</h1>
+        <div class="trk-bar__field">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <label class="visually-hidden" for="track-input">Código da entrega</label>
+          <input class="trk-bar__input mono" id="track-input" type="text" list="track-list" autocomplete="off" spellcheck="false" maxlength="20" placeholder="SDC-0001">
+          <datalist id="track-list"></datalist>
+          <button class="btn btn--primary btn--sm" type="submit">Rastrear</button>
         </div>
-        <form class="track-search" id="busca" role="search">
-          <label for="track-select">Entrega</label>
-          <select class="input" id="track-select"></select>
-          <button class="btn btn--ghost-light" type="button" id="btn-track-tour">Tutorial</button>
-        </form>
+        <div class="trk-bar__examples">
+          <span class="muted">Exemplos</span>
+          <span id="track-examples" class="trk-bar__chips"></span>
+          <button class="trk-chip trk-chip--ghost" type="button" id="btn-track-tour">Tutorial</button>
+        </div>
+      </form>
+
+      <section class="trk-empty" id="track-notfound" aria-live="polite" hidden>
+        <span class="trk-empty__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4.5 4.5M8.5 11h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        <h2 id="notfound-title">Não encontramos esse código</h2>
+        <p class="muted">Os códigos começam com SDC- e valem para Saúde, Delivery e Central. Nesta demonstração, só os códigos da simulação funcionam.</p>
+        <button class="btn btn--ghost" type="button" id="track-example">Ver entrega de exemplo</button>
+      </section>
+
+      <div class="trk-grid" id="track-found">
+        <section class="trk-map" id="mapa" aria-label="Mapa da rota">
+          <svg class="tmap" id="map" viewBox="-4 -4 208 168" role="img" aria-labelledby="map-desc" preserveAspectRatio="xMidYMid slice">
+            <desc id="map-desc">Mapa esquemático com a rota da entrega selecionada, zonas de pouso seguro e a posição atual do drone.</desc>
+            <g id="map-grid" class="tmap__grid"></g>
+            <g id="map-points"></g>
+            <g id="map-route"></g>
+            <g id="map-drone" class="tmap__drone"></g>
+          </svg>
+          <div class="trk-map__eta" aria-live="off">
+            <p class="trk-eta"><span>Chegada</span><strong class="mono" id="eta-time">—</strong></p>
+            <p class="trk-eta trk-eta--dark"><span>Faltam</span><strong class="mono" id="eta-left">—</strong></p>
+          </div>
+          <div class="trk-map__tools">
+            <button type="button" class="trk-tool" data-zoom="in" aria-label="Aproximar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+            <button type="button" class="trk-tool" data-zoom="out" aria-label="Afastar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+            <button type="button" class="trk-tool" data-zoom="drone" aria-label="Centralizar no drone"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4 4 11l7 2 2 7 7-16Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>
+          </div>
+          <p class="trk-map__note mono" id="map-note">Cidade-modelo fictícia · telemetria simulada</p>
+        </section>
+
+        <aside class="trk-side" aria-label="Detalhes da entrega">
+          <section class="trk-card" aria-labelledby="track-code">
+            <div class="trk-code">
+              <span class="trk-code__prio" id="track-prio" data-prio="0">P–</span>
+              <div>
+                <p class="muted trk-small">Código</p>
+                <h2 class="mono trk-code__id" id="track-code">—</h2>
+              </div>
+              <span class="trk-pill" id="track-status" data-status="">—</span>
+            </div>
+            <ol class="trk-progress" id="track-progress" aria-label="Progresso da entrega">
+              <li>Despachado</li><li>Em voo</li><li>Entregue</li>
+            </ol>
+            <p class="trk-cargo" id="track-cargo">—</p>
+            <p class="trk-reason" id="track-reason" hidden></p>
+          </section>
+
+          <section class="trk-card" aria-label="Rota e drone">
+            <dl class="trk-dl">
+              <div><dt>De</dt><dd id="track-from">—</dd></div>
+              <div><dt>Para</dt><dd id="track-to">—</dd></div>
+              <div><dt>Drone</dt><dd class="mono" id="track-drone">—</dd></div>
+              <div><dt>Bateria</dt><dd class="trk-bat"><span class="trk-bat__bar"><svg viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true"><rect class="trk-bat__track" width="100" height="6" rx="3"/><rect class="trk-bat__fill" id="track-bat-fill" width="0" height="6" rx="3"/></svg></span><span class="mono" id="track-bat">—</span></dd></div>
+            </dl>
+          </section>
+
+          <section class="trk-card trk-temp" id="telemetria" aria-labelledby="tele-title">
+            <span class="trk-temp__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 14.5V5a2 2 0 1 1 4 0v9.5a3.5 3.5 0 1 1-4 0Z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>
+            <div class="trk-temp__body">
+              <h2 class="muted trk-small" id="tele-title">Temperatura do contêiner</h2>
+              <p><strong class="mono trk-temp__value" id="track-temp">—</strong> <span class="trk-temp__range" id="track-temp-range"></span></p>
+            </div>
+            <svg class="trk-spark" id="track-spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><polyline id="track-spark-line" points="" /></svg>
+            <dl class="trk-tele" id="telemetry"></dl>
+            <p class="alert-box" id="temp-alert" role="status"></p>
+          </section>
+
+          <section class="trk-card" id="etapas" aria-labelledby="etapas-title">
+            <h2 class="trk-card__title" id="etapas-title">Linha do tempo</h2>
+            <ol class="trk-time" id="steps"></ol>
+          </section>
+        </aside>
       </div>
-    </section>
 
-    <div class="container track">
-      <section class="panel track__summary" aria-labelledby="summary-title">
-        <h2 id="summary-title" class="visually-hidden">Resumo da entrega</h2>
-        <div class="summary" id="summary"></div>
-      </section>
+      <div class="trk-more">
+        <section class="trk-card" id="seguranca" aria-labelledby="seg-title">
+          <h2 class="trk-card__title" id="seg-title">Demonstrações de segurança</h2>
+          <p class="muted trk-small">Disponíveis enquanto a entrega está em voo.</p>
+          <div class="safety-actions" id="safety-actions">
+            <button class="btn btn--primary" type="button" data-action="launch">Decolar</button>
+            <button class="btn btn--ghost" type="button" data-action="bateria">Bateria insuficiente</button>
+            <button class="btn btn--ghost" type="button" data-action="motor">Falha de motor</button>
+            <button class="btn btn--danger" type="button" data-action="grave">Falha grave</button>
+            <button class="btn btn--ghost" type="button" data-action="temp">Temperatura fora da faixa</button>
+          </div>
+          <p class="muted trk-small" id="safety-hint"></p>
+          <div class="incident" id="incident" role="status"></div>
+        </section>
 
-      <section class="panel track__map" id="mapa" aria-labelledby="mapa-title">
-        <div class="panel__head">
-          <h2 id="mapa-title" class="panel__title">Mapa esquemático</h2>
-          <p class="panel__hint">Cidade-modelo fictícia (20 × 16 km). Não representa rotas reais autorizadas.</p>
-        </div>
-        <svg class="map" id="map" viewBox="-4 -4 208 168" role="img" aria-labelledby="map-desc">
-          <desc id="map-desc">Mapa esquemático com bases, hospitais, zonas de pouso seguro, a rota da entrega selecionada e a posição atual do drone.</desc>
-          <g id="map-grid" class="map__grid"></g>
-          <g id="map-route"></g>
-          <g id="map-points"></g>
-          <g id="map-drone" class="map__drone"></g>
-        </svg>
-        <ul class="legend" aria-label="Legenda do mapa">
-          <li><span class="legend__key legend__key--base" aria-hidden="true"></span>Base</li>
-          <li><span class="legend__key legend__key--hospital" aria-hidden="true"></span>Hospital / UBS</li>
-          <li><span class="legend__key legend__key--zona" aria-hidden="true"></span>Zona de pouso seguro</li>
-          <li><span class="legend__key legend__key--rota" aria-hidden="true"></span>Rota</li>
-        </ul>
-      </section>
+        <section class="trk-card" id="recebimento" aria-labelledby="receb-title">
+          <h2 class="trk-card__title" id="receb-title">Registro de recebimento</h2>
+          <p class="muted trk-small">Disponível quando a entrega é concluída. Dados fictícios, salvos só no seu navegador.</p>
+          <form class="receipt" id="receipt-form" novalidate>
+            <div class="field">
+              <label for="r-responsavel">Responsável pela entrega</label>
+              <input class="input" id="r-responsavel" name="responsavel" type="text" maxlength="60" autocomplete="off" placeholder="Ex.: Operador da Central">
+            </div>
+            <div class="field">
+              <label for="r-destinatario">Destinatário</label>
+              <input class="input" id="r-destinatario" name="destinatario" type="text" maxlength="60" autocomplete="off" placeholder="Ex.: Enfermeira da UBS (fictícia)">
+            </div>
+            <div class="field">
+              <label for="r-carga">Identificação da carga</label>
+              <input class="input mono" id="r-carga" type="text" readonly>
+            </div>
+            <div class="field">
+              <label for="r-estado">Estado da entrega</label>
+              <select class="input" id="r-estado" name="estado">
+                <option value="">Selecione…</option>
+                <option value="integra">Íntegra</option>
+                <option value="avariada">Com avaria</option>
+                <option value="temperatura">Fora da faixa térmica</option>
+                <option value="recusada">Recusada</option>
+              </select>
+            </div>
+            <button class="btn btn--primary" type="submit">Registrar recebimento</button>
+          </form>
+          <p class="form-status" id="receipt-msg" role="status"></p>
+          <dl class="receipt__done" id="receipt-done" hidden></dl>
+        </section>
+      </div>
 
-      <section class="panel" id="etapas" aria-labelledby="etapas-title">
-        <div class="panel__head"><h2 id="etapas-title" class="panel__title">Etapas</h2></div>
-        <ol class="steps" id="steps"></ol>
-      </section>
-
-      <section class="panel" id="telemetria" aria-labelledby="tele-title">
-        <div class="panel__head">
-          <h2 id="tele-title" class="panel__title">Telemetria</h2>
-          <p class="panel__hint">Leituras demonstrativas calculadas pela simulação.</p>
-        </div>
-        <dl class="telemetry" id="telemetry"></dl>
-        <div class="alert-box" id="temp-alert" role="status"></div>
-      </section>
-
-      <section class="panel" id="seguranca" aria-labelledby="seg-title">
-        <div class="panel__head">
-          <h2 id="seg-title" class="panel__title">Demonstrações de segurança</h2>
-          <p class="panel__hint">Disponíveis enquanto a entrega está em voo.</p>
-        </div>
-        <div class="safety" id="safety-actions">
-          <button class="btn btn--primary" type="button" data-action="launch">Decolar</button>
-          <button class="btn btn--ghost-light" type="button" data-action="bateria">Bateria insuficiente</button>
-          <button class="btn btn--ghost-light" type="button" data-action="motor">Falha de motor</button>
-          <button class="btn btn--danger" type="button" data-action="grave">Falha grave</button>
-          <button class="btn btn--ghost-light" type="button" data-action="temp">Temperatura fora da faixa</button>
-        </div>
-        <p class="panel__hint" id="safety-hint"></p>
-        <div class="incident" id="incident" role="status"></div>
-      </section>
+      <p class="ops__note">Simulação acadêmica: o SADEC não controla drones reais e a telemetria é calculada no navegador.</p>
     </div>
-
-    <p class="container ops__note">Simulação acadêmica: o SADEC não controla drones reais. O mesmo pedido e o mesmo drone aparecem na Central.</p>
   </main>
 
-  <footer class="site-footer site-footer--compact">
+  <footer class="site-footer">
     <div class="container">
-      <p class="site-footer__legal">Projeto acadêmico — FIAP Global Solution 2026. O site não controla drones reais. <a href="index.html">Voltar ao portal</a></p>
+      <div class="site-footer__grid">
+        <div class="site-footer__brand">
+          <a class="brand" href="index.html"><img class="brand__mark" src="assets/icons/drone-bot.svg" alt="" width="42" height="42"><span class="brand__name">SADEC</span></a>
+          <p>Sistema Autônomo de Drones de Cuidado e Entrega. Projeto acadêmico da FIAP Global Solution 2026.</p>
+        </div>
+        <div>
+          <h2>Operação</h2>
+          <ul><li><a href="como-funciona.html">Como funciona</a></li><li><a href="central.html">Central de Operações</a></li><li><a href="rastreamento.html">Rastrear uma entrega</a></li><li><a href="orgaos.html">Missão P1 · Órgãos</a></li></ul>
+        </div>
+        <div>
+          <h2>Serviços</h2>
+          <ul><li><a href="saude/index.html">SADEC Saúde</a></li><li><a href="delivery/index.html">SADEC Delivery</a></li><li><a href="drone-bot.html">Drone Bot</a></li></ul>
+        </div>
+        <div>
+          <h2>Projeto</h2>
+          <ul><li><a href="sobre.html">Sobre</a></li><li><a href="faq.html">Perguntas frequentes</a></li><li><a href="faq.html#contato">Contato</a></li><li><a href="integrantes.html">Integrantes</a></li><li><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório</a></li></ul>
+        </div>
+      </div>
+      <p class="site-footer__legal">O SADEC é um protótipo acadêmico conceitual. Não opera comercialmente, não controla drones reais, não possui parcerias hospitalares e não tem integração com plataformas de delivery. Frota, rotas, telemetria e missões são simulações com dados fictícios. Uma operação real dependeria de autorização da ANAC e do DECEA.</p>
     </div>
   </footer>
+
+  <nav class="tabbar" aria-label="Atalhos">
+    <a class="tabbar__item" href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5v-5H9v5H4z"/></svg><span>Início</span></a>
+    <a class="tabbar__item" href="saude/index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg><span>Saúde</span></a>
+    <a class="tabbar__item" href="delivery/index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Delivery</span></a>
+    <a class="tabbar__item" href="rastreamento.html" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11Z"/><circle cx="12" cy="10" r="2.2"/></svg><span>Rastrear</span></a>
+    <button class="tabbar__item" type="button" data-open-menu aria-controls="site-nav"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg><span>Menu</span></button>
+  </nav>
 
   <script src="js/ui.js" defer></script>
   <script src="js/operations.js" defer></script>

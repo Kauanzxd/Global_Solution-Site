@@ -5,92 +5,145 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Central de operações — SADEC Control</title>
   <meta name="description" content="Central operacional demonstrativa do SADEC: fila por prioridade, frota, novas solicitações e cenários de teste das regras.">
+  <link rel="icon" href="assets/icons/drone-bot.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/drone-bot.css">
   <link rel="stylesheet" href="css/control.css">
 </head>
-<body class="control" data-page="central">
+<body class="control ops-app" data-page="central">
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
-  <header class="site-header">
-    <div class="container site-header__bar">
-      <a class="brand" href="index.html" aria-label="SADEC, página inicial">
-        <span class="brand__name">SADEC</span>
-        <span class="brand__tag">Control · central</span>
-      </a>
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
-        <span class="nav-toggle__bars" aria-hidden="true"></span>
-        <span class="visually-hidden">Abrir menu</span>
-      </button>
-      <nav id="site-nav" class="site-nav" aria-label="Principal">
-        <ul class="site-nav__list">
-          <li><a href="index.html">Início</a></li>
-          <li><a href="sobre.html">Sobre</a></li>
-          <li><a href="central.html" aria-current="page">Central</a></li>
-          <li><a href="rastreamento.html">Rastreamento</a></li>
-          <li><a href="saude/index.html">Saúde</a></li>
-          <li><a href="delivery/index.html">Delivery</a></li>
-          <li><a href="faq.html">FAQ</a></li>
-          <li><a href="integrantes.html">Integrantes</a></li>
-          <li><a class="site-nav__cta" href="contato.html">Contato</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+  <!-- Barra lateral de ícones (computador) -->
+  <nav class="ops-rail" aria-label="Central de Operações">
+    <a class="ops-rail__logo" href="index.html" aria-label="SADEC, voltar ao portal"><img src="assets/icons/drone-bot.svg" alt="" width="36" height="36"></a>
+    <a class="ops-rail__item" href="#visao" aria-label="Visão geral" aria-current="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></a>
+    <a class="ops-rail__item" href="#mapa-frota" aria-label="Mapa de rotas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5 9 4.5l6 2 5-2v13l-5 2-6-2-5 2z"/><path d="M9 4.5v13M15 6.5v13"/></svg></a>
+    <a class="ops-rail__item" href="#frota" aria-label="Frota"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg></a>
+    <a class="ops-rail__item" href="#alertas" aria-label="Alertas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 19.5h18z"/><path d="M12 10v4.5M12 17v.3"/></svg></a>
+    <a class="ops-rail__item" href="#registro" aria-label="Registro operacional"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg></a>
+    <button class="ops-rail__item ops-rail__help" type="button" id="btn-tour" aria-label="Tutorial guiado"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4M12 16.6v.3"/></svg></button>
+    <span class="ops-rail__op" aria-hidden="true">OP</span>
+  </nav>
 
   <main id="conteudo" class="ops">
-    <section class="ops__bar" aria-labelledby="page-title">
-      <div class="container ops__bar-inner">
-        <div>
-          <p class="eyebrow eyebrow--light">SADEC Control · simulação</p>
-          <h1 id="page-title" class="ops__title">Central de operações</h1>
-        </div>
-        <dl class="kpis" aria-label="Resumo da operação">
-          <div><dt>Na fila</dt><dd class="mono" id="kpi-fila">—</dd></div>
-          <div><dt>Em voo</dt><dd class="mono" id="kpi-voo">—</dd></div>
-          <div><dt>Drones livres</dt><dd class="mono" id="kpi-livres">—</dd></div>
-          <div><dt>Outro meio</dt><dd class="mono" id="kpi-outro">—</dd></div>
-        </dl>
-        <div class="ops__actions">
-          <button class="btn btn--primary" type="button" id="btn-processar">Processar fila</button>
-          <button class="btn btn--ghost-light" type="button" id="btn-reset">Restaurar dados iniciais</button>
-          <button class="btn btn--ghost-light" type="button" id="btn-tour">Tutorial</button>
-        </div>
+    <header class="ops-top" id="visao">
+      <p class="ops-top__eyebrow">Central · simulação</p>
+      <h1 id="page-title" class="ops__title"><span class="ops__title-full">Central de Operações</span><span class="ops__title-short">Triagem</span></h1>
+      <nav class="ops-tabs" aria-label="Seções da Central">
+        <a href="#visao" aria-current="true">Visão geral</a>
+        <a href="#frota">Frota</a>
+        <a href="#mapa-frota">Rotas</a>
+        <a href="#alertas">Alertas</a>
+      </nav>
+      <div class="ops-top__end">
+        <span class="ops__live"><span class="live-dot" aria-hidden="true"></span>Ao vivo</span>
+        <span class="ops__clock mono" id="ops-clock" aria-hidden="true">--:--:--</span>
+        <span class="tag tag--demo">Simulação · dados ilustrativos</span>
       </div>
-    </section>
+      <div class="ops__actions">
+        <button class="btn btn--light btn--sm" type="button" id="btn-processar">Processar fila</button>
+        <button class="btn btn--ghost-light btn--sm" type="button" id="btn-reset">Restaurar dados iniciais</button>
+      </div>
+      <div class="scenario-result" id="ops-msg" role="status" aria-live="polite"></div>
+    </header>
 
-    <div class="container ops__grid">
-      <section class="panel panel--wide" id="fila" aria-labelledby="fila-title">
-        <div class="panel__head">
-          <h2 id="fila-title" class="panel__title">Fila e entregas</h2>
-          <p class="panel__hint">Ordenada por prioridade e chegada. Atualiza sozinha.</p>
+    <div class="ops-grid">
+      <!-- Voo prioritário: sobre o mapa no computador, primeiro cartão no celular -->
+      <a class="ops-flight" id="ops-flight" href="rastreamento.html" data-prio="0">
+        <span class="ops-flight__top"><span class="prio-chip" id="flight-prio">—</span><span class="mono" id="flight-id">—</span></span>
+        <strong class="ops-flight__title" id="flight-title">Nenhum voo agora</strong>
+        <span class="ops-flight__row"><span id="flight-label">Processe a fila e decole uma entrega.</span><span class="mono" id="flight-eta"></span></span>
+        <span class="ops-flight__bar"><svg viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true"><rect width="100" height="4" rx="2" class="ops-flight__track"/><rect id="flight-bar" width="0" height="4" rx="2" class="ops-flight__fill"/></svg></span>
+      </a>
+
+      <section class="panel panel--map" id="mapa-frota" aria-labelledby="mapa-frota-title">
+        <h2 id="mapa-frota-title" class="ops-map__title">Mapa de rotas</h2>
+        <svg class="map map--fleet" id="fleet-map" viewBox="-4 -4 208 168" role="img" aria-labelledby="fleet-map-desc" preserveAspectRatio="xMidYMid slice">
+          <desc id="fleet-map-desc">Mapa esquemático com bases, hospitais, zonas de pouso seguro, rotas em andamento e a posição de cada drone.</desc>
+          <g id="fleet-map-grid" class="map__grid"></g>
+          <g id="fleet-map-routes"></g>
+          <g id="fleet-map-points"></g>
+          <g id="fleet-map-drones"></g>
+        </svg>
+        <ul class="legend" aria-label="Legenda do mapa">
+          <li><span class="legend__key legend__key--base" aria-hidden="true"></span>Base</li>
+          <li><span class="legend__key legend__key--hospital" aria-hidden="true"></span>Hospital</li>
+          <li><span class="legend__key legend__key--zona" aria-hidden="true"></span>Pouso seguro</li>
+          <li><span class="legend__key legend__key--voo" aria-hidden="true"></span>Em voo</li>
+        </ul>
+      </section>
+
+      <section class="panel" id="alertas" aria-labelledby="alertas-title">
+        <div class="panel__head panel__head--row">
+          <h2 id="alertas-title" class="panel__title">Precisa da sua atenção</h2>
+          <span class="ops-count" id="alert-count">0</span>
         </div>
-        <div class="table-wrap">
-          <table class="queue">
-            <caption class="visually-hidden">Entregas ordenadas por prioridade, com status, drone e ações</caption>
-            <thead>
-              <tr>
-                <th scope="col">Entrega</th>
-                <th scope="col">Carga</th>
-                <th scope="col">Rota</th>
-                <th scope="col">Status e drone</th>
-                <th scope="col"><span class="visually-hidden">Ações</span></th>
-              </tr>
-            </thead>
-            <tbody id="queue-body"></tbody>
-          </table>
+        <ul class="alerts" id="alert-list"></ul>
+      </section>
+
+      <section class="panel" id="fila" aria-labelledby="fila-title">
+        <div class="panel__head panel__head--row">
+          <h2 id="fila-title" class="panel__title">Fila de prioridades</h2>
+          <span class="mono ops-count" id="fila-count">—</span>
         </div>
+        <div class="ops-chips" role="group" aria-label="Filtrar por prioridade" id="fila-filtro">
+          <button type="button" aria-pressed="true" data-filtro="0">Todas</button>
+          <button type="button" aria-pressed="false" data-filtro="1">P1</button>
+          <button type="button" aria-pressed="false" data-filtro="2">P2</button>
+          <button type="button" aria-pressed="false" data-filtro="3">P3</button>
+          <button type="button" aria-pressed="false" data-filtro="4">P4</button>
+        </div>
+        <ol class="qlist" id="queue-body"></ol>
+      </section>
+
+      <section class="panel" id="missao" aria-labelledby="missao-title">
+        <div class="panel__head panel__head--row">
+          <h2 id="missao-title" class="panel__title">Drones em missão</h2>
+          <span class="panel__hint">Toque para destacar no mapa</span>
+        </div>
+        <ul class="missions" id="mission-list"></ul>
+      </section>
+
+      <section class="panel" id="autonomia" aria-labelledby="aut-title">
+        <h2 id="aut-title" class="panel__hint ops-aut__label">Autonomia · <span class="mono" id="aut-drone">—</span></h2>
+        <p class="ops-aut__big" id="aut-big">—</p>
+        <div class="ops-aut__cells" id="aut-cells" role="meter" aria-label="Bateria do drone selecionado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p class="ops-aut__scale mono" aria-hidden="true"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span></p>
+        <p class="ops-aut__alt"><span class="mono" id="aut-alt-km">—</span><span id="aut-alt">Pouso alternativo</span></p>
+      </section>
+
+      <section class="panel ops-route" id="rota" aria-labelledby="rota-title">
+        <div class="ops-route__info">
+          <h2 class="visually-hidden" id="rota-title">Rota do drone selecionado</h2>
+          <ol class="ops-route__steps">
+            <li><strong id="rota-dest">—</strong><span>Destino</span></li>
+            <li><strong id="rota-zona">—</strong><span>Pouso seguro mais próximo</span></li>
+            <li class="ops-route__mini"><span class="mono">48 km/h · 92 m</span></li>
+          </ol>
+          <p class="ops-route__eta"><strong class="mono" id="rota-eta">—</strong> <span id="rota-eta-label">para chegar</span></p>
+        </div>
+        <svg class="ops-route__map" id="rota-map" viewBox="0 0 100 160" aria-hidden="true"><path id="rota-path" d=""/><circle id="rota-dot" r="3" cx="-10" cy="-10"/></svg>
+      </section>
+
+      <section class="panel" id="registro" aria-labelledby="registro-title">
+        <div class="panel__head panel__head--row">
+          <h2 id="registro-title" class="panel__title">Registro operacional</h2>
+          <span class="panel__hint">mais recente primeiro</span>
+        </div>
+        <ol class="log" id="log-list" role="log" aria-live="polite"></ol>
       </section>
 
       <section class="panel" id="frota" aria-labelledby="frota-title">
         <div class="panel__head">
           <h2 id="frota-title" class="panel__title">Frota</h2>
-          <p class="panel__hint">Bateria, carga máxima e status.</p>
+          <p class="panel__hint">Bateria, carga máxima e status. Drone em manutenção só volta depois de liberado.</p>
         </div>
         <ul class="fleet" id="fleet-list"></ul>
       </section>
@@ -98,16 +151,16 @@
       <section class="panel" id="nova-solicitacao" aria-labelledby="nova-title">
         <div class="panel__head">
           <h2 id="nova-title" class="panel__title">Nova solicitação</h2>
-          <p class="panel__hint">Pedido fictício. Entra na fila conforme a prioridade.</p>
+          <p class="panel__hint">Pedido fictício. Entra na fila conforme a prioridade da carga.</p>
         </div>
         <form class="order-form" id="order-form" novalidate>
           <div class="field">
             <label for="o-prioridade">Prioridade</label>
             <select class="input" id="o-prioridade" name="prioridade">
-              <option value="1">P1 — Órgãos</option>
-              <option value="2">P2 — Emergência</option>
-              <option value="3" selected>P3 — Saúde</option>
-              <option value="4">P4 — Comercial</option>
+              <option value="1">P1 · Órgãos</option>
+              <option value="2">P2 · Emergência</option>
+              <option value="3" selected>P3 · Saúde</option>
+              <option value="4">P4 · Comercial</option>
             </select>
           </div>
           <div class="field">
@@ -126,7 +179,7 @@
             <label for="o-destino">Destino</label>
             <select class="input" id="o-destino" name="destinoId"></select>
           </div>
-          <button class="btn btn--primary" type="submit">Registrar na fila</button>
+          <button class="btn btn--light" type="submit">Registrar na fila</button>
           <p class="form-msg" id="order-msg" role="status"></p>
         </form>
       </section>
@@ -139,24 +192,19 @@
         <div class="scenarios" id="scenario-list"></div>
         <div class="scenario-result" id="scenario-result" role="status" aria-live="polite"></div>
       </section>
-
-      <section class="panel panel--wide" id="registro" aria-labelledby="registro-title">
-        <div class="panel__head">
-          <h2 id="registro-title" class="panel__title">Registro de decisões</h2>
-          <p class="panel__hint">Motivo e números de cada decisão da central.</p>
-        </div>
-        <ol class="log" id="log-list" role="log" aria-live="polite"></ol>
-      </section>
     </div>
 
-    <p class="container ops__note">Simulação acadêmica com dados fictícios em uma cidade-modelo. Valores de bateria, consumo e distância são ilustrativos. O estado fica salvo no seu navegador.</p>
+    <p class="ops__note">Simulação acadêmica com dados fictícios em uma cidade-modelo. Bateria, consumo e distância são ilustrativos. O SADEC não controla drones reais. <a href="index.html">Voltar ao portal</a></p>
   </main>
 
-  <footer class="site-footer site-footer--compact">
-    <div class="container">
-      <p class="site-footer__legal">Projeto acadêmico — FIAP Global Solution 2026. O site não controla drones reais. <a href="index.html">Voltar ao portal</a></p>
-    </div>
-  </footer>
+  <!-- Celular: abas da Central ao alcance do polegar -->
+  <nav class="tabbar tabbar--ops" aria-label="Central">
+    <a class="tabbar__item" href="#visao" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 19.5h18z"/></svg><span>Triagem</span></a>
+    <a class="tabbar__item" href="#mapa-frota"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5 9 4.5l6 2 5-2v13l-5 2-6-2-5 2z"/></svg><span>Mapa</span></a>
+    <a class="tabbar__item" href="#frota"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="6" height="6" rx="1.5"/><rect x="13" y="5" width="6" height="6" rx="1.5"/><rect x="5" y="13" width="6" height="6" rx="1.5"/><rect x="13" y="13" width="6" height="6" rx="1.5"/></svg><span>Frota</span></a>
+    <a class="tabbar__item" href="#registro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg><span>Registro</span></a>
+    <a class="tabbar__item" href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5v-5H9v5H4z"/></svg><span>Portal</span></a>
+  </nav>
 
   <script src="js/ui.js" defer></script>
   <script src="js/operations.js" defer></script>
