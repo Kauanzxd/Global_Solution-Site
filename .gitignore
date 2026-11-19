@@ -2,3 +2,18 @@ node_modules/
 *.zip
 .DS_Store
 Thumbs.db
+
+# Segredos e materiais internos (nunca versionar)
+chaves*.txt
+*.env
+.env*
+identificacao.txt
+.agent/
+.agents/
+.windsurf/
+
+# Backups locais do banco e artefatos de build
+ChatBot/backups/
+Java/SADEC/out/
+__pycache__/
+*.class

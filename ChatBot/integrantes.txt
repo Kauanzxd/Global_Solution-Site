@@ -1,0 +1,15 @@
+GLOBAL SOLUTION 2026/2 - CITIZENTECH
+Disciplina: AI & Chatbot
+Projeto: SADEC - Sistema Autônomo de Drones de Entrega e Cuidado
+Turma: 1TDSPB
+
+Integrantes:
+RM 576881-Pablo Ackillys Anjos da Silva  
+RM 576661 -Claudio Augusto Silva de Assis 
+RM 574837 - Kauan Gomes dos Santos
+RM 576834 - Thomaz Rafael Krutman Neves da Rocha
+RM 576939 - Gustavo Almeida 
+
+Vídeo:https://youtu.be/QzJBJD1i-2Y
+
+

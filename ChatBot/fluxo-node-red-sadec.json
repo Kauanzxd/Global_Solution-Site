@@ -1,0 +1,581 @@
+[
+  {
+    "id": "sadec_tab",
+    "type": "tab",
+    "label": "SADEC - Chatbot (Telegram + Webchat)",
+    "disabled": false,
+    "info": "Sistema Autônomo de Drones de Entrega e Cuidado (SADEC) - Global Solution 2026/2 - FIAP 1TDS.\nChaves: duplo clique nesta aba > Environment (GROQ_API_KEY e TELEGRAM_BOT_TOKEN).",
+    "env": [
+      {
+        "name": "GROQ_API_KEY",
+        "value": "",
+        "type": "str"
+      },
+      {
+        "name": "TELEGRAM_BOT_TOKEN",
+        "value": "",
+        "type": "str"
+      }
+    ]
+  },
+  {
+    "id": "c_deploy",
+    "type": "comment",
+    "z": "sadec_tab",
+    "name": "Antes do Deploy: chaves no Environment da aba, token no bot (nó 1) e caminho do .db (nós 5 e 5.1)",
+    "info": "",
+    "x": 460,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "c_tele",
+    "type": "comment",
+    "z": "sadec_tab",
+    "name": "CANAL TELEGRAM (texto e áudio)",
+    "info": "",
+    "x": 170,
+    "y": 100,
+    "wires": []
+  },
+  {
+    "id": "c_web",
+    "type": "comment",
+    "z": "sadec_tab",
+    "name": "CANAL WEBCHAT (texto) - abra http://localhost:1880/sadec",
+    "info": "",
+    "x": 230,
+    "y": 640,
+    "wires": []
+  },
+  {
+    "id": "n1_receber",
+    "type": "telegram receiver",
+    "z": "sadec_tab",
+    "name": "1 Receber Mensagem",
+    "bot": "bot_cfg",
+    "saveDataDir": "",
+    "filterCommands": false,
+    "hasinput": false,
+    "inputs": 0,
+    "handleallupdates": false,
+    "handleprocessupdates": false,
+    "x": 130,
+    "y": 160,
+    "wires": [
+      [
+        "n1_switch"
+      ],
+      []
+    ]
+  },
+  {
+    "id": "n1_switch",
+    "type": "switch",
+    "z": "sadec_tab",
+    "name": "É Voz ou Texto?",
+    "property": "payload.type",
+    "propertyType": "msg",
+    "rules": [
+      {
+        "t": "eq",
+        "v": "voice",
+        "vt": "str"
+      },
+      {
+        "t": "else"
+      }
+    ],
+    "checkall": "true",
+    "repair": false,
+    "outputs": 2,
+    "x": 340,
+    "y": 160,
+    "wires": [
+      [
+        "n2_stt"
+      ],
+      [
+        "n1_texto"
+      ]
+    ]
+  },
+  {
+    "id": "n1_texto",
+    "type": "change",
+    "z": "sadec_tab",
+    "name": "Canal = telegram",
+    "rules": [
+      {
+        "t": "set",
+        "p": "canal",
+        "pt": "msg",
+        "to": "telegram",
+        "tot": "str"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 350,
+    "y": 220,
+    "wires": [
+      [
+        "n3_prompt"
+      ]
+    ]
+  },
+  {
+    "id": "n2_stt",
+    "type": "function",
+    "z": "sadec_tab",
+    "name": "2 Preparar Download do Áudio",
+    "func": "// 2 Preparar Download do Áudio\n// O nó 1 (receiver) já entrega o link do arquivo de voz em msg.payload.weblink.\n// As chaves ficam nas variáveis de ambiente da aba (duplo clique na aba > Environment).\nmsg.groqKey = env.get(\"GROQ_API_KEY\");\nmsg.telegramContext = msg.payload || {};\nmsg.chatId = msg.payload ? msg.payload.chatId : null;\nmsg.veioDeAudio = true;          // quem fala por áudio recebe a resposta em áudio (nó 7)\nmsg.canal = \"telegram\";\n\nif (!msg.payload || !msg.payload.weblink) {\n    node.error(\"Áudio sem link de download.\", msg);\n    return null;\n}\nmsg.url = msg.payload.weblink;   // o próximo nó baixa o arquivo .ogg (binário)\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 590,
+    "y": 120,
+    "wires": [
+      [
+        "n2_baixar"
+      ]
+    ]
+  },
+  {
+    "id": "n2_baixar",
+    "type": "http request",
+    "z": "sadec_tab",
+    "name": "Download do Áudio",
+    "method": "GET",
+    "ret": "bin",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 820,
+    "y": 120,
+    "wires": [
+      [
+        "n2_form"
+      ]
+    ]
+  },
+  {
+    "id": "n2_form",
+    "type": "function",
+    "z": "sadec_tab",
+    "name": "2.1 Montar Form",
+    "func": "// 2.1 Montar Form: monta o pedido multipart para o Whisper (Groq) transcrever o áudio.\nconst audioBuffer = msg.payload;\nif (!Buffer.isBuffer(audioBuffer) || audioBuffer.length === 0) {\n    node.error(\"Download do áudio falhou.\", msg);\n    return null;\n}\nconst boundary = '----NodeREDFormBoundary' + Math.random().toString(16).substr(2);\n\nlet body = [];\n// parte 1: o arquivo de áudio\nbody.push(Buffer.from('--' + boundary + '\\r\\n'));\nbody.push(Buffer.from('Content-Disposition: form-data; name=\"file\"; filename=\"audio.ogg\"\\r\\n'));\nbody.push(Buffer.from('Content-Type: audio/ogg\\r\\n\\r\\n'));\nbody.push(audioBuffer);\nbody.push(Buffer.from('\\r\\n'));\n// parte 2: o modelo de transcrição\nbody.push(Buffer.from('--' + boundary + '\\r\\n'));\nbody.push(Buffer.from('Content-Disposition: form-data; name=\"model\"\\r\\n\\r\\n'));\nbody.push(Buffer.from('whisper-large-v3\\r\\n'));\n// parte 3: o idioma (português)\nbody.push(Buffer.from('--' + boundary + '\\r\\n'));\nbody.push(Buffer.from('Content-Disposition: form-data; name=\"language\"\\r\\n\\r\\n'));\nbody.push(Buffer.from('pt\\r\\n'));\nbody.push(Buffer.from('--' + boundary + '--\\r\\n'));\n\nmsg.headers = {\n    'Authorization': 'Bearer ' + msg.groqKey,\n    'Content-Type': 'multipart/form-data; boundary=' + boundary\n};\nmsg.url = 'https://api.groq.com/openai/v1/audio/transcriptions';\nmsg.payload = Buffer.concat(body);\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1010,
+    "y": 120,
+    "wires": [
+      [
+        "n2_whisper"
+      ]
+    ]
+  },
+  {
+    "id": "n2_whisper",
+    "type": "http request",
+    "z": "sadec_tab",
+    "name": "Transcrição (STT Whisper)",
+    "method": "POST",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 1220,
+    "y": 120,
+    "wires": [
+      [
+        "n2_conv"
+      ]
+    ]
+  },
+  {
+    "id": "n2_conv",
+    "type": "function",
+    "z": "sadec_tab",
+    "name": "2.2 Converter Transcrição p/ Entrada",
+    "func": "// 2.2 Converter Transcrição p/ Entrada\n// Saída 1 -> nó 3 (entendimento) | Saída 2 -> Telegram (\"Você disse: ...\")\nconst texto = (msg.payload && msg.payload.text) ? String(msg.payload.text).trim() : \"\";\nconst chatId = msg.chatId;\n\nif (!texto) {\n    const aviso = { payload: { chatId: chatId, type: \"message\",\n        content: \"Não consegui entender o áudio. Pode repetir ou escrever sua mensagem?\" } };\n    return [null, aviso];\n}\n\n// Devolve ao formato de mensagem de texto do Telegram, como se a pessoa tivesse digitado.\nmsg.payload = msg.telegramContext || {};\nmsg.payload.type = \"message\";\nmsg.payload.content = texto;\n\n// Mostra o que foi entendido (ajuda a pessoa e a demonstração no vídeo).\nconst eco = { payload: { chatId: chatId, type: \"message\", content: \"🎤 Você disse: \\\"\" + texto + \"\\\"\" } };\nreturn [msg, eco];\n",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1250,
+    "y": 200,
+    "wires": [
+      [
+        "n3_prompt"
+      ],
+      [
+        "n8_sender"
+      ]
+    ]
+  },
+  {
+    "id": "n3_prompt",
+    "type": "function",
+    "z": "sadec_tab",
+    "name": "3 Montar Prompt IA - Intenções",
+    "func": "// 3 Montar Prompt IA - Intenções e Entidades\n// Saída 1 -> Groq (IA) | Saída 2 -> nó 4 direto (mensagens que não precisam de IA)\nconst GROQ_API_KEY = env.get(\"GROQ_API_KEY\");\n\nconst rawText = (msg.payload && msg.payload.content) ? String(msg.payload.content).trim() : \"\";\nconst textLower = rawText.toLowerCase();\n\nmsg.telegramContext = msg.payload || {};\n\n// Comandos, respostas de uma palavra e códigos de rastreio não precisam da IA\n// (economiza chamadas). O nó 4 trata essas mensagens diretamente.\nconst SEM_IA = [\"/start\", \"/help\", \"/ajuda\", \"/audio\", \"/texto\", \"inicio\", \"início\", \"reiniciar\",\n    \"oi\", \"olá\", \"ola\", \"manhã\", \"manha\", \"tarde\", \"noite\"];\nconst soCodigo = /^sd\\s?-?\\d{4,5}$/.test(textLower);\nif (!rawText || SEM_IA.includes(textLower) || soCodigo) {\n    msg.ai = {};\n    return [null, msg];\n}\n\n// INTENÇÕES (5 principais, cada uma com 12 exemplos) E ENTIDADES (5, com sinônimos).\n// A IA só classifica e extrai. Os dados (status, drones, bateria) vêm SEMPRE do banco (nós 4, 5 e 6).\nconst instrucoes =\n    \"Você é o módulo de entendimento do Assistente SADEC (Sistema Autônomo de Drones de Entrega e Cuidado): uma rede de drones que transporta \" +\n    \"órgãos para transplante, remédios e ajuda em emergências, sustentada por entregas comerciais. \" +\n    \"Analise a mensagem do cidadão e responda SOMENTE com um JSON.\\n\\n\" +\n\n    \"Campo 'intencao' (uma destas):\\n\" +\n    \"- 'rastrear_entrega': quer saber onde está a entrega. Ex.: 'Onde está minha entrega?', 'Quero rastrear meu pedido', \" +\n    \"'Meu remédio já saiu?', 'Quanto tempo falta para o drone chegar?', 'O drone já decolou?', 'Status da minha entrega', \" +\n    \"'Cadê meu pedido?', 'Minha encomenda está a caminho?', 'Quero acompanhar o drone em tempo real', \" +\n    \"'A entrega vai demorar muito?', 'Previsão de chegada do pedido SD1001', 'Rastrear SD1004'.\\n\" +\n\n    \"- 'pedir_remedio': quer receber remédio de uso contínuo em casa. Ex.: 'Preciso receber meu remédio em casa', \" +\n    \"'Quero pedir meus medicamentos', 'Minha mãe não consegue ir à farmácia buscar o remédio', 'Pedir remédio de uso contínuo', \" +\n    \"'Quero que o drone traga minha insulina', 'A UBS fica longe, dá pra mandar o remédio?', 'Solicitar entrega de medicamento', \" +\n    \"'Acabou meu remédio de pressão', 'Sou idoso e preciso dos meus remédios em casa', \" +\n    \"'Tenho dificuldade de locomoção e preciso de remédio', 'Pode entregar remédio na zona rural?', 'Quero remédio no Itaquera'.\\n\" +\n\n    \"- 'solicitar_transporte_urgente': órgão para transplante ou emergência. Ex.: 'Preciso de um transporte urgente', \" +\n    \"'É uma emergência', 'Precisamos transportar um órgão para transplante', 'Temos um rim que precisa chegar ao InCor', \" +\n    \"'A enchente isolou meu bairro e precisamos de água', 'Socorro, estamos ilhados', \" +\n    \"'A estrada caiu e ninguém consegue trazer remédio', 'Preciso de kit de primeiros socorros agora', \" +\n    \"'A Defesa Civil precisa enviar mantimentos', 'Houve um deslizamento e precisamos de ajuda', \" +\n    \"'O coração para transplante precisa sair agora para o HC', 'Chamado de emergência no Parelheiros'.\\n\" +\n\n    \"- 'reagendar_entrega': quer mudar o horário da entrega. Ex.: 'Quero reagendar minha entrega', \" +\n    \"'Posso mudar o horário da entrega?', 'Não vou estar em casa, dá para entregar em outro horário?', 'Trocar o horário do pedido', \" +\n    \"'Remarcar entrega', 'Prefiro receber à tarde', 'Pode entregar amanhã de manhã?', 'Adiar a entrega', \" +\n    \"'Mudar o período de entrega', 'Quero receber em outro período', 'Não posso receber agora', 'Reagendar o SD1002 para a noite'.\\n\" +\n\n    \"- 'reportar_problema': reclamação ou aviso de problema. Ex.: 'Quero fazer uma reclamação', 'Tem um drone caído aqui na rua', \" +\n    \"'O remédio chegou danificado', 'A entrega veio errada', 'O drone pousou no lugar errado', \" +\n    \"'O drone está fazendo um barulho estranho', 'Meu pedido atrasou demais', 'Ninguém me avisou que a entrega mudou', \" +\n    \"'A caixa chegou aberta', 'Vi um drone com a luz de alerta piscando', 'O drone quase bateu em um fio', 'Estou insatisfeito com o serviço'.\\n\" +\n\n    \"- 'saudacao': cumprimentos. Ex.: 'Oi', 'Bom dia', 'Olá, tudo bem?'.\\n\" +\n    \"- 'ajuda': pergunta o que o bot faz. Ex.: 'O que você faz?', 'Como funciona?', 'Me ajuda'.\\n\" +\n    \"- 'despedida': encerra. Ex.: 'Tchau', 'Obrigado, era só isso', 'Valeu'.\\n\" +\n    \"- 'desconhecido': outro assunto, ou mensagem que só traz um dado solto (ex.: 'Capão Redondo', 'InCor', 'à tarde', 'responda em áudio').\\n\\n\" +\n\n    \"Entidades (use exatamente os valores entre aspas simples, ou null se não aparecer):\\n\" +\n    \"- 'tipo_carga': 'orgao' (órgão, rim, fígado, coração, córnea, pulmão, tecido, transplante), \" +\n    \"'remedio' (remédio, medicamento, medicação, insulina, comprimido), \" +\n    \"'kit_emergencia' (kit de primeiros socorros, água, mantimentos, kit), \" +\n    \"'exame' (amostra, exame de sangue, material de exame, insumo, vacina), \" +\n    \"'encomenda' (pacote, compra, pedido do iFood, lanche, Shopee, AliExpress).\\n\" +\n    \"- 'prioridade': 'nivel_1_orgaos' (prioridade máxima, transplante urgente), \" +\n    \"'nivel_2_emergencia' (emergência, enchente, deslizamento, ilhados, Defesa Civil), \" +\n    \"'nivel_3_saude' (saúde, uso contínuo, remédio mensal, UBS), 'nivel_4_comercial' (comercial, delivery, sem pressa).\\n\" +\n    \"- 'bairro': 'Capão Redondo' (Capão, Capao), 'Jardim Ângela' (Jardim Angela, Jd Ângela), 'Brasilândia' (Brasilandia, Vila Brasilândia), \" +\n    \"'Paraisópolis' (Paraisopolis), 'Itaquera' (Cohab Itaquera), 'Parelheiros' (zona rural de Parelheiros), \" +\n    \"'Centro' (Sé, República, centro da cidade), 'Mooca' (Moóca).\\n\" +\n    \"- 'hospital': 'Hospital das Clínicas' (HC, Clínicas), 'InCor' (Instituto do Coração), 'Santa Casa' (Santa Casa de São Paulo), \" +\n    \"'Hospital São Paulo' (HSP, hospital da Unifesp), 'Hospital do Servidor Público' (Hospital do Servidor, HSPE).\\n\" +\n    \"- 'horario': 'manha' (manhã, de manhã, cedo, pela manhã), 'tarde' (à tarde, de tarde, depois do almoço), \" +\n    \"'noite' (à noite, de noite, depois das 18h).\\n\" +\n    \"- 'formato': 'audio' se a pessoa pedir respostas em áudio ou voz; 'texto' se pedir respostas escritas.\\n\\n\" +\n\n    \"Responda estritamente no formato JSON: {\\\"intencao\\\": \\\"...\\\", \\\"tipo_carga\\\": null, \\\"prioridade\\\": null, \" +\n    \"\\\"bairro\\\": null, \\\"hospital\\\": null, \\\"horario\\\": null, \\\"formato\\\": null}\";\n\nmsg.headers = {\n    'Authorization': 'Bearer ' + GROQ_API_KEY,\n    'Content-Type': 'application/json'\n};\nmsg.url = 'https://api.groq.com/openai/v1/chat/completions';\nmsg.payload = {\n    model: \"openai/gpt-oss-120b\",\n    temperature: 0,\n    response_format: { type: \"json_object\" },\n    messages: [\n        { role: \"system\", content: instrucoes },\n        { role: \"user\", content: rawText }\n    ]\n};\nreturn [msg, null];\n",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 600,
+    "y": 300,
+    "wires": [
+      [
+        "n3_ia"
+      ],
+      [
+        "n4_analisar"
+      ]
+    ]
+  },
+  {
+    "id": "n3_ia",
+    "type": "http request",
+    "z": "sadec_tab",
+    "name": "Interpretar c/ IA (Groq)",
+    "method": "POST",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 830,
+    "y": 280,
+    "wires": [
+      [
+        "n3_json"
+      ]
+    ]
+  },
+  {
+    "id": "n3_json",
+    "type": "function",
+    "z": "sadec_tab",
+    "name": "3.1 Processar JSON IA",
+    "func": "// 3.1 Processar JSON IA: lê a resposta da IA e devolve a mensagem original junto com o resultado.\nlet aiResult = { intencao: \"desconhecido\" };\n\ntry {\n    if (msg.payload && msg.payload.choices && msg.payload.choices[0] && msg.payload.choices[0].message) {\n        aiResult = JSON.parse(msg.payload.choices[0].message.content);\n    } else {\n        node.warn(\"A IA não respondeu (confira a chave do Groq). Seguindo como 'desconhecido'.\");\n    }\n} catch (e) {\n    node.warn(\"Erro ao interpretar JSON da IA, mantendo comportamento padrão.\");\n}\n\nmsg.payload = msg.telegramContext || {};\nmsg.ai = aiResult;\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1040,
+    "y": 280,
+    "wires": [
+      [
+        "n4_analisar"
+      ]
+    ]
+  },
+  {
+    "id": "n4_analisar",
+    "type": "function",
+    "z": "sadec_tab",
+    "name": "4 Analisar Pedido / Contexto",
+    "func": "// 4 Analisar Pedido: decide o que fazer com a intenção e as entidades.\n// Saída 1 -> 5 BD Consulta (leitura) | Saída 2 -> 5.1 BD Gravação | Saída 3 -> 7 resposta direta\nif (!msg.payload || !msg.payload.chatId) return [null, null, null];\n\nconst chatId = msg.payload.chatId;\nconst rawText = msg.payload.content ? String(msg.payload.content).trim() : \"\";\nconst textLower = rawText.toLowerCase();\n\n// ---------- Valores aceitos (os mesmos do prompt do nó 3) ----------\nconst INTENCOES = [\"rastrear_entrega\", \"pedir_remedio\", \"solicitar_transporte_urgente\", \"reagendar_entrega\",\n    \"reportar_problema\", \"saudacao\", \"ajuda\", \"despedida\", \"desconhecido\"];\nconst TIPOS_CARGA = [\"orgao\", \"remedio\", \"kit_emergencia\", \"exame\", \"encomenda\"];\nconst PRIORIDADES = [\"nivel_1_orgaos\", \"nivel_2_emergencia\", \"nivel_3_saude\", \"nivel_4_comercial\"];\nconst BAIRROS = [\"Capão Redondo\", \"Jardim Ângela\", \"Brasilândia\", \"Paraisópolis\", \"Itaquera\", \"Parelheiros\", \"Centro\", \"Mooca\"];\nconst HOSPITAIS = [\"Hospital das Clínicas\", \"InCor\", \"Santa Casa\", \"Hospital São Paulo\", \"Hospital do Servidor Público\"];\nconst HORARIOS = [\"manha\", \"tarde\", \"noite\"];\nconst NOME_HORARIO = { manha: \"manhã\", tarde: \"tarde\", noite: \"noite\" };\n\nconst mensagemBoasVindas = \"Olá! 👋 Eu sou o Assistente SADEC, do Sistema Autônomo de Drones de Entrega e Cuidado: a rede de drones que leva órgãos, \" +\n    \"remédios e ajuda em emergências para quem mais precisa.\\n\\n\" +\n    \"Posso:\\n• rastrear sua entrega\\n• pedir seu remédio de uso contínuo\\n• solicitar transporte urgente\\n\" +\n    \"• reagendar uma entrega\\n• registrar um problema\\n\\n\" +\n    \"Você pode escrever ou mandar áudio. Para ouvir as respostas em áudio, diga \\\"responda em áudio\\\" (ou /audio).\";\nconst mensagemAjuda = \"Exemplos do que você pode dizer:\\n• \\\"Onde está a entrega SD1001?\\\"\\n• \\\"Quero pedir meu remédio no Capão Redondo\\\"\\n\" +\n    \"• \\\"Precisamos levar um rim para o InCor\\\"\\n• \\\"Reagendar o SD1002 para a noite\\\"\\n• \\\"Tem um drone caído na minha rua\\\"\";\nconst mensagemNaoEntendi = \"Desculpe, não entendi. Posso rastrear uma entrega, pedir remédio, solicitar transporte urgente, \" +\n    \"reagendar uma entrega ou registrar um problema. Diga /ajuda para ver exemplos.\";\n\n// Só aceita valores da lista (protege o banco de qualquer texto inesperado vindo da IA)\nfunction valor(v, lista) {\n    if (v === null || v === undefined) return null;\n    const s = String(v).trim();\n    return lista.includes(s) ? s : null;\n}\n\n// Para gravar texto livre no banco: dobra as aspas simples (evita quebrar o SQL).\nfunction seguro(t) {\n    return String(t).replace(/'/g, \"''\");\n}\n\nfunction responder(texto) {\n    msg.payload.type = \"message\";\n    msg.payload.content = texto;\n    return [null, null, msg];\n}\n\n// ---------- Memória da conversa (variáveis de contexto por chat) ----------\n// memoria_  = dados já informados: bairro, hospital, tipo de urgência, horário e último código\n// espera_   = o que o bot perguntou por último (bairro, hospital, codigo, horario)\n// pendente_ = intenção que estava sendo atendida quando o bot perguntou algo\n// formato_  = \"texto\" ou \"audio\": como a pessoa quer receber as respostas (usado no nó 7)\nlet memoria = flow.get(\"memoria_\" + chatId) || {};\nconst espera = flow.get(\"espera_\" + chatId) || null;\nconst pendente = flow.get(\"pendente_\" + chatId) || null;\n\nfunction salvarMemoria() {\n    flow.set(\"memoria_\" + chatId, memoria);\n}\nfunction limparEspera() {\n    flow.set(\"espera_\" + chatId, null);\n    flow.set(\"pendente_\" + chatId, null);\n}\nfunction perguntar(oQue, intencaoAtual, texto) {\n    salvarMemoria();\n    flow.set(\"espera_\" + chatId, oQue);\n    flow.set(\"pendente_\" + chatId, intencaoAtual);\n    return responder(texto);\n}\nfunction limparConversa() {\n    memoria = {};\n    salvarMemoria();\n    limparEspera();\n}\n\n// Leitura no banco: o SQL vai em msg.topic e os valores em msg.payload (lista, na ordem dos $).\nfunction consultarBanco(acao, sql, valores) {\n    msg.acao = acao;\n    msg.topic = sql;\n    msg.telegramContext = msg.payload;\n    msg.payload = valores;\n    return [msg, null, null];\n}\n// Gravação no banco (INSERT/UPDATE): o SQL vai em msg.topic.\nfunction gravarBanco(acao, sql) {\n    msg.acao = acao;\n    msg.topic = sql;\n    msg.telegramContext = msg.payload;\n    return [null, msg, null];\n}\n\n// Código de rastreio para pedidos novos: SD + 5 números\nfunction novoCodigo() {\n    return \"SD\" + String(Date.now()).slice(-5);\n}\n\nif ([\"/start\", \"inicio\", \"início\", \"reiniciar\"].includes(textLower)) {\n    limparConversa();\n    return responder(mensagemBoasVindas);\n}\n\n// ---------- Resultado da IA (nó 3) + atalhos sem IA ----------\nconst ai = msg.ai || {};\nlet intencao = valor(ai.intencao, INTENCOES) || \"desconhecido\";\nlet novoFormato = valor(ai.formato, [\"audio\", \"texto\"]);\n\nif ([\"oi\", \"olá\", \"ola\"].includes(textLower)) intencao = \"saudacao\";\nif ([\"/help\", \"/ajuda\"].includes(textLower)) intencao = \"ajuda\";\nif (textLower === \"/audio\") novoFormato = \"audio\";\nif (textLower === \"/texto\") novoFormato = \"texto\";\n\nconst novo = {\n    tipo_carga: valor(ai.tipo_carga, TIPOS_CARGA),\n    prioridade: valor(ai.prioridade, PRIORIDADES),\n    bairro: valor(ai.bairro, BAIRROS),\n    hospital: valor(ai.hospital, HOSPITAIS),\n    horario: valor(ai.horario, HORARIOS)\n};\n// Respostas de uma palavra que pularam a IA\nif (textLower === \"manhã\" || textLower === \"manha\") novo.horario = \"manha\";\nif (textLower === \"tarde\" || textLower === \"noite\") novo.horario = textLower;\n\n// O código de rastreio é lido direto do texto (padrão SD + 4 ou 5 números), sem IA.\nconst achou = rawText.toUpperCase().match(/SD\\s?-?(\\d{4,5})/);\nconst codigo = achou ? \"SD\" + achou[1] : null;\n\nconst trouxeDado = codigo || Object.keys(novo).some(function (k) { return novo[k]; });\n\n// ---------- Variável de contexto: resposta em áudio ou em texto ----------\nif (novoFormato) {\n    flow.set(\"formato_\" + chatId, novoFormato);\n    if ([\"desconhecido\", \"saudacao\", \"ajuda\"].includes(intencao)) {\n        return responder(novoFormato === \"audio\"\n            ? \"Combinado! A partir de agora respondo em áudio. Para voltar ao texto, diga \\\"responda em texto\\\" (ou /texto).\"\n            : \"Combinado! A partir de agora respondo em texto.\");\n    }\n}\n\n// Resposta curta a uma pergunta do bot (ex.: \"Itaquera\" depois de \"Em qual bairro?\"):\n// a intenção é a que estava pendente.\nif (intencao === \"desconhecido\" && trouxeDado && espera && pendente) {\n    intencao = pendente;\n}\n// Só o código, sem pergunta pendente (ex.: \"SD1004\"): entende como rastreio.\nif (intencao === \"desconhecido\" && codigo && !espera) {\n    intencao = \"rastrear_entrega\";\n}\nconst continuacao = (intencao === pendente);\n\n// ---------- Saudação, ajuda e despedida ----------\nif (intencao === \"saudacao\") {\n    limparEspera();\n    return responder(\"Olá! Em que posso ajudar? Posso rastrear, pedir remédio, solicitar transporte urgente, reagendar ou registrar um problema.\");\n}\nif (intencao === \"ajuda\") {\n    return responder(mensagemAjuda);\n}\nif (intencao === \"despedida\") {\n    limparConversa();\n    return responder(\"Por nada! O SADEC está sempre por aqui. Até mais!\");\n}\n\n// ---------- 1) Rastrear entrega ----------\nif (intencao === \"rastrear_entrega\") {\n    const cod = codigo || memoria.ultimo_codigo;\n    if (!cod) {\n        return perguntar(\"codigo\", intencao, \"Qual é o código de rastreio? Ele começa com SD, por exemplo SD1001.\");\n    }\n    memoria.ultimo_codigo = cod;\n    salvarMemoria();\n    limparEspera();\n    return consultarBanco(\"rastrear\",\n        \"SELECT CD_Rastreio, NM_Destino, TP_Carga, NR_Prioridade, ST_Status, DS_Periodo, CD_Drone, NR_Previsao_Min \" +\n        \"FROM tbl_entrega WHERE CD_Rastreio = $codigo\", [cod]);\n}\n\n// ---------- 2) Pedir remédio (modo Saúde, nível 3) ----------\nif (intencao === \"pedir_remedio\") {\n    // VARIÁVEL DE CONTEXTO: se a pessoa já disse o bairro antes, o bot lembra.\n    const bairro = novo.bairro || memoria.bairro;\n    if (!bairro) {\n        return perguntar(\"bairro\", intencao, \"Claro! A entrega de remédios de uso contínuo tem prioridade nível 3 (Saúde). \" +\n            \"Em qual bairro você mora? Atendemos: \" + BAIRROS.join(\", \") + \".\");\n    }\n    const periodo = novo.horario || \"manha\";\n    const cod = novoCodigo();\n    msg.dados = { codigo: cod, bairro: bairro, periodo: periodo, lembrouBairro: !novo.bairro };\n    memoria.bairro = bairro;\n    memoria.ultimo_codigo = cod;\n    salvarMemoria();\n    limparEspera();\n    return gravarBanco(\"remedio_registrado\",\n        \"INSERT INTO tbl_entrega (CD_Rastreio, NR_Chat, NM_Destino, TP_Carga, NR_Prioridade, ST_Status, DS_Periodo, DT_Pedido) \" +\n        \"VALUES ('\" + cod + \"', '\" + seguro(chatId) + \"', '\" + bairro + \"', 'remedio', 3, 'aguardando', '\" + periodo + \"', \" +\n        \"datetime('now', 'localtime'))\");\n}\n\n// ---------- 3) Transporte urgente: órgão (nível 1) ou emergência (nível 2) ----------\nif (intencao === \"solicitar_transporte_urgente\") {\n    let tipo = null;\n    if (novo.tipo_carga === \"orgao\" || novo.prioridade === \"nivel_1_orgaos\") tipo = \"orgao\";\n    else if (novo.tipo_carga || novo.prioridade) tipo = \"emergencia\";\n    else if (continuacao && memoria.tipo_urgente) tipo = memoria.tipo_urgente;\n    else tipo = novo.hospital ? \"orgao\" : \"emergencia\";\n    memoria.tipo_urgente = tipo;\n\n    let destino, fator, prioridade, carga;\n    if (tipo === \"orgao\") {\n        destino = novo.hospital || (continuacao ? memoria.hospital : null);\n        if (!destino) {\n            return perguntar(\"hospital\", intencao, \"Transporte de órgão tem prioridade máxima (nível 1) e é pedido por hospitais \" +\n                \"e pela Central Estadual de Transplantes. Qual é o hospital de destino? Atendemos: \" + HOSPITAIS.join(\", \") + \".\");\n        }\n        memoria.hospital = destino;\n        fator = 1.3;          // REGRA: para órgãos, a bateria precisa cobrir a rota com 30% de folga\n        prioridade = 1;\n        carga = \"orgao\";\n    } else {\n        destino = novo.bairro || memoria.bairro;\n        if (!destino) {\n            return perguntar(\"bairro\", intencao, \"Entendi, é uma emergência (nível 2). Se houver risco de vida, ligue também \" +\n                \"para a Defesa Civil (199) ou o SAMU (192). Em qual bairro você está?\");\n        }\n        memoria.bairro = destino;\n        fator = 1.0;\n        prioridade = 2;\n        carga = \"kit_emergencia\";\n    }\n    salvarMemoria();\n    limparEspera();\n    msg.dados = { codigo: novoCodigo(), destino: destino, prioridade: prioridade, carga: carga, fator: fator };\n\n    // REGRA DA FILA: nível 1 e 2 podem usar um drone livre OU um drone de entrega comercial que ainda\n    // não decolou. Drone já em voo comercial termina a entrega (não entra na busca).\n    // A bateria precisa cobrir ida e volta (distância x 2) vezes o fator de folga.\n    return consultarBanco(\"escolher_drone\",\n        \"SELECT d.CD_Drone, d.ST_Status, d.NR_Bateria_Pct, \" +\n        \"ROUND(d.NR_Autonomia_Km * d.NR_Bateria_Pct / 100.0, 1) AS alcance_km, l.NR_Distancia_Km \" +\n        \"FROM tbl_drone d, tbl_local l \" +\n        \"WHERE l.NM_Local = $destino AND d.ST_Status IN ('livre', 'aguardando_comercial') \" +\n        \"AND d.NR_Autonomia_Km * d.NR_Bateria_Pct / 100.0 >= l.NR_Distancia_Km * 2 * $fator \" +\n        \"ORDER BY CASE d.ST_Status WHEN 'livre' THEN 0 ELSE 1 END, d.NR_Bateria_Pct DESC LIMIT 1\",\n        [destino, fator]);\n}\n\n// ---------- 4) Reagendar entrega ----------\nif (intencao === \"reagendar_entrega\") {\n    if (novo.horario) memoria.horario = novo.horario;\n    const horario = novo.horario || (continuacao ? memoria.horario : null);\n    const cod = codigo || memoria.ultimo_codigo;\n    if (!cod) {\n        return perguntar(\"codigo\", intencao, \"Qual é o código da entrega que você quer reagendar? Ex.: SD1002.\");\n    }\n    memoria.ultimo_codigo = cod;\n    if (!horario) {\n        return perguntar(\"horario\", intencao, \"Para qual período você quer reagendar a entrega \" + cod + \": manhã, tarde ou noite?\");\n    }\n    delete memoria.horario;\n    salvarMemoria();\n    limparEspera();\n    msg.dados = { codigo: cod, horario: horario };\n    // Primeiro confere o status: só dá para reagendar o que ainda não decolou (ver nó 6).\n    return consultarBanco(\"conferir_reagendamento\",\n        \"SELECT CD_Rastreio, ST_Status, NR_Prioridade FROM tbl_entrega WHERE CD_Rastreio = $codigo\", [cod]);\n}\n\n// ---------- 5) Reportar problema ----------\nif (intencao === \"reportar_problema\") {\n    const cod = codigo || memoria.ultimo_codigo || null;\n    limparEspera();\n    msg.dados = { codigo: cod };\n    return gravarBanco(\"ocorrencia_registrada\",\n        \"INSERT INTO tbl_ocorrencia (NR_Chat, CD_Rastreio, DS_Relato, DT_Registro) VALUES ('\" + seguro(chatId) + \"', \" +\n        (cod ? \"'\" + cod + \"'\" : \"NULL\") + \", '\" + seguro(rawText.substring(0, 500)) + \"', datetime('now', 'localtime'))\");\n}\n\n// ---------- Não entendeu ----------\n// Se o bot estava esperando uma resposta, explica o que é aceito (como um \"anything_else\").\nif (espera === \"bairro\") return responder(\"Não reconheci o bairro. Atendemos: \" + BAIRROS.join(\", \") + \".\");\nif (espera === \"hospital\") return responder(\"Não encontrei esse hospital na rede piloto. Atendemos: \" + HOSPITAIS.join(\", \") +\n    \". Para outros hospitais, a Central de Transplantes deve acionar helicóptero ou ambulância.\");\nif (espera === \"codigo\") return responder(\"Não encontrei um código válido. Ele começa com SD e tem números, por exemplo SD1001.\");\nif (espera === \"horario\") return responder(\"Não entendi o período. Responda com manhã, tarde ou noite.\");\n\nlimparEspera();\nreturn responder(mensagemNaoEntendi);\n",
+    "outputs": 3,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 620,
+    "y": 420,
+    "wires": [
+      [
+        "n5_consulta"
+      ],
+      [
+        "n5_gravacao"
+      ],
+      [
+        "n7_saida"
+      ]
+    ]
+  },
+  {
+    "id": "n5_consulta",
+    "type": "sqlite",
+    "z": "sadec_tab",
+    "mydb": "db_cfg",
+    "sqlquery": "msg.topic",
+    "sql": "",
+    "name": "5 BD SADEC (consulta)",
+    "x": 880,
+    "y": 400,
+    "wires": [
+      [
+        "n6_resposta"
+      ]
+    ]
+  },
+  {
+    "id": "n5_gravacao",
+    "type": "sqlite",
+    "z": "sadec_tab",
+    "mydb": "db_cfg",
+    "sqlquery": "batch",
+    "sql": "",
+    "name": "5.1 BD SADEC (gravação)",
+    "x": 890,
+    "y": 460,
+    "wires": [
+      [
+        "n6_resposta"
+      ]
+    ]
+  },
+  {
+    "id": "n6_resposta",
+    "type": "function",
+    "z": "sadec_tab",
+    "name": "6 Processar Resposta BD",
+    "func": "// 6 Processar Resposta BD: transforma o resultado do banco em mensagem.\n// Saída 1 -> 7 resposta | Saída 2 -> 5.1 BD Gravação (segunda etapa, quando precisa gravar depois de consultar)\nconst linhas = Array.isArray(msg.payload) ? msg.payload : [];\nmsg.payload = msg.telegramContext || {};\nconst chatId = msg.payload.chatId;\nconst d = msg.dados || {};\n\nconst NOME_HORARIO = { manha: \"manhã\", tarde: \"tarde\", noite: \"noite\" };\nconst NOME_CARGA = { orgao: \"órgão para transplante\", remedio: \"remédio\", kit_emergencia: \"kit de emergência\",\n    exame: \"material de exame\", encomenda: \"encomenda\" };\n\n// Número com vírgula decimal (47.5 -> 47,5)\nfunction km(n) {\n    return String(n).replace(\".\", \",\");\n}\nfunction responder(texto) {\n    msg.payload.type = \"message\";\n    msg.payload.content = texto;\n    return [msg, null];\n}\nfunction gravar(acao, sql) {\n    msg.acao = acao;\n    msg.topic = sql;\n    msg.telegramContext = msg.payload;\n    return [null, msg];\n}\n\n// ---------- 1) Rastrear ----------\nif (msg.acao === \"rastrear\") {\n    if (linhas.length === 0) {\n        return responder(\"Não encontrei a entrega \" + d.codigo + \". Confira o código (ex.: SD1001).\");\n    }\n    const e = linhas[0];\n    const carga = NOME_CARGA[e.TP_Carga] || e.TP_Carga;\n    if (e.ST_Status === \"em_voo\") {\n        return responder(\"📦 Entrega \" + e.CD_Rastreio + \" (\" + carga + \" para \" + e.NM_Destino + \"): em voo monitorado \" +\n            \"pelo drone \" + e.CD_Drone + \". Previsão: \" + e.NR_Previsao_Min + \" minutos. A central acompanha bateria, posição, \" +\n            \"temperatura e vibração da carga em tempo real.\");\n    }\n    if (e.ST_Status === \"entregue\") {\n        return responder(\"✅ Entrega \" + e.CD_Rastreio + \" (\" + carga + \" para \" + e.NM_Destino + \") já foi entregue e o recebimento foi registrado.\");\n    }\n    if (e.ST_Status === \"reagendada\") {\n        return responder(\"🕒 Entrega \" + e.CD_Rastreio + \" (\" + carga + \" para \" + e.NM_Destino + \") foi reagendada para o período da \" +\n            (NOME_HORARIO[e.DS_Periodo] || e.DS_Periodo) + \". Avisaremos quando o drone decolar.\");\n    }\n    return responder(\"🕒 Entrega \" + e.CD_Rastreio + \" (\" + carga + \" para \" + e.NM_Destino + \") está na fila com prioridade nível \" +\n        e.NR_Prioridade + \", aguardando decolagem no período da \" + (NOME_HORARIO[e.DS_Periodo] || e.DS_Periodo) + \".\");\n}\n\n// ---------- 2) Remédio gravado ----------\nif (msg.acao === \"remedio_registrado\") {\n    let t = \"💊 Pedido de remédio registrado!\\nCódigo: \" + d.codigo + \"\\nBairro: \" + d.bairro +\n        \"\\nPeríodo: \" + NOME_HORARIO[d.periodo] + \"\\nPrioridade: nível 3 (Saúde)\";\n    if (d.lembrouBairro) {\n        t += \"\\n\\nUsei o bairro que você já tinha informado: \" + d.bairro + \".\";\n    }\n    t += \"\\n\\nPara acompanhar, pergunte \\\"onde está minha entrega?\\\".\";\n    return responder(t);\n}\n\n// ---------- 3) Transporte urgente: escolha do drone ----------\nif (msg.acao === \"escolher_drone\") {\n    if (linhas.length === 0) {\n        // REGRA: se nenhum drone cobre a rota, o sistema avisa que é preciso outro transporte.\n        const folga = d.prioridade === 1 ? \" com 30% de folga\" : \"\";\n        const outro = d.prioridade === 1\n            ? \"A Central de Transplantes deve acionar helicóptero ou ambulância.\"\n            : \"Acione a Defesa Civil (199). Se houver risco de vida, ligue para o SAMU (192).\";\n        return responder(\"⚠️ Nenhum drone disponível agora tem bateria para ir e voltar de \" + d.destino + folga + \". \" + outro);\n    }\n    const dr = linhas[0];\n    d.drone = dr.CD_Drone;\n    d.bateria = dr.NR_Bateria_Pct;\n    d.alcance = dr.alcance_km;\n    d.distancia = dr.NR_Distancia_Km;\n    d.previsao = Math.round(dr.NR_Distancia_Km) + 3;      // drone a ~60 km/h + 3 min de decolagem\n    d.tomouComercial = (dr.ST_Status === \"aguardando_comercial\");\n    msg.dados = d;\n\n    // Grava tudo de uma vez (nó 5.1 em modo lote): a entrega nova, o drone em voo e,\n    // se o drone estava reservado para uma entrega comercial, essa entrega é reagendada.\n    let sql = \"INSERT INTO tbl_entrega (CD_Rastreio, NR_Chat, NM_Destino, TP_Carga, NR_Prioridade, ST_Status, DS_Periodo, \" +\n        \"CD_Drone, NR_Previsao_Min, DT_Pedido) VALUES ('\" + d.codigo + \"', '\" + String(chatId).replace(/'/g, \"''\") + \"', '\" +\n        d.destino + \"', '\" + d.carga + \"', \" + d.prioridade + \", 'em_voo', 'agora', '\" + d.drone + \"', \" + d.previsao +\n        \", datetime('now', 'localtime'));\\n\";\n    if (d.tomouComercial) {\n        sql += \"UPDATE tbl_entrega SET ST_Status = 'reagendada', CD_Drone = NULL WHERE CD_Drone = '\" + d.drone +\n            \"' AND ST_Status = 'aguardando' AND NR_Prioridade = 4;\\n\";\n    }\n    sql += \"UPDATE tbl_drone SET ST_Status = 'em_voo' WHERE CD_Drone = '\" + d.drone + \"';\";\n\n    // Guarda o código na memória da conversa, para \"onde está minha entrega?\" funcionar depois.\n    const memoria = flow.get(\"memoria_\" + chatId) || {};\n    memoria.ultimo_codigo = d.codigo;\n    flow.set(\"memoria_\" + chatId, memoria);\n\n    return gravar(\"urgente_registrado\", sql);\n}\n\nif (msg.acao === \"urgente_registrado\") {\n    const nivel = d.prioridade === 1 ? \"🫀 Pedido nível 1 (órgão)\" : \"🚨 Chamado nível 2 (emergência)\";\n    const regra = d.prioridade === 1\n        ? \"A rota de ida e volta (\" + km(d.distancia * 2) + \" km) mais 30% de folga cabe no alcance da bateria (\" + km(d.alcance) + \" km).\"\n        : \"A rota de ida e volta (\" + km(d.distancia * 2) + \" km) cabe no alcance da bateria (\" + km(d.alcance) + \" km).\";\n    let t = nivel + \" registrado.\\nCódigo: \" + d.codigo + \"\\nDestino: \" + d.destino +\n        \"\\nDrone: \" + d.drone + \" (bateria \" + d.bateria + \"%)\\nPrevisão: \" + d.previsao + \" minutos\\n\\n\" + regra;\n    if (d.tomouComercial) {\n        t += \"\\n\\nEsse drone estava reservado para uma entrega comercial que ainda não tinha decolado: ela foi reagendada e o cliente será avisado.\";\n    }\n    return responder(t);\n}\n\n// ---------- 4) Reagendar ----------\nif (msg.acao === \"conferir_reagendamento\") {\n    if (linhas.length === 0) {\n        return responder(\"Não encontrei a entrega \" + d.codigo + \". Confira o código (ex.: SD1002).\");\n    }\n    const e = linhas[0];\n    // REGRA: drone já em voo termina a entrega; não dá para reagendar.\n    if (e.ST_Status === \"em_voo\") {\n        return responder(\"O drone da entrega \" + d.codigo + \" já decolou. Entregas em voo são sempre concluídas, então não dá para reagendar.\");\n    }\n    if (e.ST_Status === \"entregue\") {\n        return responder(\"A entrega \" + d.codigo + \" já foi entregue.\");\n    }\n    if (e.NR_Prioridade === 1) {\n        return responder(\"Transporte de órgão não pode ser reagendado pelo chat. Fale com a Central de Transplantes.\");\n    }\n    return gravar(\"reagendado\",\n        \"UPDATE tbl_entrega SET DS_Periodo = '\" + d.horario + \"', ST_Status = 'reagendada' WHERE CD_Rastreio = '\" + d.codigo + \"'\");\n}\n\nif (msg.acao === \"reagendado\") {\n    return responder(\"🕒 Pronto! A entrega \" + d.codigo + \" foi reagendada para o período da \" + NOME_HORARIO[d.horario] +\n        \". Avisaremos quando o drone decolar.\");\n}\n\n// ---------- 5) Ocorrência gravada ----------\nif (msg.acao === \"ocorrencia_registrada\") {\n    let t = \"Sinto muito pelo transtorno. Sua ocorrência foi registrada\" + (d.codigo ? \" para a entrega \" + d.codigo : \"\") +\n        \" e a central de operação vai analisar.\";\n    t += \"\\n\\nSe você viu um drone caído ou com a luz de alerta piscando, não se aproxime: ele está programado para pousar \" +\n        \"em uma zona de pouso seguro, e uma equipe vai resgatar a carga.\";\n    return responder(t);\n}\n\nreturn responder(\"Desculpe, algo deu errado ao consultar os dados. Tente de novo.\");\n",
+    "outputs": 2,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1120,
+    "y": 420,
+    "wires": [
+      [
+        "n7_saida"
+      ],
+      [
+        "n5_gravacao"
+      ]
+    ]
+  },
+  {
+    "id": "n7_saida",
+    "type": "function",
+    "z": "sadec_tab",
+    "name": "7 Gera Texto e Rota TTS",
+    "func": "// 7 Gera Texto e Rota TTS: entrega a resposta no canal certo.\n// Saída 1 -> Telegram (texto) | Saída 2 -> áudio (TTS) no Telegram | Saída 3 -> resposta do Webchat\nconst p = msg.payload || {};\nconst chatId = p.chatId || (msg.telegramContext && msg.telegramContext.chatId) || msg.chatId;\nconst texto = p.content;\nif (!chatId || !texto) return [null, null, null];\n\n// ---------- Webchat: devolve o texto para a página (somente texto) ----------\nif (msg.canal === \"web\") {\n    msg.payload = { resposta: texto };\n    msg.statusCode = 200;\n    msg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\n    return [null, null, msg];\n}\n\n// ---------- Telegram ----------\n// VARIÁVEL DE CONTEXTO: como esta pessoa quer receber as respostas (\"responda em áudio\" / \"responda em texto\").\n// Quem mandou a pergunta por áudio também recebe em áudio.\nconst preferencia = flow.get(\"formato_\" + chatId);\nconst formato = preferencia || (msg.veioDeAudio ? \"audio\" : \"texto\");\n\n// O texto completo sempre vai (no áudio as respostas longas são resumidas).\nconst mensagens = [{ payload: { chatId: chatId, type: \"message\", content: texto } }];\nif (formato === \"texto\") {\n    return [mensagens, null, null];\n}\n\n// ---------- Formato \"audio\": limpa o texto para a voz ----------\nlet cleanText = texto\n    .replace(/\\bSD(\\d)/g, \"SD $1\")                   // lê o código separado\n    .replace(/\\s*\\(?ou \\/(audio|texto)\\)?/g, \"\")\n    .replace(/[*_#`•]/g, \"\")\n    .replace(/([✀-➿]|[-]|\\uD83C[\\uDC00-\\uDFFF]|\\uD83D[\\uDC00-\\uDFFF]|[☀-⛿]|\\uD83E[\\uDD10-\\uDDFF])/g, \"\")\n    .replace(/[\"'`()\\[\\]{}]/g, \"\")\n    .replace(/\\/(audio|texto|ajuda)/g, \"\")\n    .replace(/\\n+/g, \". \")\n    .replace(/\\s+/g, \" \")\n    .replace(/(\\. )+/g, \". \")\n    .replace(/:\\./g, \":\")\n    .trim();\n\n// A boas-vindas é longa: no áudio vai um resumo\nif (cleanText.toLowerCase().includes(\"eu sou o assistente sadec\")) {\n    cleanText = \"Olá! Eu sou o Assistente SADEC. Posso rastrear sua entrega, pedir seu remédio, solicitar transporte urgente, reagendar ou registrar um problema.\";\n}\n\n// O gerador de voz aceita frases curtas: corta no fim da última frase que couber em 200 caracteres\nif (cleanText.length > 200) {\n    const trecho = cleanText.substring(0, 200);\n    const fim = Math.max(trecho.lastIndexOf(\". \"), trecho.lastIndexOf(\"? \"), trecho.lastIndexOf(\"! \"));\n    cleanText = fim > 40 ? trecho.substring(0, fim + 1) : trecho.substring(0, 197) + \"...\";\n}\nif (!cleanText) cleanText = \"Pedido processado com sucesso.\";\n\n// Voz gerada pelo TTS do Google e enviada direto pela API do Telegram (sendAudio com o link do áudio)\nconst TELEGRAM_BOT_TOKEN = env.get(\"TELEGRAM_BOT_TOKEN\");\nconst audioUrl = \"https://translate.google.com/translate_tts?ie=UTF-8&q=\" + encodeURIComponent(cleanText) + \"&tl=pt-BR&client=tw-ob\";\nconst msgVoz = {\n    method: \"GET\",\n    url: \"https://api.telegram.org/bot\" + TELEGRAM_BOT_TOKEN + \"/sendAudio?chat_id=\" + chatId + \"&audio=\" + encodeURIComponent(audioUrl)\n};\nreturn [mensagens, msgVoz, null];\n",
+    "outputs": 3,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1150,
+    "y": 540,
+    "wires": [
+      [
+        "n8_sender"
+      ],
+      [
+        "n8_audio"
+      ],
+      [
+        "w_resposta"
+      ]
+    ]
+  },
+  {
+    "id": "n8_sender",
+    "type": "telegram sender",
+    "z": "sadec_tab",
+    "name": "8 Enviar Texto (Telegram)",
+    "bot": "bot_cfg",
+    "haserroroutput": false,
+    "outputs": 1,
+    "x": 1430,
+    "y": 500,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "n8_audio",
+    "type": "http request",
+    "z": "sadec_tab",
+    "name": "8.1 Enviar Áudio (TTS)",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 1420,
+    "y": 560,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "w_get",
+    "type": "http in",
+    "z": "sadec_tab",
+    "name": "W1 Página do Webchat",
+    "url": "/sadec",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 160,
+    "y": 700,
+    "wires": [
+      [
+        "w_html"
+      ]
+    ]
+  },
+  {
+    "id": "w_html",
+    "type": "template",
+    "z": "sadec_tab",
+    "name": "Página HTML",
+    "field": "payload",
+    "fieldType": "msg",
+    "format": "html",
+    "syntax": "plain",
+    "template": "<!DOCTYPE html>\n<html lang=\"pt-BR\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Assistente SADEC - Webchat</title>\n<style>\n  body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #eef3f1; }\n  header { background: #0f5132; color: #fff; padding: 14px 18px; }\n  header h1 { margin: 0; font-size: 18px; }\n  header p { margin: 4px 0 0; font-size: 13px; opacity: .85; }\n  #chat { max-width: 720px; margin: 0 auto; height: calc(100vh - 140px); overflow-y: auto; padding: 16px; box-sizing: border-box; }\n  .msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; margin: 8px 0; white-space: pre-wrap; line-height: 1.4; }\n  .bot { background: #fff; border: 1px solid #cfe0d8; }\n  .eu { background: #198754; color: #fff; margin-left: auto; }\n  form { max-width: 720px; margin: 0 auto; display: flex; gap: 8px; padding: 0 16px; box-sizing: border-box; }\n  input { flex: 1; padding: 12px; font-size: 16px; border: 1px solid #9bb8ab; border-radius: 8px; }\n  button { padding: 12px 18px; font-size: 16px; border: 0; border-radius: 8px; background: #0f5132; color: #fff; cursor: pointer; }\n</style>\n</head>\n<body>\n<header>\n  <h1>Assistente SADEC</h1>\n  <p>Sistema Autônomo de Drones de Entrega e Cuidado</p>\n</header>\n<div id=\"chat\" aria-live=\"polite\"></div>\n<form id=\"form\">\n  <label for=\"texto\" style=\"position:absolute;left:-9999px\">Mensagem</label>\n  <input id=\"texto\" autocomplete=\"off\" placeholder=\"Digite sua mensagem...\">\n  <button type=\"submit\">Enviar</button>\n</form>\n<script>\n  // Cada aba do navegador ganha um id de sessão: é ele que separa a memória da conversa no Node-RED.\n  const sessao = Math.random().toString(36).substring(2, 12);\n  const chat = document.getElementById(\"chat\");\n\n  function mostrar(texto, quem) {\n    const div = document.createElement(\"div\");\n    div.className = \"msg \" + quem;\n    div.textContent = texto;\n    chat.appendChild(div);\n    chat.scrollTop = chat.scrollHeight;\n  }\n\n  async function enviar(texto) {\n    try {\n      const r = await fetch(\"/sadec/mensagem\", {\n        method: \"POST\",\n        headers: { \"Content-Type\": \"application/json\" },\n        body: JSON.stringify({ sessao: sessao, texto: texto })\n      });\n      const dados = await r.json();\n      mostrar(dados.resposta, \"bot\");\n    } catch (e) {\n      mostrar(\"Não consegui falar com o servidor. Confira se o Node-RED está rodando.\", \"bot\");\n    }\n  }\n\n  document.getElementById(\"form\").addEventListener(\"submit\", function (ev) {\n    ev.preventDefault();\n    const campo = document.getElementById(\"texto\");\n    const texto = campo.value.trim();\n    if (!texto) return;\n    mostrar(texto, \"eu\");\n    campo.value = \"\";\n    enviar(texto);\n  });\n\n  enviar(\"/start\");   // mensagem de boas-vindas ao abrir a página\n</script>\n</body>\n</html>\n",
+    "output": "str",
+    "x": 380,
+    "y": 700,
+    "wires": [
+      [
+        "w_html_resp"
+      ]
+    ]
+  },
+  {
+    "id": "w_html_resp",
+    "type": "http response",
+    "z": "sadec_tab",
+    "name": "Enviar página",
+    "statusCode": "200",
+    "headers": {
+      "content-type": "text/html; charset=utf-8"
+    },
+    "x": 570,
+    "y": 700,
+    "wires": []
+  },
+  {
+    "id": "w_post",
+    "type": "http in",
+    "z": "sadec_tab",
+    "name": "W2 Mensagem do Webchat",
+    "url": "/sadec/mensagem",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 170,
+    "y": 760,
+    "wires": [
+      [
+        "w_entrada"
+      ]
+    ]
+  },
+  {
+    "id": "w_entrada",
+    "type": "function",
+    "z": "sadec_tab",
+    "name": "W2 Webchat: preparar entrada",
+    "func": "// W2 Webchat: preparar entrada\n// A página envia {sessao, texto}. Transformamos no mesmo formato de mensagem do Telegram,\n// assim o resto do fluxo (nós 3 a 7) é o mesmo para os dois canais.\nconst corpo = msg.payload || {};\nconst sessao = String(corpo.sessao || \"anonimo\").replace(/[^a-zA-Z0-9]/g, \"\").substring(0, 20);\n\nmsg.canal = \"web\";\nmsg.chatId = \"web-\" + sessao;          // cada aba do navegador tem a própria memória\nmsg.payload = {\n    chatId: msg.chatId,\n    type: \"message\",\n    content: String(corpo.texto || \"\").substring(0, 500)\n};\nreturn msg;\n",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 420,
+    "y": 760,
+    "wires": [
+      [
+        "n3_prompt"
+      ]
+    ]
+  },
+  {
+    "id": "w_resposta",
+    "type": "http response",
+    "z": "sadec_tab",
+    "name": "W3 Resposta do Webchat",
+    "statusCode": "",
+    "headers": {},
+    "x": 1440,
+    "y": 620,
+    "wires": []
+  },
+  {
+    "id": "bot_cfg",
+    "type": "telegram bot",
+    "botname": "SadecBot",
+    "usernames": "",
+    "chatids": "",
+    "baseapiurl": "",
+    "testenvironment": false,
+    "updatemode": "polling",
+    "pollinterval": 300,
+    "usesocks": false,
+    "sockshost": "",
+    "socksprotocol": "socks5",
+    "socksport": 6667,
+    "socksusername": "anonymous",
+    "sockspassword": "",
+    "bothost": "",
+    "botpath": "",
+    "localbothost": "0.0.0.0",
+    "localbotport": 8443,
+    "publicbotport": 8443,
+    "privatekey": "",
+    "certificate": "",
+    "useselfsignedcertificate": false,
+    "sslterminated": false,
+    "verboselogging": false
+  },
+  {
+    "id": "db_cfg",
+    "type": "sqlitedb",
+    "db": "C:\\SADEC\\SADEC_Chatbot.db",
+    "mode": "RWC"
+  }
+]
