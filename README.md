@@ -28,7 +28,7 @@ Oferecer um meio **complementar** de transporte para cargas críticas, com regra
 | `central.html` | Central de Operações: alterna entre **rede real** (pedidos da API no mapa de ruas de São Paulo) e **simulação** (cidade-modelo). Indicadores, mapa ao vivo com o voo mais urgente, fila com decolar/concluir, frota com bateria, alertas, registro, códigos de órgão, nova solicitação e cenários de teste |
 | `rastreamento.html` | Mapa esquemático, etapas, telemetria simulada, demonstrações de pane e **registro de recebimento** |
 | `orgaos.html` | Missão P1 demonstrativa: janela de preservação, corredor exclusivo, temperatura, reserva de bateria e cadeia de custódia |
-| `saude/index.html` | **SADEC Saúde**: pedidos por perfil (cidadão P3, hospital P1 com pré-checagem de autonomia, operador P2), rastreamento médico, simuladores e tutorial |
+| `saude/index.html` | **SADEC Saúde**: pedidos por perfil (cidadão P3, hospital P1 com pré-checagem de autonomia, governo P2; órgão e socorro trancados para quem não tem o perfil), rastreamento médico, simuladores e tutorial |
 | `delivery/index.html` | **SADEC Delivery**: restaurantes fictícios, sacola, comparação drone × entrega convencional, pedido P4 na mesma Central e acompanhamento do voo no mapa de ruas reais, com atalho fixo para o pedido |
 | `drone-bot.html` | Conversa com o Drone Bot e atalhos para as cinco intenções |
 | `faq.html` | **Ajuda**: perguntas frequentes por assunto (abas + accordion) e formulário de contato validado em JavaScript, com mensagens de erro e de sucesso |
@@ -38,7 +38,7 @@ Oferecer um meio **complementar** de transporte para cargas críticas, com regra
 ## Regras da Central (implementadas em `js/operations.js`)
 1. Fila ordenada por prioridade: **P1 → P2 → P3 → P4**; empate pela ordem de chegada.
 2. P1 e P2 podem antecipar uma entrega comercial **antes da decolagem**; entrega **em voo** nunca é realocada.
-3. Órgão só decola se `consumo da rota × 1,3 ≤ bateria` (reserva de 30%). Demais cargas: 15% (ilustrativo).
+3. Toda entrega só decola se `rota de ida e volta × 1,3 ≤ bateria` (reserva de 30%), seja órgão, emergência, saúde ou comercial.
    Voo em tempo real: cruzeiro de 48 km/h (1 km a cada 75 s) e consumo de cerca de 3% por km, ou seja, uns 2,4% por minuto; drone parado na base recarrega cerca de 3% por minuto.
 4. A Central escolhe o drone **disponível** mais próximo da filial adequada, com carga e autonomia suficientes; se não houver, indica **transporte alternativo**.
 5. Pane de motor ou bateria: pouso na **zona segura mais próxima da rota**. Falha grave: paraquedas, luzes e alerta sonoro. A ocorrência é registrada e o drone segue para **resgate e manutenção**; só volta à frota depois de liberado.
@@ -123,7 +123,7 @@ Site (HTML/CSS/JS puro) ──fetch──▶ Node-RED (API + chatbot) ──▶ 
 - Só a **CentralOperacao Java** escolhe o drone (não há segundo motor de despacho; a função `escolher_drone()` do Python continua só no programa acadêmico).
 - O pedido fica `atribuida` com o drone reservado e **só entra em voo na decolagem** (`POST /api/pedidos/:codigo/decolar`).
 - Reserva do drone com `UPDATE` condicional dentro de transação: o mesmo drone não é despachado duas vezes.
-- Autorização: **P1** só hospital ou Central de Transplantes, com **conta de unidade de saúde** e um **código de autorização de órgão** emitido pela Central para aquele transporte (uso único, válido por 6 horas, vinculado ao hospital). **P2** só com conta de operador da Central (em nome da Defesa Civil ou do município). O **chatbot público não autoriza P1 nem P2**.
+- Autorização: **P1** só hospital ou Central de Transplantes, com **conta de unidade de saúde** e um **código de autorização de órgão** emitido pela Central para aquele transporte (uso único, válido por 6 horas, vinculado ao hospital). **P2** só com **conta do governo** (Defesa Civil ou município) ou da Central. Conta de outro perfil recebe 403; sem conta, 401. O **chatbot público não autoriza P1 nem P2**.
 - Decolar, concluir, processar a fila e liberar drones exigem conta de **operador**.
 - Drone em pouso de emergência, manutenção ou aguardando liberação **nunca** é despachado; não há volta automática à frota.
 - Recebimento grava responsável, destinatário, estado da carga e horário, e entra no histórico.
@@ -157,8 +157,8 @@ Nenhuma chave fica no código, no fluxo ou no banco. A API escuta só em `127.0.
 - Perfis: **cliente** (Delivery e remédios), **unidade de saúde** (escolhe o hospital da rede no cadastro) e **operador** (criado só pela Central, não pelo cadastro público).
 - O cabeçalho do portal, o Saúde e o Delivery mostram a conta conectada. No Delivery, com a API ligada e conta de cliente, o pedido também é gravado na Central (P4) e acompanhado ali mesmo no mapa de ruas reais: a loja libera a decolagem quando o preparo termina e o cliente confirma o recebimento depois da chegada prevista (só no próprio pedido comercial; a Central pode fazer as duas ações em qualquer pedido).
 - O código de 6 dígitos, o Face ID e "Esqueci a senha" continuam **simulados** (nenhum SMS ou e-mail é enviado).
-- Contas de demonstração (fictícias, criadas pela migração 002), todas com a senha `sadec2026`: `operador@sadec.demo`, `hospital@sadec.demo` (Hospital das Clínicas) e `cliente@sadec.demo`.
-- Conta de administrador (criada pela migração 003, mesma senha): `admin@sadec.demo`. É um operador: entra por qualquer perfil da tela de login (inclusive Cliente) e acessa tudo — Delivery, Saúde (P1 a P4), Central, códigos de órgão, decolar e concluir.
+- Contas de demonstração (fictícias, criadas pela migração 002), todas com a senha `sadec2026`: `operador@sadec.demo`, `hospital@sadec.demo` (Hospital das Clínicas), `cliente@sadec.demo` e `governo@sadec.demo` (Defesa Civil fictícia, criada pela migração 004; envia socorro P2).
+- Conta de administrador (criada pela migração 003; senha `121365` desde a migração 004): `admin@sadec.demo`. É um operador: entra por qualquer perfil da tela de login (inclusive Cliente) e acessa tudo — Delivery, Saúde (P1 a P4), Central, códigos de órgão, decolar e concluir.
 
 Transporte de órgão: o operador entra na Central, emite o código para o hospital (painel "Códigos de órgão", no modo rede real) e o informa ao hospital; a equipe entra com a conta da unidade de saúde e digita o código no pedido de órgão do SADEC Saúde. O código é consumido na mesma transação que grava o pedido.
 
@@ -192,6 +192,7 @@ POST /api/pedidos
 `ChatBot/migracoes/migrar.py up|down` aplica ou desfaz a migração 001 (faz backup antes, roda em transação): novos estados de drone e de pedido, origem, distância, peso e solicitante no pedido, e as tabelas `tbl_evento` e `tbl_recebimento`.
 `ChatBot/migracoes/migrar_002.py up|down` aplica ou desfaz a migração 002: latitude, longitude e endereço dos locais; todas as unidades do CNES do `sadec.py` (distância até a filial mais próxima pelo `calcular_distancia()` do Python); coordenadas das filiais; e as tabelas `tbl_usuario`, `tbl_sessao` e `tbl_codigo_orgao`, com o dono de cada pedido. Para voltar aos dados demonstrativos depois de testar: pare a API e rode `git checkout -- ChatBot/SADEC_Chatbot.db`.
 `ChatBot/migracoes/migrar_003.py up|down` cria (ou remove) a conta de administrador.
+`ChatBot/migracoes/migrar_004.py up|down` cria (ou remove) o perfil `governo` e a conta `governo@sadec.demo`, e troca a senha do administrador.
 
 ### Testes
 | Comando | O que cobre |

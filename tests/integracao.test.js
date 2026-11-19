@@ -97,6 +97,23 @@ test('P1 usa drone comercial que ainda não decolou e a entrega comercial é rea
   assert.equal(api.obterPedido('SD1002').status, 'reagendada');
 });
 
+test('acesso por perfil: órgão só com cadastro médico, socorro só com conta do governo; admin tem acesso total', { skip: pular }, () => {
+  const kit = { tipo_carga: 'kit_emergencia', destino: 'Mooca', solicitante: { tipo: 'defesa_civil' } };
+  assert.throws(() => api.criarPedido(kit, sessao('cliente@sadec.demo')), (e) => e.status === 403);
+  assert.throws(() => api.criarPedido(kit, sessao('hospital@sadec.demo')), (e) => e.status === 403);
+  assert.equal(api.criarPedido(kit, sessao('governo@sadec.demo')).pedido.prioridade, 2);
+  const orgao = { tipo_carga: 'orgao', destino: 'InCor', solicitante: { tipo: 'central_transplantes' }, codigo_orgao: codigoPara('InCor') };
+  assert.throws(() => api.criarPedido(orgao, sessao('governo@sadec.demo')), (e) => e.status === 403);
+  assert.throws(() => api.criarPedido(orgao, sessao('cliente@sadec.demo')), (e) => e.status === 403);
+  // administrador: senha própria, entra por qualquer aba e pode tudo
+  assert.throws(() => api.entrar({ email: 'admin@sadec.demo', senha: 'sadec2026' }), (e) => e.status === 401);
+  const adm = api.entrar({ email: 'admin@sadec.demo', senha: '121365', perfil: 'cliente' });
+  assert.equal(adm.conta.perfil, 'operador');
+  assert.equal(api.criarPedido(kit, api.contaDaSessao('Bearer ' + adm.token)).pedido.prioridade, 2);
+  // governo não entra pela aba de cliente
+  assert.throws(() => api.entrar({ email: 'governo@sadec.demo', senha: 'sadec2026', perfil: 'cliente' }), (e) => e.status === 403);
+});
+
 test('drone em voo comercial (DR-03) e em voo (DR-06) nunca são realocados; sem drone vai para outro meio', { skip: pular }, () => {
   assert.throws(() => api.criarPedido({ tipo_carga: 'kit_emergencia', destino: 'Parelheiros', solicitante: { tipo: 'defesa_civil' } }), (e) => e.status === 401);
   const r = api.criarPedido({ tipo_carga: 'kit_emergencia', destino: 'Parelheiros', solicitante: { tipo: 'defesa_civil' } }, sessao('operador@sadec.demo'));

@@ -152,6 +152,7 @@ const PERFIS_PUBLICOS = ['cliente', 'unidade_saude'];
 const SOLICITANTE_DO_PERFIL = {
   cliente: ['cliente', 'cidadao'],
   unidade_saude: ['hospital', 'ubs', 'farmacia', 'central_transplantes', 'cidadao'],
+  governo: ['defesa_civil', 'municipio', 'cidadao'],
   operador: ['hospital', 'central_transplantes', 'defesa_civil', 'municipio', 'ubs', 'farmacia', 'cidadao', 'cliente', 'comercio']
 };
 const HORAS_SESSAO = 12;
@@ -190,7 +191,7 @@ function criarConta(entrada) {
   if (nome.length < 2 || nome.length > 80) erros.push('nome precisa ter entre 2 e 80 caracteres.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 120) erros.push('email inválido.');
   if (senha.length < 8 || senha.length > 128) erros.push('senha precisa ter de 8 a 128 caracteres.');
-  if (!PERFIS_PUBLICOS.includes(e.perfil)) erros.push('perfil precisa ser cliente ou unidade_saude (contas de operador são criadas pela Central).');
+  if (!PERFIS_PUBLICOS.includes(e.perfil)) erros.push('perfil precisa ser cliente ou unidade_saude (contas de governo e de operador são criadas pela Central).');
   if (e.perfil === 'unidade_saude' && !instituicao) erros.push('instituicao é obrigatória para unidade de saúde.');
   if (erros.length) throw new ErroApi(400, 'Cadastro inválido.', erros);
   const db = abrir();
@@ -215,7 +216,7 @@ function entrar(entrada) {
     if (!u || !senhaConfere(e.senha, u.DS_Senha_Hash)) throw new ErroApi(401, 'E-mail ou senha incorretos.');
     // Operador (inclui a conta de administrador) entra por qualquer perfil: tem acesso a tudo.
     if (e.perfil && e.perfil !== u.TP_Perfil && u.TP_Perfil !== 'operador') {
-      const nomes = { cliente: 'Cliente', unidade_saude: 'Unidade de saúde', operador: 'Operador' };
+      const nomes = { cliente: 'Cliente', unidade_saude: 'Unidade de saúde', governo: 'Governo', operador: 'Operador' };
       throw new ErroApi(403, 'Esta conta é do perfil "' + (nomes[u.TP_Perfil] || u.TP_Perfil) + '". Escolha esse perfil para entrar.');
     }
     const token = crypto.randomBytes(32).toString('hex');
@@ -317,13 +318,17 @@ function criarPedido(entrada, conta) {
   if (conta && !SOLICITANTE_DO_PERFIL[conta.perfil].includes(sol.tipo)) {
     throw new ErroApi(403, 'A conta "' + conta.perfil + '" não pode pedir como "' + sol.tipo + '".');
   }
-  // Órgão (P1): exige conta de unidade de saúde (ou operador) e um código da Central para este transporte.
+  // Acesso por perfil: órgão (P1) só com cadastro médico autorizado; socorro (P2) só com conta do governo.
+  // Sem conta: 401 (entrar). Conta de outro perfil: 403 (a sessão continua válida).
+  const exigir = (perfis, msg) => {
+    if (!conta) throw new ErroApi(401, msg);
+    if (!perfis.includes(conta.perfil)) throw new ErroApi(403, msg);
+  };
   if (prioridade === 1) {
-    if (!conta || !['unidade_saude', 'operador'].includes(conta.perfil)) throw new ErroApi(401, 'Transporte de órgão exige entrar com uma conta de unidade de saúde.');
+    exigir(['unidade_saude', 'operador'], 'Transporte de órgão exige uma conta de unidade de saúde (cadastro médico autorizado).');
     if (!e.codigo_orgao) throw new ErroApi(403, 'Informe o código de autorização do órgão emitido pela Central.', ['Cada transporte de órgão tem um código de uso único.']);
   }
-  // Socorro (P2): só a Central (operador, em nome da Defesa Civil ou do município).
-  if (prioridade === 2 && (!conta || conta.perfil !== 'operador')) throw new ErroApi(401, 'Envio de socorro exige entrar com uma conta de operador da Central.');
+  if (prioridade === 2) exigir(['governo', 'operador'], 'Envio de socorro exige uma conta do governo (Defesa Civil ou município).');
   const db = abrir();
   try {
     const local = db.prepare('SELECT NM_Local, NR_Distancia_Km FROM tbl_local WHERE NM_Local = ?').get(e.destino.trim());
