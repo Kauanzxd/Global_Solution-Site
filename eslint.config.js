@@ -26,5 +26,11 @@ module.exports = [
     files: ['tests/**/*.js', 'scripts/**/*.js', 'ChatBot/**/*.js', 'eslint.config.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'commonjs', globals: { ...globals.node } },
     rules
+  },
+  {
+    // widget incorporável do chatbot roda no navegador
+    files: ['ChatBot/node-red/widget/**/*.js'],
+    languageOptions: { ecmaVersion: 2022, sourceType: 'script', globals: { ...globals.browser } },
+    rules
   }
 ];

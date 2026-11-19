@@ -1054,5 +1054,99 @@
     "x": 720,
     "y": 600,
     "wires": []
+  },
+  {
+    "id": "widget_js_in",
+    "type": "http in",
+    "z": "sadec_tab",
+    "name": "W4 GET /sadec/widget.js",
+    "url": "/sadec/widget.js",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 170,
+    "y": 880,
+    "wires": [
+      [
+        "widget_js_fn"
+      ]
+    ]
+  },
+  {
+    "id": "widget_js_fn",
+    "type": "function",
+    "z": "sadec_tab",
+    "name": "W4 Widget (js)",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "func": "// Entrega o arquivo do widget incorporável (lido pelo settings.js).\nmsg.payload = global.get(\"sadecWidget\").js;\nmsg.headers = { \"Content-Type\": \"application/javascript; charset=utf-8\", \"Cache-Control\": \"no-cache\" };\nreturn msg;",
+    "x": 420,
+    "y": 880,
+    "wires": [
+      [
+        "widget_js_out"
+      ]
+    ]
+  },
+  {
+    "id": "widget_js_out",
+    "type": "http response",
+    "z": "sadec_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 640,
+    "y": 880,
+    "wires": []
+  },
+  {
+    "id": "widget_css_in",
+    "type": "http in",
+    "z": "sadec_tab",
+    "name": "W4 GET /sadec/widget.css",
+    "url": "/sadec/widget.css",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 170,
+    "y": 940,
+    "wires": [
+      [
+        "widget_css_fn"
+      ]
+    ]
+  },
+  {
+    "id": "widget_css_fn",
+    "type": "function",
+    "z": "sadec_tab",
+    "name": "W4 Widget (css)",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "func": "// Entrega o arquivo do widget incorporável (lido pelo settings.js).\nmsg.payload = global.get(\"sadecWidget\").css;\nmsg.headers = { \"Content-Type\": \"text/css; charset=utf-8\", \"Cache-Control\": \"no-cache\" };\nreturn msg;",
+    "x": 420,
+    "y": 940,
+    "wires": [
+      [
+        "widget_css_out"
+      ]
+    ]
+  },
+  {
+    "id": "widget_css_out",
+    "type": "http response",
+    "z": "sadec_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 640,
+    "y": 940,
+    "wires": []
   }
 ]

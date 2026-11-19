@@ -1,0 +1,27 @@
+/* SADEC — estilo do widget do chatbot (identidade "Precisão suave": tinta #0B1424, azul #2868D7, lilás do bot). */
+.sdw { font-family: "Inter", system-ui, sans-serif; color: #0B1424; }
+.sdw__abrir { position: fixed; right: 20px; bottom: 20px; z-index: 80; min-height: 52px; padding: 0 22px; border: 0; border-radius: 999px;
+  background: #0B1424; color: #FFFFFF; font: 600 15px "Inter", system-ui, sans-serif; box-shadow: 0 12px 32px rgb(11 20 36 / 0.25); cursor: pointer; }
+.sdw__abrir:focus-visible, .sdw__fechar:focus-visible, .sdw__enviar:focus-visible, .sdw__campo:focus-visible { outline: 2px solid #2868D7; outline-offset: 2px; }
+.sdw__painel { display: none; flex-direction: column; width: min(380px, calc(100vw - 32px)); max-height: min(560px, calc(100vh - 120px)); overflow: hidden;
+  border-radius: 28px; background: #FFFFFF; box-shadow: 0 20px 48px rgb(11 20 36 / 0.22); }
+.sdw:not(.sdw--inline) .sdw__painel { position: fixed; right: 20px; bottom: 84px; z-index: 80; }
+.sdw.is-aberto .sdw__painel { display: flex; }
+.sdw--inline .sdw__painel { width: 100%; max-height: 520px; box-shadow: none; border: 1px solid #E1E4E9; }
+.sdw__topo { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: #F1EEFA; }
+.sdw__fechar { width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; font-size: 22px; cursor: pointer; }
+.sdw--inline .sdw__fechar { display: none; }
+.sdw__log { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 180px; margin: 0; padding: 16px; overflow-y: auto; list-style: none; }
+.sdw__msg { max-width: 85%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.45; white-space: pre-line; }
+.sdw__msg--bot { align-self: flex-start; background: #F1F2F5; }
+.sdw__msg--eu { align-self: flex-end; background: #2868D7; color: #FFFFFF; }
+.sdw__msg.is-carregando { color: #5F6B7A; font-style: italic; }
+.sdw__msg.is-erro { background: #FDECEA; color: #A3221C; }
+.sdw__form { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #E1E4E9; }
+.sdw__campo { flex: 1; min-width: 0; min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: #F1F2F5; font: inherit; }
+.sdw__enviar { min-height: 44px; padding: 0 18px; border: 0; border-radius: 999px; background: #0B1424; color: #FFFFFF; font: 600 14px "Inter", system-ui, sans-serif; cursor: pointer; }
+.sdw__enviar:disabled { opacity: 0.5; cursor: wait; }
+.sdw__nota { margin: 0; padding: 0 16px 12px; font-size: 12px; color: #5F6B7A; }
+.sdw__oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: no-preference) { .sdw.is-aberto .sdw__painel { animation: sdw-entrar 200ms ease-out; } }
+@keyframes sdw-entrar { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }

@@ -6,6 +6,8 @@
      NODE_RED_CREDENTIAL_SECRET          — chave para cifrar credenciais salvas pelo editor */
 'use strict';
 const path = require('path');
+const fs = require('fs');
+const lerWidget = (nome) => fs.readFileSync(path.join(__dirname, 'widget', nome), 'utf8');
 
 process.env.SADEC_DB = process.env.SADEC_DB || path.join(__dirname, '..', 'SADEC_Chatbot.db');
 
@@ -27,7 +29,9 @@ module.exports = {
   },
   // Núcleo compartilhado: endpoints da API e chatbot usam as mesmas regras (Python + Java + SQLite).
   functionGlobalContext: {
-    sadecApi: require('./lib/sadec-api.js')
+    sadecApi: require('./lib/sadec-api.js'),
+    // Widget incorporável do chatbot: /sadec/widget.js e /sadec/widget.css
+    sadecWidget: { js: lerWidget('widget.js'), css: lerWidget('widget.css') }
   },
   logging: { console: { level: 'info', metrics: false, audit: false } },
   editorTheme: { projects: { enabled: false } }
