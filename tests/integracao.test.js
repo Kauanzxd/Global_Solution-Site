@@ -22,6 +22,9 @@ const pular = !(pyOk && javaOk) && 'Python ou Java indisponível (defina SADEC_P
 
 const api = require('../ChatBot/node-red/lib/sadec-api.js');
 const hospital = { tipo: 'hospital', nome: 'Hospital das Clínicas (simulação)' };
+// Contas de demonstração criadas pela migração 002 (senha documentada no README)
+const sessao = (email) => api.contaDaSessao('Bearer ' + api.entrar({ email, senha: 'sadec2026' }).token);
+const codigoPara = (hospitalNome) => api.emitirCodigoOrgao(sessao('operador@sadec.demo'), { hospital: hospitalNome }).codigo;
 
 // cada teste parte do banco demonstrativo original
 test.beforeEach(() => fs.copyFileSync(path.join(RAIZ, 'ChatBot', 'SADEC_Chatbot.db'), copia));
@@ -32,8 +35,50 @@ test('P1 pedido pelo chatbot público é recusado (sem autorização)', { skip: 
     (e) => e.status === 403);
 });
 
+test('P1 sem conta ou sem código da Central é recusado', { skip: pular }, () => {
+  assert.throws(() => api.criarPedido({ tipo_carga: 'orgao', destino: 'InCor', solicitante: hospital }), (e) => e.status === 401);
+  assert.throws(() => api.criarPedido({ tipo_carga: 'orgao', destino: 'InCor', solicitante: hospital }, sessao('hospital@sadec.demo')), (e) => e.status === 403);
+  assert.throws(() => api.criarPedido({ tipo_carga: 'orgao', destino: 'InCor', solicitante: hospital, codigo_orgao: 'ORG-XXXXXX' }, sessao('hospital@sadec.demo')), (e) => e.status === 403);
+  assert.throws(() => api.criarPedido({ tipo_carga: 'orgao', destino: 'InCor', solicitante: { tipo: 'cliente' }, codigo_orgao: codigoPara('Hospital das Clínicas') }, sessao('cliente@sadec.demo')), (e) => e.status === 403);
+});
+
+test('código de órgão vale para um hospital e um único transporte', { skip: pular }, () => {
+  const conta = sessao('hospital@sadec.demo');
+  assert.throws(() => api.criarPedido({ tipo_carga: 'orgao', destino: 'InCor', solicitante: hospital, codigo_orgao: codigoPara('Santa Casa') }, conta), (e) => e.status === 403);
+  const codigo = codigoPara('Hospital das Clínicas');
+  const r = api.criarPedido({ tipo_carga: 'orgao', destino: 'InCor', solicitante: hospital, codigo_orgao: codigo }, conta);
+  assert.equal(api.listarCodigosOrgao().find((c) => c.codigo === codigo).pedido_codigo, r.pedido.codigo);
+  assert.throws(() => api.criarPedido({ tipo_carga: 'orgao', destino: 'InCor', solicitante: hospital, codigo_orgao: codigo }, conta), (e) => e.status === 403);
+  assert.deepEqual(api.meusPedidos(conta).map((p) => p.codigo), [r.pedido.codigo]);
+});
+
+test('contas: cadastro, login, sessão, perfis e saída', { skip: pular }, () => {
+  const c = api.criarConta({ nome: 'Ana (fictícia)', email: 'Ana@Exemplo.com', senha: 'senha-forte-1', perfil: 'cliente' });
+  assert.equal(c.email, 'ana@exemplo.com');
+  assert.throws(() => api.criarConta({ nome: 'Ana', email: 'ana@exemplo.com', senha: 'senha-forte-1', perfil: 'cliente' }), (e) => e.status === 409);
+  assert.throws(() => api.criarConta({ nome: 'X', email: 'x@exemplo.com', senha: 'senha-forte-1', perfil: 'operador' }), (e) => e.status === 400);
+  assert.throws(() => api.criarConta({ nome: 'Hosp', email: 'h@exemplo.com', senha: 'senha-forte-1', perfil: 'unidade_saude', instituicao: 'Hospital Inventado' }), (e) => e.status === 400);
+  assert.throws(() => api.entrar({ email: 'ana@exemplo.com', senha: 'errada123' }), (e) => e.status === 401);
+  assert.throws(() => api.entrar({ email: 'ana@exemplo.com', senha: 'senha-forte-1', perfil: 'operador' }), (e) => e.status === 403);
+  const s = api.entrar({ email: 'ana@exemplo.com', senha: 'senha-forte-1', manter: true });
+  assert.match(s.token, /^[a-f0-9]{64}$/);
+  assert.equal(api.contaDaSessao('Bearer ' + s.token).nome, 'Ana (fictícia)');
+  assert.equal(api.contaDaSessao(''), null);
+  assert.throws(() => api.exigirConta('Bearer ' + s.token, ['operador']), (e) => e.status === 403);
+  api.sair('Bearer ' + s.token);
+  assert.throws(() => api.contaDaSessao('Bearer ' + s.token), (e) => e.status === 401);
+});
+
+test('locais trazem os hospitais do CNES com coordenadas e o pedido traz a rota real', { skip: pular }, () => {
+  const locais = api.listarLocais();
+  assert.ok(locais.filter((l) => l.tipo === 'hospital').length >= 180);
+  assert.ok(locais.every((l) => typeof l.lat === 'number' && typeof l.lon === 'number'));
+  const r = api.criarPedido({ tipo_carga: 'remedio', destino: 'Mooca', solicitante: { tipo: 'cidadao' } });
+  assert.deepEqual(r.pedido.rota.map((p) => p.tipo), ['filial', 'destino']);
+});
+
 test('P1 de hospital: Python calcula, Java atribui, SQLite guarda com código SD e evento', { skip: pular }, () => {
-  const r = api.criarPedido({ tipo_carga: 'orgao', destino: 'InCor', origem: 'Hospital das Clínicas', solicitante: hospital });
+  const r = api.criarPedido({ tipo_carga: 'orgao', destino: 'InCor', origem: 'Hospital das Clínicas', solicitante: hospital, codigo_orgao: codigoPara('Hospital das Clínicas') }, sessao('hospital@sadec.demo'));
   assert.match(r.pedido.codigo, /^SD\d{4}$/);
   assert.equal(r.calculo_python.ok, true);
   assert.equal(r.calculo_python.reserva_pct, 30);
@@ -45,15 +90,16 @@ test('P1 de hospital: Python calcula, Java atribui, SQLite guarda com código SD
 test('P1 usa drone comercial que ainda não decolou e a entrega comercial é reagendada', { skip: pular }, () => {
   // Hospital São Paulo: 8 km, ida e volta 16 km × 1,3 = 20,8 km. DR-04 (30% de 40 km = 12 km) não alcança;
   // DR-01 (livre) é ocupado antes; resta DR-02, reservado para SD1002 (P4) que ainda não decolou.
-  api.criarPedido({ tipo_carga: 'orgao', destino: 'InCor', solicitante: hospital });
-  const r = api.criarPedido({ tipo_carga: 'orgao', destino: 'Hospital São Paulo', solicitante: { tipo: 'central_transplantes' } });
+  api.criarPedido({ tipo_carga: 'orgao', destino: 'InCor', solicitante: hospital, codigo_orgao: codigoPara('Hospital das Clínicas') }, sessao('hospital@sadec.demo'));
+  const r = api.criarPedido({ tipo_carga: 'orgao', destino: 'Hospital São Paulo', solicitante: { tipo: 'central_transplantes' }, codigo_orgao: codigoPara('InCor') }, sessao('operador@sadec.demo'));
   assert.equal(r.pedido.drone_codigo, 'DR-02');
   assert.deepEqual(r.decisao_java.reagendadas, ['SD1002']);
   assert.equal(api.obterPedido('SD1002').status, 'reagendada');
 });
 
 test('drone em voo comercial (DR-03) e em voo (DR-06) nunca são realocados; sem drone vai para outro meio', { skip: pular }, () => {
-  const r = api.criarPedido({ tipo_carga: 'kit_emergencia', destino: 'Parelheiros', solicitante: { tipo: 'defesa_civil' } });
+  assert.throws(() => api.criarPedido({ tipo_carga: 'kit_emergencia', destino: 'Parelheiros', solicitante: { tipo: 'defesa_civil' } }), (e) => e.status === 401);
+  const r = api.criarPedido({ tipo_carga: 'kit_emergencia', destino: 'Parelheiros', solicitante: { tipo: 'defesa_civil' } }, sessao('operador@sadec.demo'));
   assert.equal(r.pedido.status, 'outro_meio');
   assert.ok(r.pedido.motivo);
   const drones = api.listarDrones();

@@ -613,7 +613,7 @@
     "initialize": "",
     "finalize": "",
     "libs": [],
-    "func": "// Criar pedido: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.criarPedido(msg.payload) };\n    msg.statusCode = 201;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "func": "// Criar pedido: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.criarPedido(msg.payload, api.contaDaSessao(auth)) };\n    msg.statusCode = 201;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
     "x": 470,
     "y": 60,
     "wires": [
@@ -754,7 +754,7 @@
     "initialize": "",
     "finalize": "",
     "libs": [],
-    "func": "// Decolar: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.decolar(msg.req.params.codigo, (msg.payload || {}).responsavel) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "func": "// Decolar: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.decolar(msg.req.params.codigo, api.exigirConta(auth, [\"operador\"]).nome) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
     "x": 470,
     "y": 240,
     "wires": [
@@ -801,7 +801,7 @@
     "initialize": "",
     "finalize": "",
     "libs": [],
-    "func": "// Concluir entrega: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.concluirEntrega(msg.req.params.codigo, (msg.payload || {}).responsavel) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "func": "// Concluir entrega: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.concluirEntrega(msg.req.params.codigo, api.exigirConta(auth, [\"operador\"]).nome) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
     "x": 470,
     "y": 300,
     "wires": [
@@ -895,7 +895,7 @@
     "initialize": "",
     "finalize": "",
     "libs": [],
-    "func": "// Processar fila: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.processarFila() };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "func": "// Processar fila: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: (api.exigirConta(auth, [\"operador\"]), api.processarFila()) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
     "x": 470,
     "y": 420,
     "wires": [
@@ -989,7 +989,7 @@
     "initialize": "",
     "finalize": "",
     "libs": [],
-    "func": "// Recuperação / liberação de drone: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.recuperarDrone(msg.req.params.codigo, (msg.payload || {}).acao, (msg.payload || {}).responsavel) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "func": "// Recuperação / liberação de drone: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.recuperarDrone(msg.req.params.codigo, (msg.payload || {}).acao, api.exigirConta(auth, [\"operador\"]).nome) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
     "x": 470,
     "y": 540,
     "wires": [
@@ -1195,6 +1195,342 @@
     "headers": {},
     "x": 720,
     "y": 680,
+    "wires": []
+  },
+  {
+    "id": "conta_contas_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "POST /api/contas",
+    "url": "/api/contas",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 760,
+    "wires": [
+      [
+        "conta_contas_fn"
+      ]
+    ]
+  },
+  {
+    "id": "conta_contas_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Criar conta",
+    "func": "// Criar conta: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.criarConta(msg.payload) };\n    msg.statusCode = 201;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 470,
+    "y": 760,
+    "wires": [
+      [
+        "conta_contas_out"
+      ]
+    ]
+  },
+  {
+    "id": "conta_contas_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 760,
+    "wires": []
+  },
+  {
+    "id": "conta_sessoes_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "POST /api/sessoes",
+    "url": "/api/sessoes",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 820,
+    "wires": [
+      [
+        "conta_sessoes_fn"
+      ]
+    ]
+  },
+  {
+    "id": "conta_sessoes_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Entrar (login)",
+    "func": "// Entrar (login): chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.entrar(msg.payload) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 470,
+    "y": 820,
+    "wires": [
+      [
+        "conta_sessoes_out"
+      ]
+    ]
+  },
+  {
+    "id": "conta_sessoes_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 820,
+    "wires": []
+  },
+  {
+    "id": "conta_sair_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "POST /api/sessoes/sair",
+    "url": "/api/sessoes/sair",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 880,
+    "wires": [
+      [
+        "conta_sair_fn"
+      ]
+    ]
+  },
+  {
+    "id": "conta_sair_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Sair (logout)",
+    "func": "// Sair (logout): chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.sair(auth) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 470,
+    "y": 880,
+    "wires": [
+      [
+        "conta_sair_out"
+      ]
+    ]
+  },
+  {
+    "id": "conta_sair_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 880,
+    "wires": []
+  },
+  {
+    "id": "conta_conta_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "GET /api/conta",
+    "url": "/api/conta",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 940,
+    "wires": [
+      [
+        "conta_conta_fn"
+      ]
+    ]
+  },
+  {
+    "id": "conta_conta_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Conta da sessão",
+    "func": "// Conta da sessão: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.exigirConta(auth) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 470,
+    "y": 940,
+    "wires": [
+      [
+        "conta_conta_out"
+      ]
+    ]
+  },
+  {
+    "id": "conta_conta_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 940,
+    "wires": []
+  },
+  {
+    "id": "conta_meus_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "GET /api/meus-pedidos",
+    "url": "/api/meus-pedidos",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 1000,
+    "wires": [
+      [
+        "conta_meus_fn"
+      ]
+    ]
+  },
+  {
+    "id": "conta_meus_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Pedidos da conta",
+    "func": "// Pedidos da conta: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.meusPedidos(api.exigirConta(auth)) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 470,
+    "y": 1000,
+    "wires": [
+      [
+        "conta_meus_out"
+      ]
+    ]
+  },
+  {
+    "id": "conta_meus_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 1000,
+    "wires": []
+  },
+  {
+    "id": "conta_codigos_get_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "GET /api/codigos-orgao",
+    "url": "/api/codigos-orgao",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 1060,
+    "wires": [
+      [
+        "conta_codigos_get_fn"
+      ]
+    ]
+  },
+  {
+    "id": "conta_codigos_get_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Listar códigos de órgão",
+    "func": "// Listar códigos de órgão: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: (api.exigirConta(auth, [\"operador\"]), api.listarCodigosOrgao()) };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 470,
+    "y": 1060,
+    "wires": [
+      [
+        "conta_codigos_get_out"
+      ]
+    ]
+  },
+  {
+    "id": "conta_codigos_get_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 1060,
+    "wires": []
+  },
+  {
+    "id": "conta_codigos_post_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "POST /api/codigos-orgao",
+    "url": "/api/codigos-orgao",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 1120,
+    "wires": [
+      [
+        "conta_codigos_post_fn"
+      ]
+    ]
+  },
+  {
+    "id": "conta_codigos_post_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Emitir código de órgão",
+    "func": "// Emitir código de órgão: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nconst auth = (msg.req.headers || {}).authorization;\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.emitirCodigoOrgao(api.exigirConta(auth, [\"operador\"]), msg.payload) };\n    msg.statusCode = 201;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 470,
+    "y": 1120,
+    "wires": [
+      [
+        "conta_codigos_post_out"
+      ]
+    ]
+  },
+  {
+    "id": "conta_codigos_post_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 1120,
     "wires": []
   }
 ]

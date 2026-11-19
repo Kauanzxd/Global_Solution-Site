@@ -27,7 +27,7 @@ module.exports = {
   httpNodeCors: {
     origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
     methods: 'GET,POST',
-    allowedHeaders: 'Content-Type'
+    allowedHeaders: 'Content-Type, Authorization'
   },
   // Núcleo compartilhado: endpoints da API e chatbot usam as mesmas regras (Python + Java + SQLite).
   functionGlobalContext: {

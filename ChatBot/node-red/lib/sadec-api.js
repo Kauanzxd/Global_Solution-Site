@@ -5,6 +5,7 @@
 'use strict';
 
 const path = require('path');
+const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 const { DatabaseSync } = require('node:sqlite');
 
@@ -145,8 +146,160 @@ function despachar(db, linha, responsavel) {
   return decisao;
 }
 
+/* ---------- contas e sessões (uma conta vale para o portal, o Saúde e o Delivery) ---------- */
+const PERFIS_PUBLICOS = ['cliente', 'unidade_saude'];
+/* Que tipo de solicitante cada perfil pode declarar no pedido. */
+const SOLICITANTE_DO_PERFIL = {
+  cliente: ['cliente', 'cidadao'],
+  unidade_saude: ['hospital', 'ubs', 'farmacia', 'central_transplantes', 'cidadao'],
+  operador: ['hospital', 'central_transplantes', 'defesa_civil', 'municipio', 'ubs', 'farmacia', 'cidadao', 'cliente', 'comercio']
+};
+const HORAS_SESSAO = 12;
+const DIAS_SESSAO_LONGA = 30;
+const HORAS_CODIGO_ORGAO = 6;
+
+const sha256 = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
+const dataMais = (ms) => {
+  const d = new Date(Date.now() + ms);
+  return d.toISOString();
+};
+
+function hashSenha(senha) {
+  const sal = crypto.randomBytes(16);
+  return 'scrypt$16384$8$1$' + sal.toString('hex') + '$' + crypto.scryptSync(senha, sal, 64, { N: 16384, r: 8, p: 1 }).toString('hex');
+}
+function senhaConfere(senha, guardado) {
+  const p = String(guardado || '').split('$');
+  if (p.length !== 6 || p[0] !== 'scrypt') return false;
+  const esperado = Buffer.from(p[5], 'hex');
+  const obtido = crypto.scryptSync(String(senha), Buffer.from(p[4], 'hex'), esperado.length, { N: Number(p[1]), r: Number(p[2]), p: Number(p[3]) });
+  return crypto.timingSafeEqual(esperado, obtido);
+}
+
+function contaJson(u) {
+  return { id: u.ID_Usuario, nome: u.NM_Nome, email: u.DS_Email, perfil: u.TP_Perfil, instituicao: u.NM_Instituicao || null, criada_em: u.DT_Criacao };
+}
+
+function criarConta(entrada) {
+  const e = entrada || {};
+  const nome = typeof e.nome === 'string' ? e.nome.trim() : '';
+  const email = typeof e.email === 'string' ? e.email.trim().toLowerCase() : '';
+  const senha = typeof e.senha === 'string' ? e.senha : '';
+  const instituicao = typeof e.instituicao === 'string' ? e.instituicao.trim() : '';
+  const erros = [];
+  if (nome.length < 2 || nome.length > 80) erros.push('nome precisa ter entre 2 e 80 caracteres.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 120) erros.push('email inválido.');
+  if (senha.length < 8 || senha.length > 128) erros.push('senha precisa ter de 8 a 128 caracteres.');
+  if (!PERFIS_PUBLICOS.includes(e.perfil)) erros.push('perfil precisa ser cliente ou unidade_saude (contas de operador são criadas pela Central).');
+  if (e.perfil === 'unidade_saude' && !instituicao) erros.push('instituicao é obrigatória para unidade de saúde.');
+  if (erros.length) throw new ErroApi(400, 'Cadastro inválido.', erros);
+  const db = abrir();
+  try {
+    if (e.perfil === 'unidade_saude' && !db.prepare("SELECT 1 FROM tbl_local WHERE TP_Local = 'hospital' AND NM_Local = ?").get(instituicao)) {
+      throw new ErroApi(400, 'Unidade de saúde fora da rede piloto.', ['Escolha um hospital da lista (GET /api/locais).']);
+    }
+    if (db.prepare('SELECT 1 FROM tbl_usuario WHERE DS_Email = ?').get(email)) throw new ErroApi(409, 'Já existe uma conta com esse e-mail.');
+    const r = db.prepare('INSERT INTO tbl_usuario (NM_Nome, DS_Email, DS_Senha_Hash, TP_Perfil, NM_Instituicao, DT_Criacao) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(nome, email, hashSenha(senha), e.perfil, e.perfil === 'unidade_saude' ? instituicao : null, agora());
+    return contaJson(db.prepare('SELECT * FROM tbl_usuario WHERE ID_Usuario = ?').get(r.lastInsertRowid));
+  } finally { db.close(); }
+}
+
+function entrar(entrada) {
+  const e = entrada || {};
+  const email = typeof e.email === 'string' ? e.email.trim().toLowerCase() : '';
+  const db = abrir();
+  try {
+    const u = email ? db.prepare('SELECT * FROM tbl_usuario WHERE DS_Email = ?').get(email) : null;
+    // Mesma mensagem para e-mail inexistente e senha errada: não revela quais e-mails têm conta.
+    if (!u || !senhaConfere(e.senha, u.DS_Senha_Hash)) throw new ErroApi(401, 'E-mail ou senha incorretos.');
+    if (e.perfil && e.perfil !== u.TP_Perfil) {
+      const nomes = { cliente: 'Cliente', unidade_saude: 'Unidade de saúde', operador: 'Operador' };
+      throw new ErroApi(403, 'Esta conta é do perfil "' + (nomes[u.TP_Perfil] || u.TP_Perfil) + '". Escolha esse perfil para entrar.');
+    }
+    const token = crypto.randomBytes(32).toString('hex');
+    const expira = dataMais(e.manter ? DIAS_SESSAO_LONGA * 864e5 : HORAS_SESSAO * 36e5);
+    db.prepare('DELETE FROM tbl_sessao WHERE DT_Expira < ?').run(new Date().toISOString());
+    db.prepare('INSERT INTO tbl_sessao (DS_Token_Hash, ID_Usuario, DT_Expira) VALUES (?, ?, ?)').run(sha256(token), u.ID_Usuario, expira);
+    return { token, expira_em: expira, conta: contaJson(u) };
+  } finally { db.close(); }
+}
+
+/* Lê "Authorization: Bearer <token>". Sem cabeçalho devolve null; token inválido ou vencido gera 401. */
+function contaDaSessao(autorizacao) {
+  const m = /^Bearer\s+([a-f0-9]{64})$/i.exec(String(autorizacao || '').trim());
+  if (!autorizacao) return null;
+  if (!m) throw new ErroApi(401, 'Sessão inválida. Entre novamente.');
+  const db = abrir();
+  try {
+    const u = db.prepare('SELECT u.* FROM tbl_sessao s JOIN tbl_usuario u ON u.ID_Usuario = s.ID_Usuario WHERE s.DS_Token_Hash = ? AND s.DT_Expira > ?')
+      .get(sha256(m[1].toLowerCase()), new Date().toISOString());
+    if (!u) throw new ErroApi(401, 'Sessão expirada. Entre novamente.');
+    return contaJson(u);
+  } finally { db.close(); }
+}
+
+function exigirConta(autorizacao, perfis) {
+  const conta = contaDaSessao(autorizacao);
+  if (!conta) throw new ErroApi(401, 'Entre na sua conta para continuar.');
+  if (perfis && !perfis.includes(conta.perfil)) throw new ErroApi(403, 'Esta ação é exclusiva do perfil ' + perfis.join(' ou ') + '.');
+  return conta;
+}
+
+function sair(autorizacao) {
+  const m = /^Bearer\s+([a-f0-9]{64})$/i.exec(String(autorizacao || '').trim());
+  if (!m) return { saiu: false };
+  const db = abrir();
+  try {
+    db.prepare('DELETE FROM tbl_sessao WHERE DS_Token_Hash = ?').run(sha256(m[1].toLowerCase()));
+    return { saiu: true };
+  } finally { db.close(); }
+}
+
+/* ---------- códigos de autorização de órgão (P1): um por transporte, uso único ---------- */
+function codigoOrgaoJson(c) {
+  return { codigo: c.CD_Codigo, hospital: c.NM_Hospital, status: c.ST_Codigo, pedido_codigo: c.CD_Rastreio || null, emitido_em: c.DT_Emissao, expira_em: c.DT_Expira };
+}
+
+function emitirCodigoOrgao(conta, entrada) {
+  const hospital = entrada && typeof entrada.hospital === 'string' ? entrada.hospital.trim() : '';
+  if (!hospital) throw new ErroApi(400, 'Informe o hospital que fará o transporte.', ['hospital é obrigatório.']);
+  const db = abrir();
+  try {
+    if (!db.prepare("SELECT 1 FROM tbl_local WHERE TP_Local = 'hospital' AND NM_Local = ?").get(hospital)) throw new ErroApi(400, 'Hospital fora da rede piloto.');
+    // Sem letras ambíguas (O/0, I/1) para ditar por telefone
+    const alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let codigo;
+    do {
+      codigo = 'ORG-' + Array.from(crypto.randomBytes(6), (b) => alfabeto[b % alfabeto.length]).join('');
+    } while (db.prepare('SELECT 1 FROM tbl_codigo_orgao WHERE CD_Codigo = ?').get(codigo));
+    db.prepare("INSERT INTO tbl_codigo_orgao (CD_Codigo, NM_Hospital, ID_Emissor, ST_Codigo, DT_Emissao, DT_Expira) VALUES (?, ?, ?, 'ativo', ?, ?)")
+      .run(codigo, hospital, conta.id, new Date().toISOString(), dataMais(HORAS_CODIGO_ORGAO * 36e5));
+    return codigoOrgaoJson(db.prepare('SELECT * FROM tbl_codigo_orgao WHERE CD_Codigo = ?').get(codigo));
+  } finally { db.close(); }
+}
+
+function listarCodigosOrgao() {
+  const db = abrir();
+  try {
+    return db.prepare('SELECT * FROM tbl_codigo_orgao ORDER BY DT_Emissao DESC LIMIT 50').all().map(codigoOrgaoJson);
+  } finally { db.close(); }
+}
+
+/* Confere o código dentro da transação do pedido e o consome. */
+function consumirCodigoOrgao(db, codigo, hospital, pedido) {
+  const c = db.prepare('SELECT * FROM tbl_codigo_orgao WHERE CD_Codigo = ?').get(String(codigo || '').trim().toUpperCase());
+  if (!c) throw new ErroApi(403, 'Código de autorização do órgão inválido.', ['Peça à Central SADEC um código para este transporte.']);
+  if (c.ST_Codigo !== 'ativo') throw new ErroApi(403, 'Este código já foi usado no pedido ' + c.CD_Rastreio + '.', ['Cada código vale para um único transporte.']);
+  if (c.DT_Expira < new Date().toISOString()) throw new ErroApi(403, 'Este código expirou. Peça um novo à Central.');
+  if (hospital && c.NM_Hospital !== hospital) throw new ErroApi(403, 'Este código foi emitido para outro hospital (' + c.NM_Hospital + ').');
+  const r = db.prepare("UPDATE tbl_codigo_orgao SET ST_Codigo = 'usado', CD_Rastreio = ? WHERE CD_Codigo = ? AND ST_Codigo = 'ativo'").run(pedido, c.CD_Codigo);
+  if (r.changes !== 1) throw new ErroApi(409, 'O código acabou de ser usado em outro pedido.');
+  return c;
+}
+
 /* ---------- casos de uso ---------- */
-function criarPedido(entrada) {
+function criarPedido(entrada, conta) {
   const e = entrada || {};
   const erros = [];
   if (!TIPOS_CARGA.includes(e.tipo_carga)) erros.push('tipo_carga precisa ser um de: ' + TIPOS_CARGA.join(', ') + '.');
@@ -160,10 +313,20 @@ function criarPedido(entrada) {
     throw new ErroApi(403, 'Pedido P' + prioridade + ' não autorizado para o solicitante "' + sol.tipo + '".',
       ['P1: hospitais ou Central de Transplantes. P2: Defesa Civil ou município. O chatbot público não autoriza despacho P1 ou P2.']);
   }
+  if (conta && !SOLICITANTE_DO_PERFIL[conta.perfil].includes(sol.tipo)) {
+    throw new ErroApi(403, 'A conta "' + conta.perfil + '" não pode pedir como "' + sol.tipo + '".');
+  }
+  // Órgão (P1): exige conta de unidade de saúde (ou operador) e um código da Central para este transporte.
+  if (prioridade === 1) {
+    if (!conta || !['unidade_saude', 'operador'].includes(conta.perfil)) throw new ErroApi(401, 'Transporte de órgão exige entrar com uma conta de unidade de saúde.');
+    if (!e.codigo_orgao) throw new ErroApi(403, 'Informe o código de autorização do órgão emitido pela Central.', ['Cada transporte de órgão tem um código de uso único.']);
+  }
+  // Socorro (P2): só a Central (operador, em nome da Defesa Civil ou do município).
+  if (prioridade === 2 && (!conta || conta.perfil !== 'operador')) throw new ErroApi(401, 'Envio de socorro exige entrar com uma conta de operador da Central.');
   const db = abrir();
   try {
     const local = db.prepare('SELECT NM_Local, NR_Distancia_Km FROM tbl_local WHERE NM_Local = ?').get(e.destino.trim());
-    if (!local) throw new ErroApi(400, 'Destino fora da rede piloto.', db.prepare('SELECT NM_Local FROM tbl_local ORDER BY NM_Local').all().map((x) => x.NM_Local));
+    if (!local) throw new ErroApi(400, 'Destino fora da rede piloto.', ['Consulte os ' + db.prepare('SELECT count(*) AS n FROM tbl_local').get().n + ' destinos em GET /api/locais.']);
 
     // 2. Python: distância da rota e bateria necessária com reserva de 30% (referência: maior autonomia da frota)
     const ref = db.prepare('SELECT MAX(NR_Autonomia_Km) AS a FROM tbl_drone').get();
@@ -173,10 +336,14 @@ function criarPedido(entrada) {
     return transacao(db, () => {
       const codigo = proximoCodigo(db);
       db.prepare(`INSERT INTO tbl_entrega (CD_Rastreio, NR_Chat, NM_Destino, TP_Carga, NR_Prioridade, ST_Status, DS_Periodo, DT_Pedido,
-        NM_Origem, NR_Distancia_Km, NR_Peso_Kg, DS_Solicitante) VALUES (?, ?, ?, ?, ?, 'aguardando', ?, ?, ?, ?, ?, ?)`)
+        NM_Origem, NR_Distancia_Km, NR_Peso_Kg, DS_Solicitante, NR_Usuario) VALUES (?, ?, ?, ?, ?, 'aguardando', ?, ?, ?, ?, ?, ?, ?)`)
         .run(codigo, e.chat || null, local.NM_Local, e.tipo_carga, prioridade, e.periodo || 'agora', agora(),
-          e.origem || null, local.NR_Distancia_Km, e.peso_kg || null, sol.tipo + (sol.nome ? ': ' + sol.nome : ''));
+          e.origem || null, local.NR_Distancia_Km, e.peso_kg || null, sol.tipo + (sol.nome ? ': ' + sol.nome : ''), conta ? conta.id : null);
       evento(db, codigo, null, null, 'aguardando', 'Pedido registrado (' + (e.canal || 'site') + '). Bateria de referência pelo Python: ' + calculo.bateria_necessaria_pct + '%.', sol.nome || sol.tipo);
+      if (prioridade === 1) {
+        const c = consumirCodigoOrgao(db, e.codigo_orgao, conta.perfil === 'unidade_saude' ? conta.instituicao : null, codigo);
+        evento(db, codigo, null, 'aguardando', 'aguardando', 'Código de autorização ' + c.CD_Codigo + ' (emitido para ' + c.NM_Hospital + ') validado e consumido.', 'Central SADEC');
+      }
       const linha = db.prepare('SELECT * FROM tbl_entrega WHERE CD_Rastreio = ?').get(codigo);
       // 3. Java: aplica as regras da CentralOperacao e reserva o drone
       const decisao = despachar(db, linha, 'Central Java');
@@ -194,7 +361,31 @@ function obterPedidoDb(db, codigo) {
   p.eventos = db.prepare('SELECT * FROM tbl_evento WHERE CD_Rastreio = ? ORDER BY ID_Evento').all(l.CD_Rastreio).map(eventoJson);
   const r = db.prepare('SELECT * FROM tbl_recebimento WHERE CD_Rastreio = ?').get(l.CD_Rastreio);
   p.recebimento = r ? { pedido_codigo: r.CD_Rastreio, responsavel: r.NM_Responsavel, destinatario: r.NM_Destinatario, estado_carga: r.ST_Carga, data_hora: r.DT_Recebimento } : null;
+  p.rota = rotaDoPedido(db, l);
   return p;
+}
+
+/* Pontos reais do trajeto para o mapa: filial do drone, retirada (se for um local da rede) e destino. */
+function rotaDoPedido(db, l) {
+  const ponto = (nome, tipo, lat, lon, endereco) => (typeof lat !== 'number' ? null : { nome, tipo, lat, lon, endereco: endereco || null });
+  const local = (nome) => db.prepare('SELECT * FROM tbl_local WHERE NM_Local = ?').get(nome || '');
+  const f = l.CD_Drone
+    ? db.prepare('SELECT f.* FROM tbl_drone d JOIN tbl_filial f ON f.ID_Filial = d.ID_Filial WHERE d.CD_Drone = ?').get(l.CD_Drone)
+    : db.prepare('SELECT * FROM tbl_filial ORDER BY ID_Filial LIMIT 1').get();
+  const o = local(l.NM_Origem);
+  const d = local(l.NM_Destino);
+  return [
+    f && ponto(f.NM_Filial, 'filial', f.NR_Latitude, f.NR_Longitude, f.NM_Bairro),
+    o && ponto(o.NM_Local, 'retirada', o.NR_Latitude, o.NR_Longitude, o.DS_Endereco),
+    d && ponto(d.NM_Local, 'destino', d.NR_Latitude, d.NR_Longitude, d.DS_Endereco)
+  ].filter(Boolean);
+}
+
+function meusPedidos(conta) {
+  const db = abrir();
+  try {
+    return db.prepare('SELECT * FROM tbl_entrega WHERE NR_Usuario = ? ORDER BY ID_Entrega DESC').all(conta.id).map(pedidoJson);
+  } finally { db.close(); }
 }
 
 function obterPedido(codigo) {
@@ -216,8 +407,11 @@ function listarPedidos() {
 function listarLocais() {
   const db = abrir();
   try {
-    return db.prepare('SELECT NM_Local, TP_Local, NR_Distancia_Km FROM tbl_local ORDER BY TP_Local, NM_Local').all()
-      .map((l) => ({ nome: l.NM_Local, tipo: l.TP_Local, distancia_km: l.NR_Distancia_Km }));
+    const locais = db.prepare('SELECT * FROM tbl_local ORDER BY TP_Local, NM_Local').all()
+      .map((l) => ({ nome: l.NM_Local, tipo: l.TP_Local, distancia_km: l.NR_Distancia_Km, lat: l.NR_Latitude, lon: l.NR_Longitude, endereco: l.DS_Endereco || null, fonte: l.DS_Fonte || null }));
+    const filiais = db.prepare('SELECT * FROM tbl_filial ORDER BY ID_Filial').all()
+      .map((f) => ({ nome: f.NM_Filial, tipo: 'filial', bairro: f.NM_Bairro, lat: f.NR_Latitude, lon: f.NR_Longitude }));
+    return locais.concat(filiais);
   } finally { db.close(); }
 }
 
@@ -329,5 +523,6 @@ function recuperarDrone(codigoDrone, acao, responsavel) {
 module.exports = {
   CONFIG, ErroApi, AUTORIZADOS,
   criarPedido, obterPedido, listarPedidos, listarDrones, listarLocais, processarFila,
-  decolar, concluirEntrega, registrarRecebimento, recuperarDrone
+  decolar, concluirEntrega, registrarRecebimento, recuperarDrone,
+  criarConta, entrar, sair, contaDaSessao, exigirConta, meusPedidos, emitirCodigoOrgao, listarCodigosOrgao
 };
