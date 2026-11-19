@@ -464,6 +464,78 @@
 .receipt__done dt { color: var(--p3-ink); }
 #receipt-msg { margin-top: 12px; }
 
+/* Rastreamento: lista de entregas + mapa + detalhes (3 colunas no desktop, faixa rolável no celular) */
+.trk-app { display: grid; gap: 16px; margin-top: 16px; }
+.trk-main { min-width: 0; }
+.trk-main > .trk-grid, .trk-main > .trk-empty { margin-top: 0; }
+.trk-list { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.trk-list__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-inline: 4px; }
+.trk-list__items { display: flex; gap: 10px; margin: 0; padding: 2px 2px 8px; list-style: none; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+.trk-list__items > li { flex: 0 0 15.5rem; scroll-snap-align: start; }
+.trk-item {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "prio code status" "prio rota rota" "barra barra fonte";
+  gap: 4px 10px; align-items: center; width: 100%; min-height: 44px; padding: 12px; border: 0; border-radius: 18px;
+  background: var(--surface); color: var(--ink); text-align: left; box-shadow: inset 0 0 0 1px var(--line);
+  transition-property: box-shadow, background-color; transition-duration: var(--d-press); transition-timing-function: ease-out;
+}
+.trk-item:hover { background: var(--surface-2); }
+.trk-item[aria-current="true"] { box-shadow: inset 0 0 0 2px var(--ink); }
+.trk-item__prio { grid-area: prio; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; background: var(--surface-2); font: 600 0.75rem var(--font-mono); }
+.trk-item__prio[data-prio="1"] { background: var(--p1-bg); color: var(--p1-ink); }
+.trk-item__prio[data-prio="2"] { background: var(--p2-bg); color: var(--p2-ink); }
+.trk-item__prio[data-prio="3"] { background: var(--p3-bg); color: var(--p3-ink); }
+.trk-item__prio[data-prio="4"] { background: var(--p4-bg); color: var(--p4-ink); }
+.trk-item__code { grid-area: code; font-size: var(--t-label); font-weight: 500; }
+.trk-item__status { grid-area: status; font-size: var(--t-xs); color: var(--muted); white-space: nowrap; }
+.trk-item__rota { grid-area: rota; overflow: hidden; font-size: var(--t-xs); color: var(--muted); white-space: nowrap; text-overflow: ellipsis; }
+.trk-item__barra { grid-area: barra; display: block; height: 4px; margin-top: 6px; }
+.trk-item__barra svg { display: block; width: 100%; height: 100%; }
+.trk-item__trilho { fill: #E4E7EC; }
+.trk-item__feito { fill: var(--ink); }
+.trk-item.is-alert .trk-item__feito { fill: var(--p1); }
+.trk-item__fonte { grid-area: fonte; margin-top: 6px; font-size: 0.6875rem; color: var(--muted); }
+@media (min-width: 1200px) {
+  .trk-app { grid-template-columns: 18rem minmax(0, 1fr); align-items: start; }
+  .trk-list { position: sticky; top: calc(var(--header-h) + 16px); max-height: calc(100vh - var(--header-h) - 32px); padding: 16px 12px; border-radius: var(--r-card); background: var(--surface); }
+  .trk-list__items { flex-direction: column; overflow-x: visible; overflow-y: auto; scroll-snap-type: none; }
+  .trk-list__items > li { flex: none; }
+  .trk-list .trk-item { box-shadow: none; background: transparent; }
+  .trk-list .trk-item:hover { background: var(--surface-2); }
+  .trk-list .trk-item[aria-current="true"] { background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--ink); }
+  .trk-main .trk-grid { grid-template-columns: minmax(0, 1fr) 22rem; }
+}
+
+/* Mapa de ruas reais (OpenStreetMap) do pedido da Central */
+.osm { position: absolute; inset: 0; background: #E8E6E1; }
+.osm[hidden] { display: none; }
+.osm__svg { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; user-select: none; }
+.osm__svg.is-arrastando { cursor: grabbing; }
+.osm__svg image { filter: saturate(0.55) contrast(0.96); }
+.osm__attr { position: absolute; right: 0; bottom: 0; margin: 0; padding: 3px 10px; border-radius: 10px 0 0 0; background: rgb(255 255 255 / 0.88); font-size: 0.6875rem; color: #2B2F36; }
+.osm__attr a { color: inherit; }
+.osm__rede.is-oculta { display: none; }
+.osm__rede circle { fill: #FFFFFF; stroke: var(--p1); stroke-width: 1.5; opacity: 0.8; }
+.osm__faixa { fill: none; stroke: rgb(40 104 215 / 0.2); stroke-width: 16; stroke-linecap: round; stroke-linejoin: round; }
+.osm__feito { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.osm__falta { fill: none; stroke: var(--ink); stroke-width: 3.5; stroke-dasharray: 0.5 11.5; stroke-linecap: round; }
+.osm__marca circle { fill: var(--ink); stroke: #FFFFFF; stroke-width: 3; }
+.osm__marca .osm__miolo { fill: #FFFFFF; stroke: none; }
+.osm__marca--retirada circle:not(.osm__miolo) { fill: var(--p1); }
+.osm__marca--destino circle:not(.osm__miolo) { fill: var(--p3); }
+.osm__marca--destino .osm__halo { fill: rgb(30 127 82 / 0.2); stroke: none; }
+.osm__drone { transition: transform 600ms linear; }
+.osm__drone.is-oculto { display: none; }
+.osm__drone-anel { fill: #FFFFFF; filter: drop-shadow(0 2px 4px rgb(11 20 36 / 0.35)); }
+.osm__drone-ponto { fill: var(--blue); }
+@media (prefers-reduced-motion: no-preference) {
+  .osm__falta { animation: route-flow 1.6s linear infinite; }
+  .osm__halo { animation: map-pulse 2.4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+}
+@media (prefers-reduced-motion: reduce) { .osm__drone { transition: none; } }
+body.is-api .tmap { visibility: hidden; }
+body.is-api #telemetria { display: none; }
+body.is-api .trk-map__note { bottom: 30px; }
+
 /* ===================== Central · painéis de vidro escuro =====================
    Fundo com brilho frio, painéis translúcidos com borda fina, números grandes e finos,
    mapa dominante com legenda flutuante e fila com rolagem própria. */
