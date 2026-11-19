@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Central de operações — SADEC Control</title>
-  <meta name="description" content="Central operacional demonstrativa do SADEC: fila por prioridade, frota, novas solicitações e cenários de teste das regras.">
+  <meta name="description" content="Central operacional do SADEC: mapa ao vivo, fila por prioridade, frota com bateria, alertas, códigos de órgão e cenários de teste das regras.">
   <link rel="icon" href="assets/icons/drone-bot.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,175 +14,167 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/drone-bot.css">
   <link rel="stylesheet" href="css/control.css">
+  <link rel="stylesheet" href="css/central.css">
 </head>
-<body class="control ops-app" data-page="central">
+<body class="control cx-body" data-page="central" data-modo="sim">
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
   <!-- Barra lateral de ícones (computador) -->
-  <nav class="ops-rail" aria-label="Central de Operações">
-    <a class="ops-rail__logo" href="index.html" aria-label="SADEC, voltar ao portal"><img src="assets/icons/drone-bot.svg" alt="" width="36" height="36"></a>
-    <a class="ops-rail__item" href="#visao" aria-label="Visão geral" aria-current="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></a>
-    <a class="ops-rail__item" href="#mapa-frota" aria-label="Mapa de rotas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5 9 4.5l6 2 5-2v13l-5 2-6-2-5 2z"/><path d="M9 4.5v13M15 6.5v13"/></svg></a>
-    <a class="ops-rail__item" href="#frota" aria-label="Frota"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg></a>
-    <a class="ops-rail__item" href="#alertas" aria-label="Alertas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 19.5h18z"/><path d="M12 10v4.5M12 17v.3"/></svg></a>
-    <a class="ops-rail__item" href="#registro" aria-label="Registro operacional"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg></a>
-    <button class="ops-rail__item ops-rail__help" type="button" id="btn-tour" aria-label="Tutorial guiado"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4M12 16.6v.3"/></svg></button>
-    <span class="ops-rail__op" aria-hidden="true">OP</span>
+  <nav class="cx-rail" aria-label="Seções da Central">
+    <a class="cx-rail__logo" href="index.html" aria-label="SADEC, voltar ao portal"><img src="assets/icons/drone-bot.svg" alt="" width="34" height="34"></a>
+    <a class="cx-rail__item" href="#painel" aria-label="Resumo" aria-current="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></a>
+    <a class="cx-rail__item" href="#mapa" aria-label="Mapa ao vivo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5 9 4.5l6 2 5-2v13l-5 2-6-2-5 2z"/><path d="M9 4.5v13M15 6.5v13"/></svg></a>
+    <a class="cx-rail__item" href="#fila" aria-label="Fila de prioridades"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7h12M8 12h12M8 17h12"/><circle cx="4.5" cy="7" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="17" r="1"/></svg></a>
+    <a class="cx-rail__item" href="#frota" aria-label="Frota"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg></a>
+    <a class="cx-rail__item" href="#alertas" aria-label="Alertas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 19.5h18z"/><path d="M12 10v4.5M12 17v.3"/></svg></a>
+    <a class="cx-rail__item" href="#registro" aria-label="Registro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg></a>
+    <button class="cx-rail__item cx-rail__help" type="button" id="btn-tour" aria-label="Tutorial guiado"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4M12 16.6v.3"/></svg></button>
   </nav>
 
-  <main id="conteudo" class="ops">
-    <header class="ops-top" id="visao">
-      <p class="ops-top__eyebrow">Central · simulação</p>
-      <h1 id="page-title" class="ops__title"><span class="ops__title-full">Central de Operações</span><span class="ops__title-short">Triagem</span></h1>
-      <nav class="ops-tabs" aria-label="Seções da Central">
-        <a href="#visao" aria-current="true">Visão geral</a>
-        <a href="#frota">Frota</a>
-        <a href="#mapa-frota">Rotas</a>
-        <a href="#alertas">Alertas</a>
-      </nav>
-      <div class="ops-top__end">
-        <span class="ops__live"><span class="live-dot" aria-hidden="true"></span>Ao vivo</span>
-        <span class="ops__clock mono" id="ops-clock" aria-hidden="true">--:--:--</span>
-        <span class="tag tag--demo">Simulação · dados ilustrativos</span>
+  <main id="conteudo" class="cx">
+    <header class="cx-top" id="painel">
+      <div class="cx-top__title">
+        <p class="cx-top__crumb">SADEC Control</p>
+        <h1 id="page-title" class="cx-top__h1">Central de Operações</h1>
       </div>
-      <div class="ops__actions">
+      <div class="cx-modo" role="group" aria-label="Fonte dos dados">
+        <button type="button" data-modo="real" aria-pressed="false" disabled><span>Rede real</span><small id="cx-modo-real">verificando a API…</small></button>
+        <button type="button" data-modo="sim" aria-pressed="true"><span>Simulação</span><small>cidade-modelo</small></button>
+      </div>
+      <div class="cx-top__end">
+        <span class="cx-live"><span class="live-dot" aria-hidden="true"></span><span class="mono" id="ops-clock">--:--:--</span></span>
+        <a class="cx-conta" id="cx-conta" href="entrar.html#central"><span class="cx-conta__ini" id="cx-conta-ini" aria-hidden="true">OP</span><span id="cx-conta-nome">Entrar como operador</span></a>
         <button class="btn btn--light btn--sm" type="button" id="btn-processar">Processar fila</button>
-        <button class="btn btn--ghost-light btn--sm" type="button" id="btn-reset">Restaurar dados iniciais</button>
       </div>
-      <div class="scenario-result" id="ops-msg" role="status" aria-live="polite"></div>
+      <div class="cx-msg" id="ops-msg" role="status" aria-live="polite"></div>
     </header>
 
-    <div class="ops-grid">
-      <!-- Voo prioritário: sobre o mapa no computador, primeiro cartão no celular -->
-      <a class="ops-flight" id="ops-flight" href="rastreamento.html" data-prio="0">
-        <span class="ops-flight__top"><span class="prio-chip" id="flight-prio">—</span><span class="mono" id="flight-id">—</span></span>
-        <strong class="ops-flight__title" id="flight-title">Nenhum voo agora</strong>
-        <span class="ops-flight__row"><span id="flight-label">Processe a fila e decole uma entrega.</span><span class="mono" id="flight-eta"></span></span>
-        <span class="ops-flight__bar"><svg viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true"><rect width="100" height="4" rx="2" class="ops-flight__track"/><rect id="flight-bar" width="0" height="4" rx="2" class="ops-flight__fill"/></svg></span>
-      </a>
+    <section class="cx-kpis" aria-label="Resumo da operação">
+      <article class="cx-kpi cx-kpi--voo">
+        <h2 class="cx-kpi__label">Em voo</h2>
+        <p class="cx-kpi__num mono" id="kpi-voo">0</p>
+        <p class="cx-kpi__sub" id="kpi-voo-sub">Nenhum drone no ar</p>
+      </article>
+      <article class="cx-kpi">
+        <h2 class="cx-kpi__label">Aguardando drone ou decolagem</h2>
+        <p class="cx-kpi__num mono" id="kpi-fila">0</p>
+        <ul class="cx-kpi__prios" id="kpi-fila-prio" aria-label="Pedidos por prioridade"></ul>
+      </article>
+      <article class="cx-kpi">
+        <h2 class="cx-kpi__label">Frota disponível</h2>
+        <p class="cx-kpi__num mono"><span id="kpi-frota">0</span><small id="kpi-frota-total">/0</small></p>
+        <p class="cx-kpi__sub" id="kpi-frota-sub">—</p>
+      </article>
+      <article class="cx-kpi cx-kpi--alerta">
+        <h2 class="cx-kpi__label">Precisa de atenção</h2>
+        <p class="cx-kpi__num mono" id="kpi-alertas">0</p>
+        <p class="cx-kpi__sub" id="kpi-alertas-sub">Tudo sob controle</p>
+      </article>
+    </section>
 
-      <section class="panel panel--map" id="mapa-frota" aria-labelledby="mapa-frota-title">
-        <h2 id="mapa-frota-title" class="ops-map__title">Mapa de rotas</h2>
-        <svg class="map map--fleet" id="fleet-map" viewBox="-4 -4 208 168" role="img" aria-labelledby="fleet-map-desc" preserveAspectRatio="xMidYMid slice">
-          <desc id="fleet-map-desc">Mapa esquemático com bases, hospitais, zonas de pouso seguro, rotas em andamento e a posição de cada drone.</desc>
-          <g id="fleet-map-grid" class="map__grid"></g>
-          <g id="fleet-map-routes"></g>
-          <g id="fleet-map-points"></g>
-          <g id="fleet-map-drones"></g>
-        </svg>
-        <ul class="legend" aria-label="Legenda do mapa">
-          <li><span class="legend__key legend__key--base" aria-hidden="true"></span>Base</li>
-          <li><span class="legend__key legend__key--hospital" aria-hidden="true"></span>Hospital</li>
-          <li><span class="legend__key legend__key--zona" aria-hidden="true"></span>Pouso seguro</li>
-          <li><span class="legend__key legend__key--voo" aria-hidden="true"></span>Em voo</li>
+    <div class="cx-grid">
+      <section class="cx-panel cx-map" id="mapa" aria-labelledby="mapa-title">
+        <div class="cx-panel__head">
+          <h2 id="mapa-title" class="cx-panel__title">Mapa ao vivo</h2>
+          <span class="cx-panel__hint" id="mapa-hint">Cidade-modelo da simulação</span>
+        </div>
+        <div class="cx-map__stage">
+          <div class="osm" id="cx-osm" hidden>
+            <svg class="osm__svg" id="cx-osm-svg" role="img" aria-label="Mapa de ruas de São Paulo com as rotas e a posição estimada dos drones da Central"></svg>
+            <p class="osm__attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</p>
+          </div>
+          <svg class="map map--fleet cx-map__sim" id="fleet-map" viewBox="-4 -4 208 168" role="img" aria-labelledby="fleet-map-desc" preserveAspectRatio="xMidYMid meet">
+            <desc id="fleet-map-desc">Mapa esquemático com bases, hospitais, zonas de pouso seguro, rotas em andamento e a posição de cada drone.</desc>
+            <g id="fleet-map-grid" class="map__grid"></g>
+            <g id="fleet-map-routes"></g>
+            <g id="fleet-map-points"></g>
+            <g id="fleet-map-drones"></g>
+          </svg>
+
+          <!-- Voo mais prioritário agora: cartão sobre o mapa -->
+          <a class="cx-flight" id="ops-flight" href="rastreamento.html" data-prio="0">
+            <span class="cx-flight__top"><span class="prio-chip" id="flight-prio">—</span><span class="mono" id="flight-id">sem voo</span></span>
+            <strong class="cx-flight__title" id="flight-title">Nenhum voo agora</strong>
+            <span class="cx-flight__row"><span id="flight-label">Processe a fila e decole uma entrega.</span><span class="mono" id="flight-eta"></span></span>
+            <span class="cx-flight__bar" aria-hidden="true"><svg viewBox="0 0 100 4" preserveAspectRatio="none"><rect width="100" height="4" rx="2" class="cx-flight__track"/><rect id="flight-bar" width="0" height="4" rx="2" class="cx-flight__fill"/></svg></span>
+          </a>
+
+          <div class="cx-map__tools" role="group" aria-label="Controles do mapa">
+            <button type="button" data-cx-zoom="in" aria-label="Aproximar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button>
+            <button type="button" data-cx-zoom="out" aria-label="Afastar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
+            <button type="button" data-cx-zoom="fit" aria-label="Mostrar todas as rotas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4"/></svg></button>
+          </div>
+        </div>
+        <ul class="cx-legend" aria-label="Legenda do mapa">
+          <li><span class="cx-legend__key cx-legend__key--base" aria-hidden="true"></span>Filial</li>
+          <li><span class="cx-legend__key cx-legend__key--hospital" aria-hidden="true"></span>Hospital</li>
+          <li data-so="sim"><span class="cx-legend__key cx-legend__key--zona" aria-hidden="true"></span>Pouso seguro</li>
+          <li><span class="cx-legend__key cx-legend__key--destino" aria-hidden="true"></span>Destino</li>
+          <li><span class="cx-legend__key cx-legend__key--voo" aria-hidden="true"></span>Drone</li>
         </ul>
       </section>
 
-      <section class="panel" id="alertas" aria-labelledby="alertas-title">
-        <div class="panel__head panel__head--row">
-          <h2 id="alertas-title" class="panel__title">Precisa da sua atenção</h2>
-          <span class="ops-count" id="alert-count">0</span>
+      <section class="cx-panel cx-queue" id="fila" aria-labelledby="fila-title">
+        <div class="cx-panel__head">
+          <h2 id="fila-title" class="cx-panel__title">Fila de prioridades</h2>
+          <span class="cx-panel__count mono" id="fila-count">—</span>
         </div>
-        <ul class="alerts" id="alert-list"></ul>
-      </section>
-
-      <section class="panel" id="fila" aria-labelledby="fila-title">
-        <div class="panel__head panel__head--row">
-          <h2 id="fila-title" class="panel__title">Fila de prioridades</h2>
-          <span class="mono ops-count" id="fila-count">—</span>
-        </div>
-        <div class="ops-chips" role="group" aria-label="Filtrar por prioridade" id="fila-filtro">
+        <div class="cx-chips" role="group" aria-label="Filtrar por prioridade" id="fila-filtro">
           <button type="button" aria-pressed="true" data-filtro="0">Todas</button>
           <button type="button" aria-pressed="false" data-filtro="1">P1</button>
           <button type="button" aria-pressed="false" data-filtro="2">P2</button>
           <button type="button" aria-pressed="false" data-filtro="3">P3</button>
           <button type="button" aria-pressed="false" data-filtro="4">P4</button>
         </div>
-        <ol class="qlist" id="queue-body"></ol>
+        <ol class="cx-qlist" id="queue-body"></ol>
       </section>
 
-      <section class="panel" id="missao" aria-labelledby="missao-title">
-        <div class="panel__head panel__head--row">
-          <h2 id="missao-title" class="panel__title">Drones em missão</h2>
-          <span class="panel__hint">Toque para destacar no mapa</span>
+      <section class="cx-panel cx-fleet" id="frota" aria-labelledby="frota-title">
+        <div class="cx-panel__head">
+          <h2 id="frota-title" class="cx-panel__title">Frota</h2>
+          <span class="cx-panel__hint" id="frota-hint">Toque num drone para destacá-lo no mapa</span>
         </div>
-        <ul class="missions" id="mission-list"></ul>
+        <ul class="cx-drones" id="fleet-list" tabindex="-1"></ul>
       </section>
 
-      <section class="panel" id="autonomia" aria-labelledby="aut-title">
-        <h2 id="aut-title" class="panel__hint ops-aut__label">Autonomia · <span class="mono" id="aut-drone">—</span></h2>
-        <p class="ops-aut__big" id="aut-big">—</p>
-        <div class="ops-aut__cells" id="aut-cells" role="meter" aria-label="Bateria do drone selecionado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-          <span></span><span></span><span></span><span></span><span></span>
+      <section class="cx-panel cx-alerts" id="alertas" aria-labelledby="alertas-title">
+        <div class="cx-panel__head">
+          <h2 id="alertas-title" class="cx-panel__title">Alertas</h2>
+          <span class="cx-panel__count mono" id="alert-count">0</span>
         </div>
-        <p class="ops-aut__scale mono" aria-hidden="true"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span></p>
-        <p class="ops-aut__alt"><span class="mono" id="aut-alt-km">—</span><span id="aut-alt">Pouso alternativo</span></p>
+        <ul class="cx-alertlist" id="alert-list"></ul>
       </section>
 
-      <section class="panel ops-route" id="rota" aria-labelledby="rota-title">
-        <div class="ops-route__info">
-          <h2 class="visually-hidden" id="rota-title">Rota do drone selecionado</h2>
-          <ol class="ops-route__steps">
-            <li><strong id="rota-dest">—</strong><span>Destino</span></li>
-            <li><strong id="rota-zona">—</strong><span>Pouso seguro mais próximo</span></li>
-            <li class="ops-route__mini"><span class="mono">48 km/h · 92 m</span></li>
-          </ol>
-          <p class="ops-route__eta"><strong class="mono" id="rota-eta">—</strong> <span id="rota-eta-label">para chegar</span></p>
+      <section class="cx-panel cx-log" id="registro" aria-labelledby="registro-title">
+        <div class="cx-panel__head">
+          <h2 id="registro-title" class="cx-panel__title">Registro operacional</h2>
+          <span class="cx-panel__hint">mais recente primeiro</span>
         </div>
-        <svg class="ops-route__map" id="rota-map" viewBox="0 0 100 160" aria-hidden="true"><path id="rota-path" d=""/><circle id="rota-dot" r="3" cx="-10" cy="-10"/></svg>
+        <ol class="cx-loglist" id="log-list" role="log" aria-live="polite"></ol>
       </section>
 
-      <section class="panel" id="registro" aria-labelledby="registro-title">
-        <div class="panel__head panel__head--row">
-          <h2 id="registro-title" class="panel__title">Registro operacional</h2>
-          <span class="panel__hint">mais recente primeiro</span>
+      <!-- Rede real: códigos de autorização de órgão (P1), emitidos pelo operador -->
+      <section class="cx-panel cx-codes" id="codigos" data-so="real" aria-labelledby="codigos-title">
+        <div class="cx-panel__head">
+          <h2 id="codigos-title" class="cx-panel__title">Códigos de órgão (P1)</h2>
+          <span class="cx-panel__hint">uso único · 6 horas</span>
         </div>
-        <ol class="log" id="log-list" role="log" aria-live="polite"></ol>
+        <p class="cx-codes__conta" id="api-conta"></p>
+        <form class="cx-codes__form" id="codigo-form" novalidate hidden>
+          <label class="visually-hidden" for="codigo-hospital">Hospital que fará o transporte</label>
+          <select class="input" id="codigo-hospital"></select>
+          <button class="btn btn--light btn--sm" type="submit">Emitir código</button>
+        </form>
+        <ul class="cx-codelist" id="codigo-lista"></ul>
       </section>
 
-      <section class="panel" id="api-central" aria-labelledby="api-title">
-        <div class="panel__head panel__head--row">
-          <h2 id="api-title" class="panel__title">Central integrada (API · SQLite · Java · Python)</h2>
-          <button class="btn btn--light btn--sm" type="button" data-api-acao="processar" data-api-fila>Processar fila (Java)</button>
+      <!-- Simulação: nova solicitação e cenários das regras -->
+      <section class="cx-panel cx-new" id="nova-solicitacao" data-so="sim" aria-labelledby="nova-title">
+        <div class="cx-panel__head">
+          <h2 id="nova-title" class="cx-panel__title">Nova solicitação</h2>
+          <span class="cx-panel__hint">pedido fictício</span>
         </div>
-        <p class="api-estado" id="api-estado" role="status">Verificando a API de integração…</p>
-        <div class="api-corpo" id="api-corpo" hidden>
-          <div>
-            <h3 class="panel__hint">Pedidos gravados</h3>
-            <ol class="qlist" id="api-pedidos"></ol>
-          </div>
-          <div>
-            <h3 class="panel__hint">Drones no banco</h3>
-            <ul class="api-drones" id="api-drones"></ul>
-          </div>
-          <div class="api-codigos" id="codigos">
-            <h3 class="panel__hint">Códigos de autorização de órgão (P1)</h3>
-            <p class="api-conta" id="api-conta"></p>
-            <form class="api-codigos__form" id="codigo-form" novalidate hidden>
-              <label class="visually-hidden" for="codigo-hospital">Hospital que fará o transporte</label>
-              <select class="input" id="codigo-hospital"></select>
-              <button class="btn btn--light btn--sm" type="submit">Emitir código</button>
-            </form>
-            <ul class="api-drones" id="codigo-lista"></ul>
-          </div>
-        </div>
-        <div class="scenario-result" id="api-msg" role="status" aria-live="polite"></div>
-      </section>
-
-      <section class="panel" id="frota" aria-labelledby="frota-title">
-        <div class="panel__head">
-          <h2 id="frota-title" class="panel__title">Frota</h2>
-          <p class="panel__hint">Bateria, carga máxima e status. Drone em manutenção só volta depois de liberado.</p>
-        </div>
-        <ul class="fleet" id="fleet-list" tabindex="-1"></ul>
-      </section>
-
-      <section class="panel" id="nova-solicitacao" aria-labelledby="nova-title">
-        <div class="panel__head">
-          <h2 id="nova-title" class="panel__title">Nova solicitação</h2>
-          <p class="panel__hint">Pedido fictício. Entra na fila conforme a prioridade da carga.</p>
-        </div>
-        <form class="order-form" id="order-form" novalidate>
+        <form class="cx-form" id="order-form" novalidate>
           <div class="field">
             <label for="o-prioridade">Prioridade</label>
             <select class="input" id="o-prioridade" name="prioridade">
@@ -193,12 +185,12 @@
             </select>
           </div>
           <div class="field">
-            <label for="o-carga">Carga</label>
-            <input class="input" id="o-carga" name="carga" type="text" maxlength="80" placeholder="Ex.: insulina, rim, kit de água" required>
-          </div>
-          <div class="field">
             <label for="o-peso">Peso (kg)</label>
             <input class="input" id="o-peso" name="pesoKg" type="number" min="0.1" max="50" step="0.1" value="1" required>
+          </div>
+          <div class="field cx-form__wide">
+            <label for="o-carga">Carga</label>
+            <input class="input" id="o-carga" name="carga" type="text" maxlength="80" placeholder="Ex.: insulina, rim, kit de água" required>
           </div>
           <div class="field">
             <label for="o-origem">Origem</label>
@@ -208,31 +200,31 @@
             <label for="o-destino">Destino</label>
             <select class="input" id="o-destino" name="destinoId"></select>
           </div>
-          <button class="btn btn--light" type="submit">Registrar na fila</button>
-          <p class="form-msg" id="order-msg" role="status"></p>
+          <button class="btn btn--light cx-form__wide" type="submit">Registrar na fila</button>
+          <p class="form-msg cx-form__wide" id="order-msg" role="status"></p>
         </form>
       </section>
 
-      <section class="panel" id="cenarios" aria-labelledby="cenarios-title">
-        <div class="panel__head">
-          <h2 id="cenarios-title" class="panel__title">Cenários de teste</h2>
-          <p class="panel__hint">Cada cenário recria a situação e aplica as regras do motor.</p>
+      <section class="cx-panel cx-scen" id="cenarios" data-so="sim" aria-labelledby="cenarios-title">
+        <div class="cx-panel__head">
+          <h2 id="cenarios-title" class="cx-panel__title">Cenários de teste</h2>
+          <button class="cx-link" type="button" id="btn-reset">Restaurar dados iniciais</button>
         </div>
-        <div class="scenarios" id="scenario-list"></div>
+        <div class="cx-scenarios" id="scenario-list"></div>
         <div class="scenario-result" id="scenario-result" role="status" aria-live="polite"></div>
       </section>
     </div>
 
-    <p class="ops__note">Simulação acadêmica com dados fictícios em uma cidade-modelo. Bateria, consumo e distância são ilustrativos. O SADEC não controla drones reais. <a href="index.html">Voltar ao portal</a></p>
+    <p class="cx-note">Simulação acadêmica: drones, pedidos e contas de demonstração são fictícios; nomes de hospitais vêm do CNES (dados públicos) só para localização. Na rede real, a posição em voo é estimada pela decolagem e pela distância a 48 km/h, sem telemetria. O SADEC não controla drones reais. <a href="index.html">Voltar ao portal</a></p>
   </main>
 
   <!-- Celular: abas da Central ao alcance do polegar -->
   <nav class="tabbar tabbar--ops" aria-label="Central">
-    <a class="tabbar__item" href="#visao" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 19.5h18z"/></svg><span>Triagem</span></a>
-    <a class="tabbar__item" href="#mapa-frota"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5 9 4.5l6 2 5-2v13l-5 2-6-2-5 2z"/></svg><span>Mapa</span></a>
-    <a class="tabbar__item" href="#frota"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="6" height="6" rx="1.5"/><rect x="13" y="5" width="6" height="6" rx="1.5"/><rect x="5" y="13" width="6" height="6" rx="1.5"/><rect x="13" y="13" width="6" height="6" rx="1.5"/></svg><span>Frota</span></a>
-    <a class="tabbar__item" href="#registro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg><span>Registro</span></a>
-    <a class="tabbar__item" href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5v-5H9v5H4z"/></svg><span>Portal</span></a>
+    <a class="tabbar__item" href="#painel" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="6" height="6" rx="1.5"/><rect x="13" y="5" width="6" height="6" rx="1.5"/><rect x="5" y="13" width="6" height="6" rx="1.5"/><rect x="13" y="13" width="6" height="6" rx="1.5"/></svg><span>Resumo</span></a>
+    <a class="tabbar__item" href="#mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5 9 4.5l6 2 5-2v13l-5 2-6-2-5 2z"/></svg><span>Mapa</span></a>
+    <a class="tabbar__item" href="#fila"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7h12M8 12h12M8 17h12"/></svg><span>Fila</span></a>
+    <a class="tabbar__item" href="#frota"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><circle cx="7" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg><span>Frota</span></a>
+    <a class="tabbar__item" href="#alertas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3 19.5h18z"/></svg><span>Alertas</span></a>
   </nav>
 
   <script src="js/ui.js" defer></script>
@@ -242,6 +234,7 @@
   <script src="js/drone-avatar.js" defer></script>
   <script src="js/api.js" defer></script>
   <script src="js/chatbot.js" defer></script>
+  <script src="js/mapa-osm.js" defer></script>
   <script src="js/central.js" defer></script>
   <script src="js/central-api.js" defer></script>
 </body>
