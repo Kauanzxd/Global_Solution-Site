@@ -261,3 +261,24 @@ test('entrega convencional é modalidade própria: não vira outro meio, não en
   assert.equal(s.entregas.filter((x) => x.status === 'outro_meio').length, 0);
   assert.equal(ops.markConventional(s, 'C').ok, false);
 });
+
+test('recebimento só é registrado para entrega concluída e guarda responsável, horário, destinatário, carga e estado', () => {
+  const s = makeState({ entregas: [entrega('A', { status: 'entregue', carga: 'Insulina' }), entrega('B', { status: 'em_voo' })] });
+  const now = Date.UTC(2026, 10, 18, 14, 0);
+  const negado = ops.registerReceipt(s, 'B', { responsavel: 'Enf. Ana', destinatario: 'UBS 2', estado: 'integra' }, now);
+  assert.equal(negado.ok, false);
+  assert.equal(byId(s.entregas, 'B').recebimento, undefined);
+
+  const incompleto = ops.registerReceipt(s, 'A', { responsavel: ' ', destinatario: 'UBS 2', estado: 'integra' }, now);
+  assert.equal(incompleto.ok, false);
+
+  const invalido = ops.registerReceipt(s, 'A', { responsavel: 'Enf. Ana', destinatario: 'UBS 2', estado: 'qualquer' }, now);
+  assert.equal(invalido.ok, false);
+
+  const ok = ops.registerReceipt(s, 'A', { responsavel: '  Enf. Ana ', destinatario: 'UBS 2', estado: 'integra' }, now);
+  assert.equal(ok.ok, true);
+  assert.deepEqual(byId(s.entregas, 'A').recebimento, {
+    responsavel: 'Enf. Ana', destinatario: 'UBS 2', carga: 'A · Insulina', estado: 'integra', horario: now
+  });
+  assert.match(s.log[0].msg, /A: recebimento registrado/);
+});

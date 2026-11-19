@@ -32,6 +32,22 @@
     state.log.length = Math.min(state.log.length, 40);
   }
 
+  /* Rastreabilidade: o recebimento registra responsável, horário, destinatário, carga e estado.
+     Só vale para entrega concluída; os dados são fictícios e ficam apenas no navegador. */
+  const ESTADOS_RECEBIMENTO = { integra: 'Íntegra', avariada: 'Com avaria', temperatura: 'Fora da faixa térmica', recusada: 'Recusada' };
+
+  function registerReceipt(state, id, dados, now) {
+    const e = byId(state.entregas, id);
+    if (!e || e.status !== 'entregue') return { ok: false, motivo: 'Só é possível registrar o recebimento de uma entrega concluída.' };
+    const responsavel = String(dados.responsavel || '').trim();
+    const destinatario = String(dados.destinatario || '').trim();
+    if (!responsavel || !destinatario) return { ok: false, motivo: 'Informe o responsável pela entrega e o destinatário.' };
+    if (!ESTADOS_RECEBIMENTO[dados.estado]) return { ok: false, motivo: 'Escolha o estado da entrega.' };
+    e.recebimento = { responsavel, destinatario, carga: e.id + ' · ' + e.carga, estado: dados.estado, horario: now };
+    addLog(state, e.id + ': recebimento registrado por ' + responsavel + ' (' + ESTADOS_RECEBIMENTO[dados.estado] + ').', dados.estado === 'integra' ? 'ok' : 'warn');
+    return { ok: true };
+  }
+
   function distanceToSegment(p, a, b) {
     const dx = b.x - a.x;
     const dy = b.y - a.y;
@@ -320,7 +336,7 @@
     FLIGHT_MS_PER_KM, RESERVA, PRIORIDADES, STATUS, FAIXA_TERMICA, RESGATE_MS, MANUTENCAO_MS, RECARGA_PCT_POR_S,
     distance, findPoint, byId, sortQueue, estimateAutonomy, checkAutonomy, selectDrone, dispatch, processQueue,
     launch, tick, markConventional, flightProgress, positionAt, routeLandingZones, emergencyLanding,
-    checkTemperature, sensorReading, createOrder, addLog
+    checkTemperature, sensorReading, createOrder, addLog, registerReceipt, ESTADOS_RECEBIMENTO
   };
 
   root.SIDEC = root.SIDEC || {};
