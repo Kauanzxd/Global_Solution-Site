@@ -192,6 +192,41 @@ public class CentralOperacao {
     }
 
     // =====================================================================
+    // FUNCIONALIDADE 4b: recuperação do drone depois do pouso de emergência
+    // =====================================================================
+    // Ciclo: pouso_emergencia -> (resgate) manutencao -> (inspeção) aguardando_liberacao -> (liberação) livre.
+    // Nenhuma etapa devolve o drone à frota sozinha: a última exige liberarDrone().
+    // atribuirEntrega() só usa drones "livre" (ou "aguardando_comercial" para níveis 1 e 2),
+    // então drones em qualquer etapa deste ciclo nunca são despachados.
+
+    /** Drone resgatado e levado para a base: passa para manutenção. Retorna false se não estava em pouso de emergência. */
+    public boolean concluirResgate(Drone drone) {
+        if (!drone.getStatus().equals("pouso_emergencia")) {
+            return false;
+        }
+        drone.setStatus("manutencao");
+        return true;
+    }
+
+    /** Inspeção concluída: o drone NÃO volta à frota, fica aguardando liberação formal. */
+    public boolean concluirManutencao(Drone drone) {
+        if (!drone.getStatus().equals("manutencao")) {
+            return false;
+        }
+        drone.setStatus("aguardando_liberacao");
+        return true;
+    }
+
+    /** Liberação formal pela Central. Só funciona com a manutenção concluída; caso contrário é recusada. */
+    public boolean liberarDrone(Drone drone) {
+        if (!drone.getStatus().equals("aguardando_liberacao")) {
+            return false;
+        }
+        drone.setStatus("livre");
+        return true;
+    }
+
+    // =====================================================================
     // FUNCIONALIDADE 5: cronograma da fila
     // =====================================================================
     /** Monta o cronograma: a fila na ordem em que será atendida. */
