@@ -213,7 +213,7 @@ test('pedido de saúde refrigerado recebe faixa térmica de 2 a 8 °C', () => {
   assert.equal(comum.faixaTemp, null);
 });
 
-test('após pouso de emergência e resgate, o drone volta à base em manutenção e depois fica disponível com bateria cheia', () => {
+test('após pouso de emergência e resgate, o drone volta à base em manutenção e, concluída a inspeção, aguarda liberação', () => {
   const s = makeState({ drones: [drone('D1')], entregas: [entrega('M')] });
   ops.dispatch(s, 'M');
   ops.launch(s, 'M', 0);
@@ -227,8 +227,7 @@ test('após pouso de emergência e resgate, o drone volta à base em manutençã
   assert.deepEqual([d.x, d.y], [0, 0]);
   assert.equal(byId(s.entregas, 'M').evento.resgate, false);
   ops.tick(s, pane + ops.RESGATE_MS + ops.MANUTENCAO_MS);
-  assert.equal(d.status, 'disponivel');
-  assert.equal(d.bateria, 100);
+  assert.equal(d.status, 'aguardando_liberacao');
   assert.equal(d.entregaId, null);
 });
 
@@ -281,4 +280,85 @@ test('recebimento só é registrado para entrega concluída e guarda responsáve
     responsavel: 'Enf. Ana', destinatario: 'UBS 2', carga: 'A · Insulina', estado: 'integra', horario: now
   });
   assert.match(s.log[0].msg, /A: recebimento registrado/);
+});
+
+/* ---------- Liberação formal de drone após incidente ---------- */
+function incidente(now = 0) {
+  const s = makeState({ drones: [drone('D1'), drone('D2', { x: 1 })], entregas: [entrega('M')] });
+  ops.dispatch(s, 'M');
+  ops.launch(s, 'M', now);
+  const pane = now + 3 * ops.FLIGHT_MS_PER_KM;
+  ops.emergencyLanding(s, 'M', 'motor', pane);
+  return { s, pane, d: byId(s.drones, byId(s.entregas, 'M').droneId) };
+}
+const novaEntrega = (s, id) => { s.entregas.push(entrega(id, { ordem: 9 })); return ops.dispatch(s, id); };
+
+test('drone em resgate (pouso de emergência) não pode ser despachado', () => {
+  const { s, d } = incidente();
+  s.drones = [d];
+  assert.equal(d.status, 'pouso_emergencia');
+  assert.equal(novaEntrega(s, 'N').ok, false);
+});
+
+test('drone em manutenção não pode ser despachado', () => {
+  const { s, pane, d } = incidente();
+  ops.tick(s, pane + ops.RESGATE_MS);
+  s.drones = [d];
+  assert.equal(d.status, 'manutencao');
+  assert.equal(novaEntrega(s, 'N').ok, false);
+});
+
+test('drone aguardando liberação não pode ser despachado', () => {
+  const { s, pane, d } = incidente();
+  ops.tick(s, pane + ops.RESGATE_MS);
+  ops.tick(s, pane + ops.RESGATE_MS + ops.MANUTENCAO_MS);
+  s.drones = [d];
+  assert.equal(d.status, 'aguardando_liberacao');
+  assert.equal(novaEntrega(s, 'N').ok, false);
+});
+
+test('concluir a manutenção não libera o drone automaticamente, mesmo muito tempo depois', () => {
+  const { s, pane, d } = incidente();
+  ops.tick(s, pane + ops.RESGATE_MS);
+  ops.tick(s, pane + ops.RESGATE_MS + ops.MANUTENCAO_MS);
+  ops.tick(s, pane + 24 * 60 * 60 * 1000);
+  assert.equal(d.status, 'aguardando_liberacao');
+});
+
+test('liberar drone com manutenção concluída o devolve à frota e registra no histórico', () => {
+  const { s, pane, d } = incidente();
+  ops.tick(s, pane + ops.RESGATE_MS);
+  ops.tick(s, pane + ops.RESGATE_MS + ops.MANUTENCAO_MS);
+  const r = ops.releaseDrone(s, d.id, pane + ops.RESGATE_MS + ops.MANUTENCAO_MS + 1);
+  assert.equal(r.ok, true);
+  assert.equal(d.status, 'disponivel');
+  assert.equal(d.entregaId, null);
+  assert.match(s.log[0].msg, new RegExp(d.nome + '.*liberado'));
+  assert.equal(s.log[0].tipo, 'ok');
+  assert.ok(s.log.some((l) => /falha de motor/.test(l.msg)), 'a ocorrência continua no histórico');
+  assert.ok(byId(s.entregas, 'M').evento, 'o registro do evento na entrega é preservado');
+  assert.equal(novaEntrega(s, 'N').ok, true);
+});
+
+test('liberação prematura é recusada (em resgate ou em manutenção)', () => {
+  const { s, pane, d } = incidente();
+  const r1 = ops.releaseDrone(s, d.id, pane + 1);
+  assert.equal(r1.ok, false);
+  assert.equal(d.status, 'pouso_emergencia');
+  ops.tick(s, pane + ops.RESGATE_MS);
+  const r2 = ops.releaseDrone(s, d.id, pane + ops.RESGATE_MS + 1);
+  assert.equal(r2.ok, false);
+  assert.equal(d.status, 'manutencao');
+  assert.equal(ops.releaseDrone(s, 'NAO-EXISTE', 0).ok, false);
+});
+
+test('com um drone aguardando liberação, os outros drones disponíveis continuam operando', () => {
+  const { s, pane, d } = incidente();
+  ops.tick(s, pane + ops.RESGATE_MS);
+  ops.tick(s, pane + ops.RESGATE_MS + ops.MANUTENCAO_MS);
+  const outro = s.drones.find((x) => x.id !== d.id);
+  const r = novaEntrega(s, 'N');
+  assert.equal(r.ok, true);
+  assert.equal(r.droneId, outro.id);
+  assert.equal(d.status, 'aguardando_liberacao');
 });

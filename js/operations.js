@@ -8,14 +8,15 @@
   const CORREDOR_KM = 2.5; // distância máxima de uma zona de pouso até a rota
   const FAIXA_TERMICA = { min: 2, max: 8 };
   const RESGATE_MS = 20000; // resgate da carga e do drone após pouso de emergência (tempo simulado)
-  const MANUTENCAO_MS = 30000; // inspeção na base antes de voltar à frota (tempo simulado)
+  const MANUTENCAO_MS = 30000; // inspeção na base (tempo simulado); ao fim, o drone aguarda liberação formal
   const RECARGA_PCT_POR_S = 0.5; // recarga ilustrativa de drones parados
 
   const PRIORIDADES = { 1: 'Órgãos', 2: 'Emergência', 3: 'Saúde', 4: 'Comercial' };
   const STATUS = {
     fila: 'Na fila', atribuida: 'Drone atribuído', em_voo: 'Em voo', entregue: 'Entregue',
     outro_meio: 'Outro meio de transporte', pouso_emergencia: 'Pouso de emergência', convencional: 'Entrega convencional',
-    disponivel: 'Disponível', atribuido: 'Aguardando decolagem', manutencao: 'Em manutenção'
+    disponivel: 'Disponível', atribuido: 'Aguardando decolagem', manutencao: 'Em manutenção',
+    aguardando_liberacao: 'Aguardando liberação'
   };
 
   const round1 = (n) => Math.round(n * 10) / 10;
@@ -232,10 +233,23 @@
         Object.assign(d, { status: 'manutencao', x: base.x, y: base.y, entregaId: null, resgateAte: null, manutencaoAte: now + MANUTENCAO_MS });
         addLog(state, d.nome + ' resgatado e levado para inspeção em ' + base.nome + '.' + (e ? ' Carga de ' + e.id + ' recolhida pela equipe de solo.' : ''), 'warn');
       } else if (d.status === 'manutencao' && typeof d.manutencaoAte === 'number' && now >= d.manutencaoAte) {
-        Object.assign(d, { status: 'disponivel', bateria: 100, manutencaoAte: null });
-        addLog(state, d.nome + ' liberado após inspeção, com bateria recarregada.', 'ok');
+        // Inspeção concluída não devolve o drone à frota: ele espera a liberação formal (releaseDrone).
+        Object.assign(d, { status: 'aguardando_liberacao', bateria: 100, manutencaoAte: null });
+        addLog(state, d.nome + ': inspeção concluída. Aguarda liberação formal da Central para voltar à frota.', 'warn');
       }
     });
+  }
+
+  /* Liberação formal: só um drone com inspeção concluída (aguardando_liberacao) volta à frota. */
+  function releaseDrone(state, droneId, now) {
+    const d = byId(state.drones, droneId);
+    if (!d) return { ok: false, motivo: 'Drone não encontrado.' };
+    if (d.status !== 'aguardando_liberacao') {
+      return { ok: false, motivo: d.nome + ' não pode ser liberado agora: está ' + (STATUS[d.status] || d.status).toLowerCase() + '. Só drones com inspeção concluída são liberados.' };
+    }
+    Object.assign(d, { status: 'disponivel', liberadoEm: now });
+    addLog(state, d.nome + ' liberado pela Central após a inspeção e devolvido à frota.', 'ok');
+    return { ok: true };
   }
 
   /* Entrega comercial atendida pelo meio convencional por escolha do cliente: não é fallback de indisponibilidade. */
@@ -336,7 +350,7 @@
     FLIGHT_MS_PER_KM, RESERVA, PRIORIDADES, STATUS, FAIXA_TERMICA, RESGATE_MS, MANUTENCAO_MS, RECARGA_PCT_POR_S,
     distance, findPoint, byId, sortQueue, estimateAutonomy, checkAutonomy, selectDrone, dispatch, processQueue,
     launch, tick, markConventional, flightProgress, positionAt, routeLandingZones, emergencyLanding,
-    checkTemperature, sensorReading, createOrder, addLog, registerReceipt, ESTADOS_RECEBIMENTO
+    checkTemperature, sensorReading, createOrder, addLog, registerReceipt, ESTADOS_RECEBIMENTO, releaseDrone
   };
 
   root.SIDEC = root.SIDEC || {};

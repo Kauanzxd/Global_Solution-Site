@@ -68,7 +68,7 @@
 
   /* Maior carga que algum drone operante consegue levar. */
   function fleetCapacity(drones) {
-    return drones.filter((d) => d.status !== 'manutencao').reduce((max, d) => Math.max(max, d.cargaMaxKg), 0);
+    return drones.filter((d) => !['manutencao', 'aguardando_liberacao'].includes(d.status)).reduce((max, d) => Math.max(max, d.cargaMaxKg), 0);
   }
 
   function quote({ km, pesoKg, capacidadeKg, preparoMin }) {
