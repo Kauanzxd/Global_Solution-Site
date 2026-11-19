@@ -244,7 +244,7 @@ test('drone disponível recarrega com o tempo até 100%; drone em voo não recar
   ops.tick(s, 10000);
   assert.equal(byId(s.drones, 'D1').bateria, 40 + 10 * ops.RECARGA_PCT_POR_S);
   assert.equal(byId(s.drones, 'D2').bateria, 50);
-  ops.tick(s, 10 * 60 * 1000);
+  ops.tick(s, 60 * 60 * 1000); // recarga realista: carga completa em cerca de meia hora
   assert.equal(byId(s.drones, 'D1').bateria, 100);
 });
 

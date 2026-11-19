@@ -3,13 +3,13 @@
 (function (root) {
   'use strict';
 
-  const FLIGHT_MS_PER_KM = 3000; // simulação acelerada: 1 km de voo = 3 s
+  const FLIGHT_MS_PER_KM = 75000; // cruzeiro de 48 km/h em tempo real: 1 km = 75 s (consumo de ~3%/km = ~2,4%/min)
   const RESERVA = { 1: 0.3, 2: 0.15, 3: 0.15, 4: 0.15 }; // órgão: 30% (regra oficial); demais: 15% (ilustrativo)
   const CORREDOR_KM = 2.5; // distância máxima de uma zona de pouso até a rota
   const FAIXA_TERMICA = { min: 2, max: 8 };
   const RESGATE_MS = 20000; // resgate da carga e do drone após pouso de emergência (tempo simulado)
   const MANUTENCAO_MS = 30000; // inspeção na base (tempo simulado); ao fim, o drone aguarda liberação formal
-  const RECARGA_PCT_POR_S = 0.5; // recarga ilustrativa de drones parados
+  const RECARGA_PCT_POR_S = 0.05; // recarga de drones parados: ~3%/min (carga completa em ~33 min)
 
   const PRIORIDADES = { 1: 'Órgãos', 2: 'Emergência', 3: 'Saúde', 4: 'Comercial' };
   const STATUS = {
