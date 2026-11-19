@@ -203,3 +203,12 @@ test('saídas: P3 sai sozinho, a filial respeita 5 min (tempo da operação) ent
   assert.equal(api.ESCALA_TEMPO, 12, '1 min da operação = 5 s reais');
   assert.equal(api.INTERVALO_SAIDA_MS, 25000);
 });
+
+test('servidor aplica as saídas automáticas sozinho, sem nenhuma página consultando a fila', { skip: pular }, () => {
+  const p = api.criarPedido({ tipo_carga: 'remedio', destino: 'Mooca', solicitante: { tipo: 'cidadao' } }).pedido;
+  assert.equal(p.status, 'atribuida');
+  api.avancarSaidas();
+  assert.equal(api.listarDrones().find((d) => d.codigo === p.drone_codigo).status, 'em_voo');
+  api.avancarSaidas(); // idempotente: rodar de novo não muda nada nem duplica eventos
+  assert.equal(api.listarEventos().filter((e) => e.pedido_codigo === p.codigo && e.status_novo === 'em_voo').length, 1);
+});

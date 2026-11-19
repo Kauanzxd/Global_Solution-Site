@@ -463,6 +463,13 @@ function saidasAutomaticas(db) {
   });
 }
 
+/* Relógio do servidor: aplica as saídas automáticas mesmo sem nenhuma página aberta.
+   Idempotente: cada saída roda em transação e só muda pedidos ainda 'atribuida'. */
+function avancarSaidas() {
+  const db = abrir();
+  try { saidasAutomaticas(db); } finally { db.close(); }
+}
+
 /* Como cada pedido reservado sai: manual (botão) ou automático, com o horário real previsto da saída. */
 function saidaDoPedido(db, l, ultima) {
   if (l.ST_Status !== 'atribuida' || !l.CD_Drone) return {};
@@ -622,6 +629,6 @@ function recuperarDrone(codigoDrone, acao, responsavel) {
 module.exports = {
   CONFIG, ErroApi, AUTORIZADOS,
   criarPedido, obterPedido, listarPedidos, listarDrones, listarLocais, listarEventos, processarFila,
-  decolar, concluirEntrega, registrarRecebimento, recuperarDrone, responsavelDaAcao, VELOCIDADE_KMH, ESCALA_TEMPO, INTERVALO_SAIDA_MS,
+  decolar, concluirEntrega, registrarRecebimento, recuperarDrone, responsavelDaAcao, VELOCIDADE_KMH, ESCALA_TEMPO, INTERVALO_SAIDA_MS, avancarSaidas,
   criarConta, entrar, sair, contaDaSessao, exigirConta, meusPedidos, emitirCodigoOrgao, listarCodigosOrgao
 };
