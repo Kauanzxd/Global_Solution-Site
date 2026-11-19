@@ -130,9 +130,9 @@
       items.push({ time: hhmm(e.inicio), t: 'Decolagem', d: 'Rota segura com zonas de pouso mapeadas', done: true });
       if (e.status === 'em_voo') items.push({ time: 'agora', t: 'Em rota', d: 'Corredor seguro · sem desvios', now: true });
       if (e.status === 'pouso_emergencia') items.push({ t: 'Pouso de emergência', d: 'Ocorrência registrada; drone segue para manutenção.', done: true, alert: true });
-      else items.push({ time: hhmm(e.inicio + e.duracaoMs), t: e.status === 'entregue' ? 'Entregue' : 'Chegada prevista', d: ops.findPoint(state, e.destinoId).nome, done: e.status === 'entregue' });
+      else items.push({ time: hhmm(e.inicio + e.duracaoMs * ops.ESCALA_TEMPO), t: e.status === 'entregue' ? 'Entregue' : 'Chegada prevista', d: ops.findPoint(state, e.destinoId).nome, done: e.status === 'entregue' });
     } else if (e.droneId) {
-      items.push({ t: 'Aguardando decolagem', d: 'Libere em Demonstrações de segurança ou na Central.', done: false });
+      items.push({ t: 'Aguardando decolagem', d: e.decolagemManual ? 'O operador libera a decolagem na Central.' : 'Saída automática da filial, com intervalo de ' + ops.INTERVALO_SAIDA_MIN + ' min entre saídas.', done: false });
     } else if (e.status === 'fila') {
       items.push({ t: 'Aguardando drone', d: 'A Central atende por prioridade e ordem de chegada.', done: false });
     }
@@ -196,8 +196,9 @@
     done.hidden = false;
   }
 
-  $('receipt-form').addEventListener('submit', (ev) => {
+  $('receipt-form').addEventListener('submit', async (ev) => {
     ev.preventDefault();
+    if (pedidoApi) { enviarRecebimentoApi(); return; }
     const data = { responsavel: $('r-responsavel').value, destinatario: $('r-destinatario').value, estado: $('r-estado').value };
     let res = null;
     store.update((s) => { res = ops.registerReceipt(s, selectedId, data, Date.now()); return res; });
@@ -233,8 +234,8 @@
     $('map-note').textContent = e.km
       ? droneId + ' · ' + num(e.km * r.progress) + ' de ' + num(e.km) + ' km' + (flying ? ' · 92 m de altitude' : '')
       : droneId + ' · aguardando decolagem';
-    const leftS = flying ? Math.max(0, Math.round((1 - r.progress) * e.duracaoMs / 1000)) : null;
-    $('eta-time').textContent = typeof e.inicio === 'number' ? hhmm(e.inicio + e.duracaoMs) : '—';
+    const leftS = flying ? Math.max(0, Math.round((1 - r.progress) * e.duracaoMs * ops.ESCALA_TEMPO / 1000)) : null; // tempo da operação
+    $('eta-time').textContent = typeof e.inicio === 'number' ? hhmm(e.inicio + e.duracaoMs * ops.ESCALA_TEMPO) : '—';
     $('eta-left').textContent = leftS === null ? (e.status === 'entregue' ? 'chegou' : '—') : (leftS >= 60 ? Math.floor(leftS / 60) + ' min' : leftS + ' s');
 
     const bat = r.bateria === null ? (e.droneId ? ops.byId(state.drones, e.droneId).bateria : null) : r.bateria;
@@ -287,6 +288,10 @@
   }
 
   function select(id) {
+    if (ehCodigoApi(id) && apiOnline) { carregarApi(id.toUpperCase()); return; }
+    pedidoApi = null;
+    doc.body.classList.remove('is-api');
+    $('osm').hidden = true;
     selectedId = id;
     root.history.replaceState(null, '', '?id=' + encodeURIComponent(id));
     lastKey = '';
@@ -298,6 +303,7 @@
 
   let lastKey = '';
   function render(state) {
+    if (pedidoApi) return; // pedido da Central (API): renderApi cuida da tela
     const e = current(state);
     $('track-notfound').hidden = Boolean(e);
     $('track-found').hidden = !e;
@@ -305,6 +311,7 @@
     const key = (e ? e.id + e.status + (e.droneId || '') + (e.evento ? 'ev' : '') + (e.recebimento ? 'rc' : '') : 'none') + state.entregas.length;
     if (key !== lastKey) {
       examples(state);
+      renderLista();
       if (e) {
         if (doc.activeElement !== $('track-input')) $('track-input').value = e.id;
         renderStatic(state, e);
@@ -348,6 +355,11 @@
     const b = ev.target.closest('[data-zoom]');
     if (!b) return;
     const z = b.getAttribute('data-zoom');
+    if (pedidoApi && mapa) {
+      if (z === 'drone') mapa.centralizarDrone();
+      else mapa.zoom(z === 'in' ? 1 : -1);
+      return;
+    }
     zoom = z === 'in' ? Math.min(3, zoom + 0.75) : z === 'out' ? Math.max(1, zoom - 0.75) : 2.25;
     applyZoom();
   });
@@ -356,6 +368,7 @@
     const btn = ev.target.closest('[data-action]');
     if (!btn || btn.disabled) return;
     const action = btn.getAttribute('data-action');
+    if (pedidoApi) { acaoApi(action); return; }
     const now = Date.now();
     store.update((s) => {
       if (action === 'launch') return ops.launch(s, selectedId, now);
@@ -366,6 +379,192 @@
   });
 
   $('btn-track-tour').addEventListener('click', () => SIDEC.bot.startTour());
+
+  /* ---------- Pedidos da Central (API: SQLite + Python + Java) ---------- */
+  let pedidoApi = null;
+  let apiOnline = false;
+  const ehCodigoApi = (c) => /^SD\d{4,}$/i.test(c || '');
+  const STATUS_API = { aguardando: 'Na fila', atribuida: 'Despachado', em_voo: 'Em rota', entregue: 'Entregue', reagendada: 'Reagendada',
+    outro_meio: 'Outro meio', aguardando_resgate: 'Aguardando resgate' };
+  const FASE_API = { aguardando: 0, reagendada: 0, outro_meio: 0, atribuida: 1, em_voo: 2, aguardando_resgate: 2, entregue: 3 };
+  const NOME_EVENTO = { aguardando: 'Pedido registrado', atribuida: 'Drone reservado', em_voo: 'Decolagem', entregue: 'Entregue',
+    reagendada: 'Reagendado', outro_meio: 'Sem drone elegível', aguardando_resgate: 'Pouso seguro' };
+
+  async function carregarApi(cod) {
+    const r = await SIDEC.api.get('/api/pedidos/' + encodeURIComponent(cod));
+    root.history.replaceState(null, '', '?id=' + encodeURIComponent(cod));
+    if (!r.ok) {
+      pedidoApi = { codigo: cod, ausente: true };
+      $('track-found').hidden = true;
+      doc.querySelector('.trk-more').hidden = true;
+      $('track-notfound').hidden = false;
+      $('notfound-title').textContent = r.status === 404 ? 'Não encontramos ' + cod + ' na Central' : 'Não foi possível consultar ' + cod;
+      return;
+    }
+    const drones = await SIDEC.api.get('/api/drones');
+    pedidoApi = r.dados;
+    renderApi(pedidoApi, drones.ok ? drones.dados.find((d) => d.codigo === pedidoApi.drone_codigo) : null);
+    renderLista();
+  }
+
+  /* ---------- Mapa real do pedido da Central ---------- */
+  let mapa = null;
+  let redeHospitais = [];
+  const progressoApi = (p) => SIDEC.mapaOsm.estimarVoo(p, Date.now());
+
+  function desenharMapaApi(p, reenquadrar) {
+    if (!mapa) mapa = SIDEC.mapaOsm.criar($('osm-svg'));
+    const pr = progressoApi(p);
+    mapa.mostrar({ pontos: p.rota || [], progresso: pr.f, rede: redeHospitais, drone: p.drone_codigo ? 'Drone ' + p.drone_codigo : null }, reenquadrar);
+    const restante = pr.chegada ? pr.faltamMin : null;
+    $('eta-time').textContent = pr.chegada ? hhmm(pr.chegada) : (p.status === 'entregue' ? 'entregue' : '—');
+    $('eta-left').textContent = restante === null ? (p.status === 'entregue' ? 'chegou' : '—') : restante + ' min';
+    $('map-note').textContent = (p.drone_codigo ? p.drone_codigo + ' · ' : '') + num(p.distancia_km || 0) + ' km · ' +
+      (p.status === 'em_voo' ? 'posição estimada (sem telemetria real)' : (STATUS_API[p.status] || p.status));
+  }
+
+  /* ---------- Lista de entregas (Central + simulação) ---------- */
+  let pedidosApi = [];
+  const FASE_SIM = { fila: 0, convencional: 0, outro_meio: 0, atribuida: 1, em_voo: 2, pouso_emergencia: 2, entregue: 3 };
+  function svgBarra(f) {
+    return svg('svg', { viewBox: '0 0 100 4', preserveAspectRatio: 'none' }, [
+      svg('rect', { class: 'trk-item__trilho', width: 100, height: 4, rx: 2 }),
+      svg('rect', { class: 'trk-item__feito', width: Math.round(f * 100), height: 4, rx: 2 })
+    ]);
+  }
+  function itemLista(id, prio, status, rota, fase, alerta, fonte) {
+    const ativo = pedidoApi ? pedidoApi.codigo === id : selectedId === id;
+    return el('li', {}, el('button', { type: 'button', class: 'trk-item' + (alerta ? ' is-alert' : ''), 'data-example': id, 'aria-current': ativo ? 'true' : 'false' }, [
+      el('span', { class: 'trk-item__prio', 'data-prio': String(prio), text: 'P' + prio }),
+      el('span', { class: 'trk-item__code mono', text: id }),
+      el('span', { class: 'trk-item__status', text: status }),
+      el('span', { class: 'trk-item__rota', text: rota }),
+      el('span', { class: 'trk-item__fonte', text: fonte }),
+      el('span', { class: 'trk-item__barra', 'aria-hidden': 'true' }, svgBarra(fase / 3))
+    ]));
+  }
+  function renderLista() {
+    const state = store.get();
+    const api = pedidosApi.map((p) => itemLista(p.codigo, p.prioridade, STATUS_API[p.status] || p.status, (p.origem || 'Filial') + ' → ' + p.destino,
+      FASE_API[p.status] || 0, p.status === 'outro_meio', 'Central'));
+    const sim = state.entregas.map((e) => itemLista(e.id, e.prioridade, SHORT[e.status] || e.status,
+      ops.findPoint(state, e.origemId).nome + ' → ' + ops.findPoint(state, e.destinoId).nome, FASE_SIM[e.status] || 0,
+      e.status === 'pouso_emergencia' || e.status === 'outro_meio', 'Simulação'));
+    $('track-items').replaceChildren(...api, ...sim);
+    $('track-count').textContent = (api.length ? api.length + ' na Central · ' : '') + sim.length + ' simuladas';
+  }
+  $('track-items').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-example]');
+    if (b) select(b.getAttribute('data-example'));
+  });
+
+  async function atualizarListaApi() {
+    const r = await SIDEC.api.get('/api/pedidos');
+    if (!r.ok) return;
+    const ordem = { em_voo: 0, atribuida: 1, aguardando: 2, reagendada: 3, aguardando_resgate: 4, outro_meio: 5, entregue: 6 };
+    pedidosApi = r.dados.slice().sort((a, b) => (ordem[a.status] - ordem[b.status]) || (a.prioridade - b.prioridade) || b.codigo.localeCompare(a.codigo));
+    renderLista();
+  }
+
+  function renderApi(p, drone) {
+    doc.body.classList.add('is-api');
+    $('track-notfound').hidden = true;
+    $('track-found').hidden = false;
+    doc.querySelector('.trk-more').hidden = false;
+    if (doc.activeElement !== $('track-input')) $('track-input').value = p.codigo;
+    $('track-prio').textContent = 'P' + p.prioridade;
+    $('track-prio').setAttribute('data-prio', String(p.prioridade));
+    $('track-code').textContent = p.codigo;
+    $('track-status').textContent = STATUS_API[p.status] || p.status;
+    $('track-status').setAttribute('data-status', p.status === 'atribuida' ? 'atribuida' : p.status);
+    const fase = FASE_API[p.status] || 0;
+    doc.querySelectorAll('#track-progress li').forEach((li, i) => {
+      li.className = i < fase ? (i === fase - 1 && fase < 3 ? 'is-current' : 'is-done') : '';
+    });
+    $('track-cargo').textContent = p.tipo_carga + (p.peso_kg ? ' · ' + String(p.peso_kg).replace('.', ',') + ' kg' : '') + ' · rota de ' + String(p.distancia_km).replace('.', ',') + ' km';
+    $('track-reason').hidden = !p.motivo;
+    $('track-reason').textContent = p.motivo || '';
+    const filial = (p.rota || []).find((q) => q.tipo === 'filial');
+    $('track-from').textContent = p.origem || (filial ? filial.nome : 'Filial SADEC');
+    $('track-to').textContent = p.destino;
+    $('track-drone').textContent = p.drone_codigo || '—';
+    // em voo, desconta o trecho já voado (distância ÷ autonomia do drone no banco); sem telemetria real
+    const bat = drone ? (p.status === 'em_voo' ? Math.max(0, drone.bateria_pct - (p.distancia_km || 0) / drone.autonomia_km * 100 * progressoApi(p).f) : drone.bateria_pct) : null;
+    $('track-bat').textContent = bat === null ? '—' : String(Math.round(bat * 10) / 10).replace('.', ',') + '%';
+    $('track-bat-fill').setAttribute('width', String(bat === null ? 0 : bat));
+    $('r-carga').value = p.codigo + ' · ' + p.tipo_carga;
+    // Ruas reais (OpenStreetMap) com filial, retirada e destino gravados no banco
+    $('osm').hidden = false;
+    desenharMapaApi(p, true);
+    $('track-temp').textContent = '—';
+    $('track-temp-range').textContent = 'sem sensor ligado nesta demonstração';
+    $('track-spark-line').setAttribute('points', '');
+    $('telemetry').replaceChildren();
+    const hhmmApi = (t) => (t || '').slice(11, 16) || '—';
+    // Pedidos anteriores à integração não têm histórico gravado: mostra só o registro do pedido
+    const eventos = p.eventos.length ? p.eventos : [{ status_novo: 'aguardando', data_hora: p.data_hora, descricao: 'Pedido anterior à integração (sem histórico detalhado)', responsavel: p.solicitante || 'Central' }];
+    $('steps').replaceChildren(...eventos.map((ev, i) => el('li', { class: 'trk-time__item is-done' + (ev.status_novo === 'outro_meio' ? ' is-alert' : '') + (i === eventos.length - 1 && p.status !== 'entregue' ? ' is-now' : '') }, [
+      el('span', { class: 'mono trk-time__t', text: hhmmApi(ev.data_hora) }),
+      el('span', { class: 'trk-time__dot', 'aria-hidden': 'true' }),
+      el('span', { class: 'trk-time__body' }, [
+        el('span', { class: 'trk-time__title', text: /^Recebimento/.test(ev.descricao) ? 'Recebimento registrado' : (/^Código de autorização/.test(ev.descricao) ? 'Autorização do órgão' : (NOME_EVENTO[ev.status_novo] || ev.status_novo)) }),
+        el('span', { class: 'trk-time__desc', text: ev.descricao + ' — ' + ev.responsavel })
+      ])
+    ])));
+    // Ações do operador sobre o pedido real; as demonstrações de pane ficam no modo simulado
+    doc.querySelectorAll('#safety-actions [data-action]').forEach((b) => {
+      const a = b.getAttribute('data-action');
+      b.disabled = !((a === 'launch' && p.status === 'atribuida') || (a === 'concluir' && p.status === 'em_voo'));
+    });
+    $('safety-hint').textContent = 'Pedido gravado na Central: decolagem e conclusão ficam no histórico. As demonstrações de pane usam o modo simulado.';
+    $('incident').replaceChildren();
+    const form = $('receipt-form');
+    const done = $('receipt-done');
+    form.hidden = Boolean(p.recebimento);
+    form.querySelectorAll('input:not([readonly]), select, button').forEach((n) => { n.disabled = p.status !== 'entregue'; });
+    if (p.recebimento) {
+      const r = p.recebimento;
+      done.replaceChildren(...[['Responsável', r.responsavel], ['Destinatário', r.destinatario], ['Carga', p.codigo + ' · ' + p.tipo_carga],
+        ['Estado', r.estado_carga], ['Horário', r.data_hora]].map(([k, v]) => el('div', {}, [el('dt', { text: k }), el('dd', { text: v })])));
+      done.hidden = false;
+    } else {
+      done.hidden = true;
+    }
+  }
+
+  async function acaoApi(action) {
+    const rota = action === 'launch' ? 'decolar' : (action === 'concluir' ? 'concluir' : null);
+    if (!rota) return;
+    const r = await SIDEC.api.post('/api/pedidos/' + pedidoApi.codigo + '/' + rota);
+    $('safety-hint').textContent = r.ok ? (rota === 'decolar' ? 'Decolagem registrada na Central.' : 'Entrega concluída e registrada.') : SIDEC.api.mensagemErro(r);
+    if (r.ok) carregarApi(pedidoApi.codigo);
+  }
+
+  async function enviarRecebimentoApi() {
+    const msg = $('receipt-msg');
+    const r = await SIDEC.api.post('/api/pedidos/' + pedidoApi.codigo + '/recebimento', {
+      responsavel: $('r-responsavel').value, destinatario: $('r-destinatario').value, estado_carga: $('r-estado').value
+    });
+    msg.textContent = r.ok ? 'Recebimento gravado na Central, com responsável, destinatário, horário e estado da carga.' : SIDEC.api.mensagemErro(r);
+    msg.className = 'form-status ' + (r.ok ? 'is-success' : 'is-error');
+    if (r.ok) { $('receipt-form').reset(); carregarApi(pedidoApi.codigo); }
+  }
+
+  SIDEC.api.disponivel().then(async (on) => {
+    apiOnline = on;
+    if (!on) return;
+    const locais = await SIDEC.api.get('/api/locais');
+    if (locais.ok) redeHospitais = locais.dados.filter((l) => l.tipo === 'hospital' && typeof l.lat === 'number');
+    await atualizarListaApi();
+    // Sem código na URL: abre o pedido real mais relevante da Central (em voo, depois reservado)
+    if (ehCodigoApi(selectedId)) carregarApi(selectedId.toUpperCase());
+    else if (!new URLSearchParams(root.location.search).get('id') && pedidosApi.length) carregarApi(pedidosApi[0].codigo);
+    root.setInterval(() => {
+      if (doc.hidden || !pedidoApi || pedidoApi.ausente) return;
+      if (pedidoApi.status === 'em_voo') desenharMapaApi(pedidoApi, false);
+    }, 5000);
+    root.setInterval(() => { if (!doc.hidden) atualizarListaApi(); }, 15000);
+  });
 
   drawGrid();
   store.subscribe((s) => { lastKey = ''; render(s); });

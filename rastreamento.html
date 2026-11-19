@@ -58,7 +58,7 @@
         <div class="trk-bar__field">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
           <label class="visually-hidden" for="track-input">Código da entrega</label>
-          <input class="trk-bar__input mono" id="track-input" type="text" list="track-list" autocomplete="off" spellcheck="false" maxlength="20" placeholder="SDC-0001">
+          <input class="trk-bar__input mono" id="track-input" type="text" list="track-list" autocomplete="off" spellcheck="false" maxlength="20" placeholder="SDC-0001 ou SD1001">
           <datalist id="track-list"></datalist>
           <button class="btn btn--primary btn--sm" type="submit">Rastrear</button>
         </div>
@@ -69,6 +69,16 @@
         </div>
       </form>
 
+      <div class="trk-app">
+      <nav class="trk-list" aria-labelledby="lista-title">
+        <div class="trk-list__head">
+          <h2 class="trk-card__title" id="lista-title">Entregas</h2>
+          <span class="muted trk-small" id="track-count"></span>
+        </div>
+        <ul class="trk-list__items" id="track-items"></ul>
+      </nav>
+
+      <div class="trk-main">
       <section class="trk-empty" id="track-notfound" aria-live="polite" hidden>
         <span class="trk-empty__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4.5 4.5M8.5 11h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
         <h2 id="notfound-title">Não encontramos esse código</h2>
@@ -85,6 +95,12 @@
             <g id="map-route"></g>
             <g id="map-drone" class="tmap__drone"></g>
           </svg>
+          <div class="osm" id="osm" hidden>
+            <svg class="osm__svg" id="osm-svg" role="img" aria-labelledby="osm-desc">
+              <desc id="osm-desc">Mapa de ruas de São Paulo com a rota real do pedido: filial do drone, retirada, destino e posição estimada do drone.</desc>
+            </svg>
+            <p class="osm__attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</p>
+          </div>
           <div class="trk-map__eta" aria-live="off">
             <p class="trk-eta"><span>Chegada</span><strong class="mono" id="eta-time">—</strong></p>
             <p class="trk-eta trk-eta--dark"><span>Faltam</span><strong class="mono" id="eta-left">—</strong></p>
@@ -141,12 +157,16 @@
         </aside>
       </div>
 
+      </div>
+      </div>
+
       <div class="trk-more">
         <section class="trk-card" id="seguranca" aria-labelledby="seg-title">
           <h2 class="trk-card__title" id="seg-title">Demonstrações de segurança</h2>
           <p class="muted trk-small">Disponíveis enquanto a entrega está em voo.</p>
           <div class="safety-actions" id="safety-actions">
             <button class="btn btn--primary" type="button" data-action="launch">Decolar</button>
+            <button class="btn btn--primary trk-api-only" type="button" data-action="concluir" disabled>Concluir entrega</button>
             <button class="btn btn--ghost" type="button" data-action="bateria">Bateria insuficiente</button>
             <button class="btn btn--ghost" type="button" data-action="motor">Falha de motor</button>
             <button class="btn btn--danger" type="button" data-action="grave">Falha grave</button>
@@ -229,8 +249,10 @@
   <script src="js/operations.js" defer></script>
   <script src="js/data.js" defer></script>
   <script src="js/state.js" defer></script>
+  <script src="js/api.js" defer></script>
   <script src="js/drone-avatar.js" defer></script>
   <script src="js/chatbot.js" defer></script>
+  <script src="js/mapa-osm.js" defer></script>
   <script src="js/tracking.js" defer></script>
 </body>
 </html>
