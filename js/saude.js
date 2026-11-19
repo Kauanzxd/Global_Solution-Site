@@ -235,7 +235,7 @@
         line = el('p', { class: 'precheck__line is-ok' }, [
           'Autonomia confirmada: ' + d.nome + ' pode levar este órgão.',
           el('span', { class: 'precheck__math', text: num.format(e.km) + ' km × ' + num.format(d.consumoKm) + '%/km = ' + num.format(e.consumo) +
-            '% + 30% de reserva = ' + num.format(e.necessario) + '% ≤ bateria de ' + num.format(d.bateria) + '%' })
+            '% × 1,3 (reserva de 30%) = ' + num.format(e.necessario) + '% ≤ bateria de ' + num.format(d.bateria) + '%' })
         ]);
       } else {
         line = el('p', { class: 'precheck__line is-alert', text: (r.motivo || 'Nenhum drone elegível nesta rota.') + ' O pedido seguirá para outro meio de transporte.' });
@@ -272,7 +272,7 @@
 
   /* ---------- Resumo ao vivo do pedido ---------- */
   const REGRA = {
-    1: 'Só decola se a bateria cobrir a rota com 30% de reserva. Sem drone elegível, a Central indica outro meio.',
+    1: 'Só decola se consumo da rota × 1,3 couber na bateria (reserva de 30%). Sem drone elegível, a Central indica outro meio.',
     2: 'Pode antecipar uma entrega comercial que ainda não decolou. Voo em andamento nunca é interrompido.',
     3: 'Atendido depois de órgãos e emergências, por ordem de chegada.'
   };
