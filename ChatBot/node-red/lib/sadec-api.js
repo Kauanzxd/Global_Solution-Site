@@ -368,6 +368,7 @@ function obterPedidoDb(db, codigo) {
   const r = db.prepare('SELECT * FROM tbl_recebimento WHERE CD_Rastreio = ?').get(l.CD_Rastreio);
   p.recebimento = r ? { pedido_codigo: r.CD_Rastreio, responsavel: r.NM_Responsavel, destinatario: r.NM_Destinatario, estado_carga: r.ST_Carga, data_hora: r.DT_Recebimento } : null;
   p.rota = rotaDoPedido(db, l);
+  Object.assign(p, saidaDoPedido(db, l, ultimasSaidas(db)));
   return p;
 }
 
@@ -390,6 +391,7 @@ function rotaDoPedido(db, l) {
 function meusPedidos(conta) {
   const db = abrir();
   try {
+    saidasAutomaticas(db);
     return db.prepare('SELECT * FROM tbl_entrega WHERE NR_Usuario = ? ORDER BY ID_Entrega DESC').all(conta.id).map(pedidoJson);
   } finally { db.close(); }
 }
@@ -397,6 +399,7 @@ function meusPedidos(conta) {
 function obterPedido(codigo) {
   const db = abrir();
   try {
+    saidasAutomaticas(db);
     const p = obterPedidoDb(db, codigo);
     if (!p) throw new ErroApi(404, 'Pedido ' + codigo + ' não encontrado.');
     return p;
@@ -411,10 +414,12 @@ function decolagens(db) {
 function listarPedidos() {
   const db = abrir();
   try {
+    saidasAutomaticas(db);
     const dec = decolagens(db);
+    const ultima = ultimasSaidas(db);
     return db.prepare('SELECT * FROM tbl_entrega ORDER BY NR_Prioridade, ID_Entrega').all().map((l) => Object.assign(pedidoJson(l), {
       rota: l.ST_Status === 'entregue' ? [] : rotaDoPedido(db, l), decolou_em: dec.get(l.CD_Rastreio) || null
-    }));
+    }, saidaDoPedido(db, l, ultima)));
   } finally { db.close(); }
 }
 
@@ -422,6 +427,49 @@ function listarPedidos() {
    a loja libera a decolagem quando o pedido fica pronto e o cliente confirma que recebeu,
    mas só depois da chegada prevista (velocidade de referência de cruzeiro). */
 const VELOCIDADE_KMH = 48;
+/* Demonstração: o relógio da operação corre 12× (1 min = 5 s reais). Distância, consumo e minutos
+   exibidos continuam realistas; só a espera real encolhe. */
+const ESCALA_TEMPO = 12;
+const INTERVALO_SAIDA_MIN = 5; // intervalo mínimo entre saídas da mesma filial (minutos da operação)
+const INTERVALO_SAIDA_MS = INTERVALO_SAIDA_MIN * 60000 / ESCALA_TEMPO;
+const PREPARO_MAX_MIN = 15; // pedido comercial: se a loja não liberar antes, sai sozinho após o preparo máximo
+const msDe = (dt) => new Date(String(dt).replace(' ', 'T')).getTime();
+
+/* Decolagem manual só para P1 (órgão) e para o P2 que tirou o drone de um pedido comercial;
+   P2 comum e P3 saem sozinhos; P4 sai quando a loja termina o preparo (ou após o preparo máximo).
+   Toda saída automática respeita o intervalo entre saídas da filial. */
+function decolagemManual(db, l) {
+  if (l.NR_Prioridade === 1) return true;
+  return l.NR_Prioridade === 2 && Boolean(db.prepare("SELECT 1 FROM tbl_evento WHERE ST_Novo = 'reagendada' AND DS_Evento LIKE ?").get('%ao pedido ' + l.CD_Rastreio + ' %'));
+}
+
+function ultimasSaidas(db) {
+  return new Map(db.prepare("SELECT d.ID_Filial AS f, MAX(ev.DT_Evento) AS t FROM tbl_evento ev JOIN tbl_drone d ON d.CD_Drone = ev.CD_Drone WHERE ev.ST_Novo = 'em_voo' GROUP BY d.ID_Filial").all()
+    .map((r) => [r.f, msDe(r.t)]));
+}
+
+/* Avança o relógio: decola, por prioridade, os pedidos automáticos cuja filial já cumpriu o intervalo. */
+function saidasAutomaticas(db) {
+  transacao(db, () => {
+    const ultima = ultimasSaidas(db);
+    const reservadoEm = (cod) => msDe(db.prepare("SELECT MAX(DT_Evento) AS t FROM tbl_evento WHERE CD_Rastreio = ? AND ST_Novo = 'atribuida'").get(cod).t);
+    const prontos = db.prepare("SELECT e.*, d.ID_Filial FROM tbl_entrega e JOIN tbl_drone d ON d.CD_Drone = e.CD_Drone WHERE e.ST_Status = 'atribuida' ORDER BY e.NR_Prioridade, e.ID_Entrega").all();
+    for (const l of prontos) {
+      if (decolagemManual(db, l) || Date.now() - (ultima.get(l.ID_Filial) || 0) < INTERVALO_SAIDA_MS) continue;
+      if (l.NR_Prioridade === 4 && !(Date.now() - reservadoEm(l.CD_Rastreio) >= PREPARO_MAX_MIN * 60000 / ESCALA_TEMPO)) continue;
+      mudarPedidoDb(db, l.CD_Rastreio, ...DECOLAR, 'Saída automática (intervalo de ' + INTERVALO_SAIDA_MIN + ' min entre saídas da filial).', 'Central SADEC');
+      ultima.set(l.ID_Filial, Date.now());
+    }
+  });
+}
+
+/* Como cada pedido reservado sai: manual (botão) ou automático, com o horário real previsto da saída. */
+function saidaDoPedido(db, l, ultima) {
+  if (l.ST_Status !== 'atribuida' || !l.CD_Drone) return {};
+  if (decolagemManual(db, l)) return { decolagem_manual: true };
+  const d = db.prepare('SELECT ID_Filial FROM tbl_drone WHERE CD_Drone = ?').get(l.CD_Drone);
+  return { decolagem_manual: false, saida_em: (ultima.get(d && d.ID_Filial) || 0) + INTERVALO_SAIDA_MS };
+}
 function responsavelDaAcao(autorizacao, codigo, acao) {
   const conta = exigirConta(autorizacao);
   if (conta.perfil === 'operador') return conta.nome;
@@ -430,9 +478,14 @@ function responsavelDaAcao(autorizacao, codigo, acao) {
     const l = db.prepare('SELECT * FROM tbl_entrega WHERE CD_Rastreio = ?').get(String(codigo || '').toUpperCase());
     if (!l) throw new ErroApi(404, 'Pedido ' + codigo + ' não encontrado.');
     if (l.NR_Usuario !== conta.id || l.NR_Prioridade !== 4) throw new ErroApi(403, 'Só a Central ou o dono do pedido comercial pode fazer esta ação.');
-    if (acao === 'decolar') return 'Loja parceira (pedido de ' + conta.nome + ')';
+    if (acao === 'decolar') {
+      const d = db.prepare('SELECT ID_Filial FROM tbl_drone WHERE CD_Drone = ?').get(l.CD_Drone || '');
+      const falta = d ? (ultimasSaidas(db).get(d.ID_Filial) || 0) + INTERVALO_SAIDA_MS - Date.now() : 0;
+      if (falta > 0) throw new ErroApi(409, 'A filial respeita ' + INTERVALO_SAIDA_MIN + ' min entre saídas. Próxima saída em ' + Math.ceil(falta * ESCALA_TEMPO / 60000) + ' min.');
+      return 'Loja parceira (pedido de ' + conta.nome + ')';
+    }
     const dec = decolagens(db).get(l.CD_Rastreio);
-    const chegada = dec ? new Date(dec.replace(' ', 'T')).getTime() + (l.NR_Distancia_Km || 0) / VELOCIDADE_KMH * 3600000 : 0;
+    const chegada = dec ? new Date(dec.replace(' ', 'T')).getTime() + (l.NR_Distancia_Km || 0) / VELOCIDADE_KMH * 3600000 / ESCALA_TEMPO : 0;
     if (l.ST_Status === 'em_voo' && Date.now() < chegada) {
       throw new ErroApi(409, 'O drone ainda está a caminho. Confirme o recebimento depois da chegada prevista.');
     }
@@ -489,7 +542,11 @@ function processarFila() {
 function mudarPedido(codigo, de, para, droneDe, dronePara, descricao, responsavel, extra) {
   const db = abrir();
   try {
-    return transacao(db, () => {
+    return transacao(db, () => mudarPedidoDb(db, codigo, de, para, droneDe, dronePara, descricao, responsavel, extra));
+  } finally { db.close(); }
+}
+
+function mudarPedidoDb(db, codigo, de, para, droneDe, dronePara, descricao, responsavel, extra) {
       const l = db.prepare('SELECT * FROM tbl_entrega WHERE CD_Rastreio = ?').get(String(codigo).toUpperCase());
       if (!l) throw new ErroApi(404, 'Pedido ' + codigo + ' não encontrado.');
       if (!de.includes(l.ST_Status)) throw new ErroApi(409, 'Pedido ' + l.CD_Rastreio + ' está "' + l.ST_Status + '"; ação não permitida.');
@@ -502,14 +559,12 @@ function mudarPedido(codigo, de, para, droneDe, dronePara, descricao, responsave
       if (extra) extra(db, l);
       evento(db, l.CD_Rastreio, l.CD_Drone, l.ST_Status, para, descricao, responsavel);
       return obterPedidoDb(db, l.CD_Rastreio);
-    });
-  } finally { db.close(); }
 }
 
 /* Só aqui o pedido entra em voo: a atribuição não marca em_voo. */
+const DECOLAR = [['atribuida'], 'em_voo', ['atribuido', 'aguardando_comercial'], (l) => (l.NR_Prioridade === 4 ? 'em_voo_comercial' : 'em_voo')];
 function decolar(codigo, responsavel) {
-  return mudarPedido(codigo, ['atribuida'], 'em_voo', ['atribuido', 'aguardando_comercial'],
-    (l) => (l.NR_Prioridade === 4 ? 'em_voo_comercial' : 'em_voo'), 'Decolagem autorizada.', responsavel || 'Operador da Central');
+  return mudarPedido(codigo, ...DECOLAR, 'Decolagem autorizada.', responsavel || 'Operador da Central');
 }
 
 function concluirEntrega(codigo, responsavel) {
@@ -567,6 +622,6 @@ function recuperarDrone(codigoDrone, acao, responsavel) {
 module.exports = {
   CONFIG, ErroApi, AUTORIZADOS,
   criarPedido, obterPedido, listarPedidos, listarDrones, listarLocais, listarEventos, processarFila,
-  decolar, concluirEntrega, registrarRecebimento, recuperarDrone, responsavelDaAcao, VELOCIDADE_KMH,
+  decolar, concluirEntrega, registrarRecebimento, recuperarDrone, responsavelDaAcao, VELOCIDADE_KMH, ESCALA_TEMPO, INTERVALO_SAIDA_MS,
   criarConta, entrar, sair, contaDaSessao, exigirConta, meusPedidos, emitirCodigoOrgao, listarCodigosOrgao
 };

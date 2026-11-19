@@ -11,7 +11,7 @@
   const $ = (id) => doc.getElementById(id);
   const NS = 'http://www.w3.org/2000/svg';
   const STATUS_ORDER = { em_voo: 0, atribuida: 1, fila: 2, pouso_emergencia: 3, outro_meio: 4, convencional: 5, entregue: 6 };
-  const KM_POR_MIN = 60000 / ops.FLIGHT_MS_PER_KM; // velocidade de cruzeiro da simulação (48 km/h)
+  const KM_POR_MIN = 60000 / ops.SIM_MS_PER_KM; // velocidade de cruzeiro da simulação (48 km/h)
   const place = (state, id) => (ops.findPoint(state, id) || { nome: id }).nome;
   const num = (n) => (Math.round(n * 10) / 10).toString().replace('.', ',');
   const mmss = (s) => (s >= 60 ? Math.floor(s / 60) + ' min ' : '') + String(s % 60).padStart(2, '0') + ' s';
@@ -79,7 +79,7 @@
       $('flight-prio').textContent = v ? 'P' + v.prio : '—';
       $('flight-id').textContent = v ? v.id : 'sem voo';
       $('flight-title').textContent = v ? v.titulo : 'Nenhum voo agora';
-      $('flight-label').textContent = v ? v.label : 'Processe a fila e decole uma entrega.';
+      $('flight-label').textContent = v ? v.label : 'Processe a fila: órgãos decolam pelo operador; as demais saem sozinhas.';
       $('flight-eta').textContent = v ? v.eta : '';
       $('flight-bar').setAttribute('width', v ? String(Math.round(v.f * 100)) : '0');
       card.setAttribute('href', v ? 'rastreamento.html?id=' + encodeURIComponent(v.id) : 'rastreamento.html');
@@ -172,7 +172,14 @@
     if (e && e.status === 'em_voo') return ops.sensorReading(state, e, now).bateria;
     return d.bateria;
   }
-  const remainingS = (e, now) => Math.max(0, Math.round((1 - ops.flightProgress(e, now)) * e.duracaoMs / 1000));
+  // segundos da operação (tempo realista); a espera real é ESCALA_TEMPO vezes menor
+  const remainingS = (e, now) => Math.max(0, Math.round((1 - ops.flightProgress(e, now)) * e.duracaoMs * ops.ESCALA_TEMPO / 1000));
+  /* P2 comum, P3 e P4 saem sozinhos: preparo da loja e intervalo de 5 min entre saídas da filial */
+  function saidaSim(state, e, now) {
+    if (e.preparoAte > now) return 'Preparo: ' + Math.ceil((e.preparoAte - now) * ops.ESCALA_TEMPO / 60000) + ' min';
+    const falta = ops.proximaSaida(state, ops.byId(state.drones, e.droneId)) - now;
+    return falta > 0 ? 'Sai em ' + Math.ceil(falta * ops.ESCALA_TEMPO / 60000) + ' min' : 'Saindo agora';
+  }
 
   function topFlight(state) {
     return state.entregas.filter((e) => e.status === 'em_voo').sort((a, b) => a.prioridade - b.prioridade || a.ordem - b.ordem)[0] || null;
@@ -244,13 +251,19 @@
       sub: e.id + ' · ' + place(state, e.origemId) + ' → ' + place(state, e.destinoId),
       estado: estadoSim(e, pos.get(e.id)), estadoClasse: 'is-' + e.status,
       eta: e.status === 'em_voo' ? mmss(remainingS(e, now)) : null,
-      acao: e.status === 'atribuida' ? el('button', { type: 'button', class: 'btn btn--light btn--sm', 'data-launch': e.id, text: 'Decolar' }) : null,
+      acao: e.status !== 'atribuida' ? null : (e.decolagemManual
+        ? el('button', { type: 'button', class: 'btn btn--light btn--sm', 'data-launch': e.id, text: 'Decolar' })
+        : el('span', { class: 'cx-q__auto', 'data-saida': e.id, title: 'Saída automática: 5 min entre saídas da filial', text: saidaSim(state, e, now) })),
       motivo: e.motivo
     })) : [ui.vazio('Nenhuma entrega com essa prioridade.')])));
     if (!built) {
       shown.filter((e) => e.status === 'em_voo').forEach((e) => {
         const n = doc.querySelector('[data-eta="' + e.id + '"]');
         if (n) n.textContent = mmss(remainingS(e, now));
+      });
+      shown.filter((e) => e.status === 'atribuida' && !e.decolagemManual).forEach((e) => {
+        const n = doc.querySelector('[data-saida="' + e.id + '"]');
+        if (n) n.textContent = saidaSim(state, e, now);
       });
     }
   }
@@ -262,7 +275,7 @@
   function missaoDrone(state, d, now) {
     const e = d.entregaId ? ops.byId(state.entregas, d.entregaId) : null;
     if (!e) return null;
-    return 'P' + e.prioridade + ' · ' + e.id + ' → ' + place(state, e.destinoId) + (e.status === 'em_voo' ? ' · chega em ' + mmss(remainingS(e, now)) : ' · aguarda decolagem');
+    return 'P' + e.prioridade + ' · ' + e.id + ' → ' + place(state, e.destinoId) + (e.status === 'em_voo' ? ' · chega em ' + mmss(remainingS(e, now)) : (e.decolagemManual ? ' · aguarda decolagem do operador' : ' · saída automática'));
   }
 
   function renderFleet(state, now) {

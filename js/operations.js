@@ -3,13 +3,19 @@
 (function (root) {
   'use strict';
 
-  const FLIGHT_MS_PER_KM = 75000; // cruzeiro de 48 km/h em tempo real: 1 km = 75 s (consumo de ~3%/km = ~2,4%/min)
+  /* Demonstração: o relógio da operação corre 12× (1 min = 5 s reais). Distância, consumo, bateria e os
+     minutos exibidos continuam realistas; só a espera real encolhe. */
+  const ESCALA_TEMPO = 12;
+  const SIM_MS_PER_KM = 75000; // cruzeiro realista de 48 km/h: 1 km = 75 s (consumo de ~3%/km = ~2,4%/min)
+  const FLIGHT_MS_PER_KM = SIM_MS_PER_KM / ESCALA_TEMPO; // espera real por km na demonstração
+  const INTERVALO_SAIDA_MIN = 5; // intervalo mínimo entre saídas da mesma filial (minutos da operação)
+  const INTERVALO_SAIDA_MS = INTERVALO_SAIDA_MIN * 60000 / ESCALA_TEMPO;
   const RESERVA = { 1: 0.3, 2: 0.3, 3: 0.3, 4: 0.3 }; // padrão SADEC: toda entrega exige ida e volta + 30% de reserva
   const CORREDOR_KM = 2.5; // distância máxima de uma zona de pouso até a rota
   const FAIXA_TERMICA = { min: 2, max: 8 };
   const RESGATE_MS = 20000; // resgate da carga e do drone após pouso de emergência (tempo simulado)
   const MANUTENCAO_MS = 30000; // inspeção na base (tempo simulado); ao fim, o drone aguarda liberação formal
-  const RECARGA_PCT_POR_S = 0.05; // recarga de drones parados: ~3%/min (carga completa em ~33 min)
+  const RECARGA_PCT_POR_S = 0.05; // recarga de drones parados: ~3%/min da operação (carga completa em ~33 min)
 
   const PRIORIDADES = { 1: 'Órgãos', 2: 'Emergência', 3: 'Saúde', 4: 'Comercial' };
   const STATUS = {
@@ -167,7 +173,9 @@
     const d = sel.drone;
     const a = sel.autonomia;
     Object.assign(d, { status: 'atribuido', entregaId: e.id });
-    Object.assign(e, { status: 'atribuida', droneId: d.id, motivo: null, km: a.km, consumo: a.consumoIda, necessario: a.necessario });
+    // P1 sempre decola pelo operador; P2 também quando tirou o drone de um comercial. Os demais saem sozinhos.
+    const decolagemManual = e.prioridade === 1 || (e.prioridade === 2 && Boolean(preempted));
+    Object.assign(e, { status: 'atribuida', droneId: d.id, motivo: null, km: a.km, consumo: a.consumoIda, necessario: a.necessario, decolagemManual });
     addLog(state, e.id + ' → ' + d.nome + ' (' + sel.filial.nome + '): ' + a.kmTotal + ' km ida e volta, consumo ' + a.consumo + '% + reserva ' +
       Math.round(a.reserva * 100) + '% = ' + a.necessario + '% ≤ bateria ' + d.bateria + '%.', 'ok');
     return { ok: true, status: 'atribuida', droneId: d.id, preemptedId: preempted ? preempted.id : null, rejeitados: sel.rejeitados };
@@ -185,10 +193,20 @@
     return results;
   }
 
+  /* Horário (real) em que a filial do drone libera a próxima saída automática. */
+  function proximaSaida(state, drone) {
+    const t = (state.saidas || {})[drone.filialId];
+    return typeof t === 'number' ? t + INTERVALO_SAIDA_MS : -Infinity;
+  }
+
   function launch(state, entregaId, now) {
     const e = byId(state.entregas, entregaId);
     if (!e || e.status !== 'atribuida') return { ok: false, motivo: 'Somente entregas com drone atribuído podem decolar.' };
     const d = byId(state.drones, e.droneId);
+    if (!e.decolagemManual && now < proximaSaida(state, d)) {
+      return { ok: false, motivo: 'A filial respeita ' + INTERVALO_SAIDA_MIN + ' min entre saídas.' };
+    }
+    state.saidas = Object.assign({}, state.saidas, { [d.filialId]: now });
     Object.assign(e, {
       status: 'em_voo',
       inicio: now,
@@ -228,7 +246,7 @@
     state.ultimoTick = now;
     state.drones.forEach((d) => {
       if (d.status === 'disponivel' && d.bateria < 100 && dt > 0) {
-        d.bateria = Math.min(100, round1(d.bateria + (dt / 1000) * RECARGA_PCT_POR_S));
+        d.bateria = Math.min(100, round1(d.bateria + (dt / 1000) * ESCALA_TEMPO * RECARGA_PCT_POR_S));
       }
       if (d.status === 'pouso_emergencia' && typeof d.resgateAte === 'number' && now >= d.resgateAte) {
         const base = byId(state.filiais, d.filialId) || state.filiais[0];
@@ -265,9 +283,20 @@
     return { ok: true };
   }
 
+  /* Saídas automáticas: P2 comum, P3 e P4 pronto (preparo da loja concluído), por prioridade e ordem,
+     uma por filial a cada intervalo. P1 (e o P2 que reorganizou um comercial) esperam o operador. */
+  function autoLaunch(state, now) {
+    const saiu = [];
+    state.entregas.filter((e) => e.status === 'atribuida' && !e.decolagemManual && !(e.preparoAte > now))
+      .sort((a, b) => a.prioridade - b.prioridade || a.ordem - b.ordem)
+      .forEach((e) => { if (launch(state, e.id, now).ok) saiu.push(e.id); });
+    return saiu;
+  }
+
   function tick(state, now) {
     const done = [];
     maintainFleet(state, now);
+    autoLaunch(state, now).forEach((id) => done.push(id));
     state.entregas.forEach((e) => {
       if (e.status !== 'em_voo' || flightProgress(e, now) < 1) return;
       const d = byId(state.drones, e.droneId);
@@ -351,7 +380,7 @@
   }
 
   const api = {
-    FLIGHT_MS_PER_KM, RESERVA, PRIORIDADES, STATUS, FAIXA_TERMICA, RESGATE_MS, MANUTENCAO_MS, RECARGA_PCT_POR_S,
+    FLIGHT_MS_PER_KM, SIM_MS_PER_KM, ESCALA_TEMPO, INTERVALO_SAIDA_MIN, INTERVALO_SAIDA_MS, proximaSaida, autoLaunch, RESERVA, PRIORIDADES, STATUS, FAIXA_TERMICA, RESGATE_MS, MANUTENCAO_MS, RECARGA_PCT_POR_S,
     distance, findPoint, byId, sortQueue, estimateAutonomy, checkAutonomy, selectDrone, dispatch, processQueue,
     launch, tick, markConventional, flightProgress, positionAt, routeLandingZones, emergencyLanding,
     checkTemperature, sensorReading, createOrder, addLog, registerReceipt, ESTADOS_RECEBIMENTO, releaseDrone

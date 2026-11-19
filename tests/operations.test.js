@@ -247,7 +247,7 @@ test('drone disponível recarrega com o tempo até 100%; drone em voo não recar
   const s = makeState({ drones: [drone('D1', { bateria: 40 }), drone('D2', { bateria: 50, status: 'em_voo' })] });
   ops.tick(s, 0);
   ops.tick(s, 10000);
-  assert.equal(byId(s.drones, 'D1').bateria, 40 + 10 * ops.RECARGA_PCT_POR_S);
+  assert.equal(byId(s.drones, 'D1').bateria, 40 + 10 * ops.ESCALA_TEMPO * ops.RECARGA_PCT_POR_S); // 10 s reais = 2 min da operação
   assert.equal(byId(s.drones, 'D2').bateria, 50);
   ops.tick(s, 60 * 60 * 1000); // recarga realista: carga completa em cerca de meia hora
   assert.equal(byId(s.drones, 'D1').bateria, 100);
@@ -366,4 +366,54 @@ test('com um drone aguardando liberação, os outros drones disponíveis continu
   assert.equal(r.ok, true);
   assert.equal(r.droneId, outro.id);
   assert.equal(d.status, 'aguardando_liberacao');
+});
+
+test('tempo acelerado: 1 min da operação = 5 s reais, mas o voo de 6 km segue durando 7,5 min da operação', () => {
+  assert.equal(ops.ESCALA_TEMPO, 12);
+  assert.equal(ops.SIM_MS_PER_KM, 75000);
+  const s = makeState({ drones: [drone('D1')], entregas: [entrega('M')] });
+  ops.dispatch(s, 'M');
+  ops.tick(s, 0);
+  const e = byId(s.entregas, 'M');
+  assert.equal(e.duracaoMs * ops.ESCALA_TEMPO, 6 * 75000, 'duração realista preservada');
+  assert.equal(e.duracaoMs, 37500, 'espera real de 37,5 s');
+});
+
+test('decolagem: P1 espera o operador; P3 sai sozinho; P2 só é manual quando reorganizou um comercial', () => {
+  const s = makeState({ drones: [drone('D1'), drone('D2')], entregas: [entrega('ORG', { prioridade: 1 }), entrega('MED', { prioridade: 3, ordem: 2 })] });
+  ops.processQueue(s);
+  ops.tick(s, 0);
+  assert.equal(byId(s.entregas, 'ORG').status, 'atribuida', 'órgão nunca decola sozinho');
+  assert.equal(byId(s.entregas, 'MED').status, 'em_voo');
+  assert.equal(ops.launch(s, 'ORG', 1).ok, true, 'operador decola o órgão a qualquer momento');
+
+  const p2 = makeState({ drones: [drone('D1')], entregas: [entrega('KIT', { prioridade: 2 })] });
+  ops.dispatch(p2, 'KIT');
+  assert.equal(byId(p2.entregas, 'KIT').decolagemManual, false);
+  const pre = makeState({ drones: [drone('D1', { status: 'atribuido', entregaId: 'COM' })], entregas: [entrega('COM', { prioridade: 4, status: 'atribuida', droneId: 'D1' }), entrega('KIT', { prioridade: 2, ordem: 2 })] });
+  ops.dispatch(pre, 'KIT');
+  assert.equal(byId(pre.entregas, 'KIT').decolagemManual, true, 'P2 que tirou o drone de um comercial exige confirmação');
+});
+
+test('intervalo de 5 min da operação entre saídas automáticas da mesma filial; outra filial não espera', () => {
+  const s = makeState({ drones: [drone('D1'), drone('D2'), drone('D3', { filialId: 'F-B' })], entregas: [entrega('A'), entrega('B', { ordem: 2 }), entrega('C', { ordem: 3 })] });
+  ops.processQueue(s);
+  const filialDe = (id) => byId(s.drones, byId(s.entregas, id).droneId).filialId;
+  ops.tick(s, 0);
+  const voando = () => s.entregas.filter((e) => e.status === 'em_voo').map((e) => e.id);
+  assert.equal(voando().filter((id) => filialDe(id) === 'F-A').length, 1, 'uma saída por filial');
+  ops.tick(s, ops.INTERVALO_SAIDA_MS - 1);
+  assert.equal(voando().filter((id) => filialDe(id) === 'F-A').length, 1);
+  ops.tick(s, ops.INTERVALO_SAIDA_MS);
+  assert.equal(voando().filter((id) => filialDe(id) === 'F-A').length, 2, 'próxima sai após 5 min da operação (25 s reais)');
+  assert.equal(ops.INTERVALO_SAIDA_MS, 25000);
+});
+
+test('pedido comercial só sai sozinho depois do preparo da loja', () => {
+  const s = makeState({ drones: [drone('D1')], entregas: [entrega('P', { prioridade: 4, preparoAte: 5000 })] });
+  ops.dispatch(s, 'P');
+  ops.tick(s, 4999);
+  assert.equal(byId(s.entregas, 'P').status, 'atribuida');
+  ops.tick(s, 5000);
+  assert.equal(byId(s.entregas, 'P').status, 'em_voo');
 });

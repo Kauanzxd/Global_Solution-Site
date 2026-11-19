@@ -39,11 +39,13 @@ Oferecer um meio **complementar** de transporte para cargas críticas, com regra
 1. Fila ordenada por prioridade: **P1 → P2 → P3 → P4**; empate pela ordem de chegada.
 2. P1 e P2 podem antecipar uma entrega comercial **antes da decolagem**; entrega **em voo** nunca é realocada.
 3. Toda entrega só decola se `rota de ida e volta × 1,3 ≤ bateria` (reserva de 30%), seja órgão, emergência, saúde ou comercial.
-   Voo em tempo real: cruzeiro de 48 km/h (1 km a cada 75 s) e consumo de cerca de 3% por km, ou seja, uns 2,4% por minuto; drone parado na base recarrega cerca de 3% por minuto.
-4. A Central escolhe o drone **disponível** mais próximo da filial adequada, com carga e autonomia suficientes; se não houver, indica **transporte alternativo**.
-5. Pane de motor ou bateria: pouso na **zona segura mais próxima da rota**. Falha grave: paraquedas, luzes e alerta sonoro. A ocorrência é registrada e o drone segue para **resgate e manutenção**; só volta à frota depois de liberado.
-6. Temperatura fora de 2–8 °C: alerta à equipe médica.
-7. Recebimento registra **responsável, horário, destinatário, identificação da carga e estado da entrega**.
+   Voo (tempo da operação): cruzeiro de 48 km/h (1 km a cada 75 s) e consumo de cerca de 3% por km, ou seja, uns 2,4% por minuto; drone parado na base recarrega cerca de 3% por minuto.
+4. Decolagem manual (operador) só para **P1** e para o **P2 que tirou o drone de um pedido comercial**. P2 comum e P3 saem sozinhos; P4 sai quando a loja termina o preparo. Toda saída automática respeita **5 min entre saídas da mesma filial**.
+5. Demonstração em **tempo acelerado**: 1 min da operação passa em 5 s reais (12×). Distâncias, consumo, bateria e os minutos exibidos continuam realistas; só a espera real encolhe.
+6. A Central escolhe o drone **disponível** mais próximo da filial adequada, com carga e autonomia suficientes; se não houver, indica **transporte alternativo**.
+7. Pane de motor ou bateria: pouso na **zona segura mais próxima da rota**. Falha grave: paraquedas, luzes e alerta sonoro. A ocorrência é registrada e o drone segue para **resgate e manutenção**; só volta à frota depois de liberado.
+8. Temperatura fora de 2–8 °C: alerta à equipe médica.
+9. Recebimento registra **responsável, horário, destinatário, identificação da carga e estado da entrega**.
 
 ## Integração com as disciplinas
 - **Python:** registro de pedidos, fila de prioridades, autonomia, reserva de bateria, falhas e pouso seguro seguem as mesmas regras do motor `js/operations.js`.
@@ -121,7 +123,7 @@ Site (HTML/CSS/JS puro) ──fetch──▶ Node-RED (API + chatbot) ──▶ 
 
 ### Regras garantidas na integração
 - Só a **CentralOperacao Java** escolhe o drone (não há segundo motor de despacho; a função `escolher_drone()` do Python continua só no programa acadêmico).
-- O pedido fica `atribuida` com o drone reservado e **só entra em voo na decolagem** (`POST /api/pedidos/:codigo/decolar`).
+- O pedido fica `atribuida` com o drone reservado e **só entra em voo na decolagem**: manual para P1 (e o P2 que reorganizou um comercial) em `POST /api/pedidos/:codigo/decolar`; automática para os demais, aplicada a cada consulta da API respeitando o intervalo de 5 min (tempo da operação) entre saídas da filial.
 - Reserva do drone com `UPDATE` condicional dentro de transação: o mesmo drone não é despachado duas vezes.
 - Autorização: **P1** só hospital ou Central de Transplantes, com **conta de unidade de saúde** e um **código de autorização de órgão** emitido pela Central para aquele transporte (uso único, válido por 6 horas, vinculado ao hospital). **P2** só com **conta do governo** (Defesa Civil ou município) ou da Central. Conta de outro perfil recebe 403; sem conta, 401. O **chatbot público não autoriza P1 nem P2**.
 - Decolar, concluir, processar a fila e liberar drones exigem conta de **operador**.
@@ -197,7 +199,7 @@ POST /api/pedidos
 ### Testes
 | Comando | O que cobre |
 |---|---|
-| `npm test` | 44 testes do site + 13 testes de integração: contas, sessões, códigos de órgão, P1/P2, rotas com coordenadas, decolagem e recebimento pelo dono do pedido (pulados se Python/Java não estiverem configurados) |
+| `npm test` | 48 testes do site + 15 testes de integração: contas, sessões, códigos de órgão, P1/P2, rotas com coordenadas, decolagem e recebimento pelo dono do pedido (pulados se Python/Java não estiverem configurados) |
 | `python Python/test_sadec_integracao.py` | 13 testes: distância, bateria, reserva de 30%, limite exato, entrada inválida, CLI |
 | `java -cp Java/SADEC/out br.com.fiap.sadec.integracao.IntegracaoTeste` | 19 testes: fila P1–P4, empate, preempção, comercial em voo, bateria, pane, resgate, manutenção, liberação |
 

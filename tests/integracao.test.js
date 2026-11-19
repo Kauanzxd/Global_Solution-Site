@@ -181,3 +181,25 @@ test('processar fila usa a ordem da Java e despacha os pendentes', { skip: pular
   assert.ok(Array.isArray(fila.processados));
   assert.ok(fila.processados.length >= 1, 'há pedidos aguardando no banco demonstrativo');
 });
+
+test('saídas: P3 sai sozinho, a filial respeita 5 min (tempo da operação) entre saídas e P1 espera o operador', { skip: pular }, () => {
+  const p3 = api.criarPedido({ tipo_carga: 'remedio', destino: 'Mooca', solicitante: { tipo: 'cidadao' } });
+  assert.equal(p3.pedido.decolagem_manual, false);
+  const remedio = api.listarPedidos().find((p) => p.codigo === p3.pedido.codigo);
+  assert.equal(remedio.status, 'em_voo', 'P3 decola sozinho');
+  assert.match(api.obterPedido(remedio.codigo).eventos.pop().descricao, /Saída automática/);
+  // a mesma filial só libera a próxima saída automática depois do intervalo
+  const outro = api.criarPedido({ tipo_carga: 'remedio', destino: 'Mooca', solicitante: { tipo: 'cidadao' } }).pedido;
+  if (outro.status === 'atribuida') {
+    const p = api.listarPedidos().find((x) => x.codigo === outro.codigo);
+    if (p.status === 'atribuida') assert.ok(p.saida_em > Date.now());
+  }
+  const p1 = api.criarPedido({ tipo_carga: 'orgao', destino: 'InCor', origem: 'Hospital das Clínicas', solicitante: hospital, codigo_orgao: codigoPara('Hospital das Clínicas') }, sessao('hospital@sadec.demo'));
+  const orgao = api.listarPedidos().find((p) => p.codigo === p1.pedido.codigo);
+  if (orgao.drone_codigo) {
+    assert.equal(orgao.status, 'atribuida', 'órgão nunca decola sozinho');
+    assert.equal(orgao.decolagem_manual, true);
+  }
+  assert.equal(api.ESCALA_TEMPO, 12, '1 min da operação = 5 s reais');
+  assert.equal(api.INTERVALO_SAIDA_MS, 25000);
+});
