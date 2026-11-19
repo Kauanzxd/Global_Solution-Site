@@ -3,7 +3,6 @@
 **Global Solution 2026 · CitizenTech · Turma 1TDSPB · FIAP**
 
 - Repositório: [github.com/Kauanzxd/Global_Solution-Site](https://github.com/Kauanzxd/Global_Solution-Site)
-- Vídeo de apresentação: [youtu.be/QzJBJD1i-2Y](https://youtu.be/QzJBJD1i-2Y)
 - Versão publicada: endereço informado aqui após o deploy no Railway
 
 Rede conceitual de drones que transporta órgãos, kits de emergência e medicamentos com prioridade sobre qualquer outra carga, e usa entregas comerciais para ajudar a sustentar a operação.
