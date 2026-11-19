@@ -377,7 +377,7 @@ def ler_transporte_orgao(redes, unidades, latitudes, longitudes, drones, bateria
                                    latitudes[posicao_destino], longitudes[posicao_destino])
     bateria_necessaria = calcular_bateria_necessaria(distancia, autonomia_km)
     print(f"\nDistância da rota: {formatar_decimal(distancia)} km")
-    print(f"Bateria necessária (rota + 30% de folga): {formatar_decimal(bateria_necessaria)}%")
+    print(f"Bateria necessária (ida e volta + 30% de folga): {formatar_decimal(bateria_necessaria)}%")
 
     posicao_drone = escolher_drone(baterias, bateria_necessaria)
     if posicao_drone == -1:
@@ -451,8 +451,8 @@ def calcular_distancia(latitude1, longitude1, latitude2, longitude2):
 
 def calcular_bateria_necessaria(distancia, autonomia_km):
     # Retorna quantos % de bateria o drone precisa para voar a distância,
-    # já com 30% de folga de segurança (regra do transporte de órgãos).
-    bateria_da_rota = distancia / autonomia_km * 100
+    # Padrão para todas as entregas: o drone vai e volta à base (distância x 2), com 30% de folga.
+    bateria_da_rota = distancia * 2 / autonomia_km * 100
     return bateria_da_rota * 1.3
 
 

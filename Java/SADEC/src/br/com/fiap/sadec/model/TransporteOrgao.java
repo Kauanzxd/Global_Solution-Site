@@ -2,7 +2,7 @@ package br.com.fiap.sadec.model;
 
 /**
  * Transporte de órgão para transplante. Herda de Entrega e sempre tem prioridade 1.
- * Sobrescreve o fator de segurança: exige 30% de folga de bateria.
+ * Segue o padrão de bateria de toda entrega (ida e volta + 30% de folga, herdado de Entrega).
  */
 public class TransporteOrgao extends Entrega {
 
@@ -23,12 +23,6 @@ public class TransporteOrgao extends Entrega {
         this.temperaturaMinC = temperaturaMinC;
         this.temperaturaMaxC = temperaturaMaxC;
         this.vibracaoMaxG = vibracaoMaxG;
-    }
-
-    /** Regra do projeto: para órgãos, a bateria precisa cobrir a rota com 30% de folga. */
-    @Override
-    public double getFatorSeguranca() {
-        return 1.3;
     }
 
     public String getOrgao() {

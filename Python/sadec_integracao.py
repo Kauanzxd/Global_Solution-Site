@@ -82,7 +82,7 @@ def ler_ponto(dados, campo, erros):
 # ---------- operações ----------
 
 def calcular_rota(dados):
-    # Distância (calcular_distancia) e bateria necessária com reserva de 30%
+    # Distância (calcular_distancia) e bateria necessária de ida e volta com reserva de 30%
     # (calcular_bateria_necessaria). Se vier a bateria do drone, diz se ele pode voar.
     erros = []
     autonomia = ler_numero(dados, "autonomia_km", 0.1, 1000, erros, True)
@@ -103,9 +103,10 @@ def calcular_rota(dados):
         "ok": True,
         "operacao": "calcular_rota",
         "distancia_km": round(distancia, 2),
+        "distancia_ida_volta_km": round(distancia * 2, 2),
         "bateria_necessaria_pct": round(necessaria, 2),
         "reserva_pct": 30,
-        "regra": "bateria necessária = distância / autonomia x 100 x 1,3"
+        "regra": "bateria necessária = distância x 2 (ida e volta) / autonomia x 100 x 1,3"
     }
     if bateria is not None:
         # Mesmo critério do escolher_drone(): a bateria precisa ser MAIOR OU IGUAL à necessária.

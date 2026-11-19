@@ -39,33 +39,34 @@ def test_distancia_pitagoras():
 
 
 def test_bateria_com_reserva_de_30():
-    # 10 km com autonomia de 20 km = 50% de rota; x 1,3 = 65%
-    r = integ.processar({"operacao": "calcular_rota", "distancia_km": 10, "autonomia_km": 20})
+    # 5 km de ida + 5 km de volta, autonomia de 20 km = 50% de rota; x 1,3 = 65%
+    r = integ.processar({"operacao": "calcular_rota", "distancia_km": 5, "autonomia_km": 20})
     assert r["bateria_necessaria_pct"] == 65.0
+    assert r["distancia_ida_volta_km"] == 10.0
     assert r["reserva_pct"] == 30
 
 
 def test_bateria_suficiente():
-    r = integ.processar({"operacao": "calcular_rota", "distancia_km": 10, "autonomia_km": 20, "bateria_pct": 80})
+    r = integ.processar({"operacao": "calcular_rota", "distancia_km": 5, "autonomia_km": 20, "bateria_pct": 80})
     assert r["aprovado"] is True
     assert "motivo" not in r
 
 
 def test_bateria_insuficiente():
-    r = integ.processar({"operacao": "calcular_rota", "distancia_km": 10, "autonomia_km": 20, "bateria_pct": 64})
+    r = integ.processar({"operacao": "calcular_rota", "distancia_km": 5, "autonomia_km": 20, "bateria_pct": 64})
     assert r["aprovado"] is False
     assert "insuficiente" in r["motivo"]
 
 
 def test_limite_exato_aprova():
-    # 6 km / 20 km = 30%; x 1,3 = 39%. Com 39% exatos, o drone voa (mesmo critério >= do escolher_drone)
-    r = integ.processar({"operacao": "calcular_rota", "distancia_km": 6, "autonomia_km": 20, "bateria_pct": 39})
+    # 3 km ida e volta = 6 km / 20 km = 30%; x 1,3 = 39%. Com 39% exatos, o drone voa (critério >= do escolher_drone)
+    r = integ.processar({"operacao": "calcular_rota", "distancia_km": 3, "autonomia_km": 20, "bateria_pct": 39})
     assert r["bateria_necessaria_pct"] == 39.0
     assert r["aprovado"] is True
 
 
 def test_limite_logo_abaixo_reprova():
-    r = integ.processar({"operacao": "calcular_rota", "distancia_km": 6, "autonomia_km": 20, "bateria_pct": 38.99})
+    r = integ.processar({"operacao": "calcular_rota", "distancia_km": 3, "autonomia_km": 20, "bateria_pct": 38.99})
     assert r["aprovado"] is False
 
 
@@ -99,7 +100,7 @@ def test_validacoes_originais():
 
 
 def test_cli_devolve_um_unico_json():
-    codigo, resposta, erro, linhas = rodar_cli('{"operacao": "calcular_rota", "distancia_km": 6, "autonomia_km": 20, "bateria_pct": 39}')
+    codigo, resposta, erro, linhas = rodar_cli('{"operacao": "calcular_rota", "distancia_km": 3, "autonomia_km": 20, "bateria_pct": 39}')
     assert codigo == 0
     assert linhas == 1
     assert resposta["aprovado"] is True

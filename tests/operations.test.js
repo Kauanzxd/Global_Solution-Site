@@ -32,26 +32,30 @@ test('fila ordena por prioridade e depois por ordem de chegada, ignorando quem n
   assert.deepEqual(ops.sortQueue(s).map((e) => e.id), ['D', 'B', 'C', 'A']);
 });
 
-test('órgão exige consumo + 30% de reserva: 38% de bateria não basta para 30% de consumo', () => {
-  const s = makeState({ drones: [drone('D1', { bateria: 38 })], entregas: [entrega('O', { prioridade: 1 })] });
+test('toda entrega exige ida e volta + 30%: 77% não basta para 60% de consumo (6 km ida + 6 km volta)', () => {
+  const s = makeState({ drones: [drone('D1', { bateria: 77 })], entregas: [entrega('O', { prioridade: 1 })] });
   const r = ops.dispatch(s, 'O');
   assert.equal(r.ok, false);
   assert.equal(byId(s.entregas, 'O').status, 'outro_meio');
   assert.equal(byId(s.drones, 'D1').status, 'disponivel');
 });
 
-test('órgão é liberado quando a bateria cobre consumo × 1,3 (39%)', () => {
-  const s = makeState({ drones: [drone('D1', { bateria: 39 })], entregas: [entrega('O', { prioridade: 1 })] });
+test('órgão é liberado quando a bateria cobre ida e volta × 1,3 (78%)', () => {
+  const s = makeState({ drones: [drone('D1', { bateria: 78 })], entregas: [entrega('O', { prioridade: 1 })] });
   const a = ops.checkAutonomy(s, s.drones[0], s.entregas[0]);
   assert.equal(a.km, 6);
-  assert.equal(a.necessario, 39);
+  assert.equal(a.kmTotal, 12);
+  assert.equal(a.necessario, 78);
   assert.equal(ops.dispatch(s, 'O').ok, true);
   assert.equal(byId(s.drones, 'D1').status, 'atribuido');
+  assert.equal(byId(s.entregas, 'O').consumo, 30, 'em voo o drone gasta só o trecho de ida');
 });
 
-test('saúde (P3) usa reserva menor: 36% cobre 30% + 15%', () => {
-  const s = makeState({ drones: [drone('D1', { bateria: 36 })], entregas: [entrega('M')] });
+test('saúde (P3) segue o mesmo padrão: 78% cobre, 77% não', () => {
+  const s = makeState({ drones: [drone('D1', { bateria: 78 })], entregas: [entrega('M')] });
   assert.equal(ops.dispatch(s, 'M').ok, true);
+  const t = makeState({ drones: [drone('D1', { bateria: 77 })], entregas: [entrega('M')] });
+  assert.equal(ops.dispatch(t, 'M').ok, false);
 });
 
 test('escolhe o drone elegível mais próximo da filial adequada; empate decide pela bateria', () => {
@@ -192,16 +196,17 @@ test('novo pedido valida prioridade e peso e recebe código sequencial', () => {
   assert.throws(() => ops.createOrder(s, { prioridade: 2, carga: 'x', pesoKg: 1, origemId: 'NADA', destinoId: 'L-2' }));
 });
 
-test('simulador de autonomia aplica a mesma reserva da central (órgão 30%, demais 15%)', () => {
-  const orgao = ops.estimateAutonomy({ km: 10, consumoKm: 3, bateria: 39, prioridade: 1 });
+test('simulador de autonomia aplica o padrão da central: ida e volta + 30% para qualquer carga', () => {
+  const orgao = ops.estimateAutonomy({ km: 5, consumoKm: 3, bateria: 39, prioridade: 1 });
   assert.equal(orgao.consumo, 30);
+  assert.equal(orgao.consumoIda, 15);
   assert.equal(orgao.necessario, 39);
   assert.equal(orgao.ok, true);
   assert.equal(orgao.sobra, 0);
-  const curto = ops.estimateAutonomy({ km: 10, consumoKm: 3, bateria: 38.9, prioridade: 1 });
+  const curto = ops.estimateAutonomy({ km: 5, consumoKm: 3, bateria: 38.9, prioridade: 1 });
   assert.equal(curto.ok, false);
-  const saude = ops.estimateAutonomy({ km: 10, consumoKm: 3, bateria: 35, prioridade: 3 });
-  assert.equal(saude.necessario, 34.5);
+  const saude = ops.estimateAutonomy({ km: 5, consumoKm: 3, bateria: 39, prioridade: 3 });
+  assert.equal(saude.necessario, 39);
   assert.equal(saude.ok, true);
 });
 

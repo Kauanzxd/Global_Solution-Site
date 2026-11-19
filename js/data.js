@@ -67,7 +67,7 @@
     const e = ops.byId(state.entregas, entregaId);
     const d = ops.byId(state.drones, droneId);
     const a = ops.checkAutonomy(state, d, e);
-    Object.assign(e, { status: 'atribuida', droneId: d.id, km: a.km, consumo: a.consumo, necessario: a.necessario });
+    Object.assign(e, { status: 'atribuida', droneId: d.id, km: a.km, consumo: a.consumoIda, necessario: a.necessario });
     Object.assign(d, { status: 'atribuido', entregaId: e.id });
   }
 

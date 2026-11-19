@@ -33,7 +33,7 @@ public class Drone {
 
     /**
      * Regra de segurança: o drone só decola se o alcance atual cobrir a rota de ida e volta
-     * multiplicada pelo fator de folga (1,3 para órgãos = 30% de folga; 1,0 nos outros casos).
+     * multiplicada pelo fator de folga (1,3 = 30% de folga, padrão de todas as entregas).
      */
     public boolean verificarAutonomia(double distanciaIdaVoltaKm, double fatorSeguranca) {
         return calcularAlcanceAtual() >= distanciaIdaVoltaKm * fatorSeguranca;

@@ -29,9 +29,12 @@ public class Entrega {
         this.status = "aguardando";
     }
 
-    /** Folga de bateria exigida. Entregas comuns: 1,0 (sem folga). TransporteOrgao sobrescreve. */
+    /** Padrão do SADEC para qualquer carga: a bateria cobre a rota de ida e volta + 30% de folga. */
+    public static final double FATOR_SEGURANCA_PADRAO = 1.3;
+
+    /** Folga de bateria exigida sobre a rota de ida e volta (igual para todas as entregas). */
     public double getFatorSeguranca() {
-        return 1.0;
+        return FATOR_SEGURANCA_PADRAO;
     }
 
     /** Nome do nível de prioridade, para as saídas. */

@@ -66,7 +66,7 @@ public class CentralOperacao {
     /**
      * Escolhe o drone para a entrega e o coloca em voo.
      * Regras:
-     *  - a bateria precisa cobrir ida e volta x fator de segurança (1,3 para órgãos);
+     *  - a bateria precisa cobrir ida e volta x fator de segurança (1,3 em todas as entregas);
      *  - prefere drone livre; entre os livres, o de maior bateria;
      *  - níveis 1 e 2 podem usar um drone reservado para entrega comercial que ainda não decolou:
      *    essa entrega comercial é reagendada;
@@ -75,7 +75,7 @@ public class CentralOperacao {
      */
     public Drone atribuirEntrega(Entrega entrega) {
         double distancia = entrega.getRota().calcularDistanciaIdaVolta();
-        double fator = entrega.getFatorSeguranca();     // polimorfismo: 1,3 se for TransporteOrgao
+        double fator = entrega.getFatorSeguranca();     // padrão SADEC: 1,3 (30% de folga)
         boolean urgente = entrega.getPrioridade() <= 2;
 
         Drone escolhido = null;

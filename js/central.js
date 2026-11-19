@@ -407,7 +407,7 @@
     {
       id: 'orgao-sem-autonomia',
       titulo: 'Órgão sem autonomia suficiente',
-      regra: 'Órgão só decola se bateria ≥ consumo × 1,3.',
+      regra: 'Só decola se bateria ≥ ida e volta × 1,3.',
       run(now) {
         const s = data.base();
         s.entregas = [];

@@ -4,7 +4,7 @@
   'use strict';
 
   const FLIGHT_MS_PER_KM = 75000; // cruzeiro de 48 km/h em tempo real: 1 km = 75 s (consumo de ~3%/km = ~2,4%/min)
-  const RESERVA = { 1: 0.3, 2: 0.15, 3: 0.15, 4: 0.15 }; // órgão: 30% (regra oficial); demais: 15% (ilustrativo)
+  const RESERVA = { 1: 0.3, 2: 0.3, 3: 0.3, 4: 0.3 }; // padrão SADEC: toda entrega exige ida e volta + 30% de reserva
   const CORREDOR_KM = 2.5; // distância máxima de uma zona de pouso até a rota
   const FAIXA_TERMICA = { min: 2, max: 8 };
   const RESGATE_MS = 20000; // resgate da carga e do drone após pouso de emergência (tempo simulado)
@@ -75,18 +75,22 @@
   }
 
   /* Regra de autonomia isolada da geometria: usada pela central e pelo simulador do SADEC Saúde. */
-  function estimateAutonomy({ km, consumoKm, bateria, prioridade }) {
-    const consumo = round1(km * consumoKm);
+  /* Padrão de todas as entregas: a bateria cobre ida e volta à base, mais 30% de reserva.
+     km = trecho de ida; kmVolta = retorno à base (padrão: igual à ida). */
+  function estimateAutonomy({ km, kmVolta = km, consumoKm, bateria, prioridade }) {
+    const consumoIda = round1(km * consumoKm);
+    const consumo = round1((km + kmVolta) * consumoKm);
     const reserva = RESERVA[prioridade];
     const necessario = round1(consumo * (1 + reserva));
-    return { ok: bateria >= necessario, km: round1(km), consumo, reserva, necessario, sobra: round1(bateria - necessario) };
+    return { ok: bateria >= necessario, km: round1(km), kmTotal: round1(km + kmVolta), consumoIda, consumo, reserva, necessario, sobra: round1(bateria - necessario) };
   }
 
   function checkAutonomy(state, drone, entrega) {
     const origem = findPoint(state, entrega.origemId);
     const destino = findPoint(state, entrega.destinoId);
     const km = round1(distance(drone, origem) + distance(origem, destino));
-    return estimateAutonomy({ km, consumoKm: drone.consumoKm, bateria: drone.bateria, prioridade: entrega.prioridade });
+    const kmVolta = round1(distance(destino, drone));
+    return estimateAutonomy({ km, kmVolta, consumoKm: drone.consumoKm, bateria: drone.bateria, prioridade: entrega.prioridade });
   }
 
   function filialAdequada(state, entrega) {
@@ -163,8 +167,8 @@
     const d = sel.drone;
     const a = sel.autonomia;
     Object.assign(d, { status: 'atribuido', entregaId: e.id });
-    Object.assign(e, { status: 'atribuida', droneId: d.id, motivo: null, km: a.km, consumo: a.consumo, necessario: a.necessario });
-    addLog(state, e.id + ' → ' + d.nome + ' (' + sel.filial.nome + '): ' + a.km + ' km, consumo ' + a.consumo + '% + reserva ' +
+    Object.assign(e, { status: 'atribuida', droneId: d.id, motivo: null, km: a.km, consumo: a.consumoIda, necessario: a.necessario });
+    addLog(state, e.id + ' → ' + d.nome + ' (' + sel.filial.nome + '): ' + a.kmTotal + ' km ida e volta, consumo ' + a.consumo + '% + reserva ' +
       Math.round(a.reserva * 100) + '% = ' + a.necessario + '% ≤ bateria ' + d.bateria + '%.', 'ok');
     return { ok: true, status: 'atribuida', droneId: d.id, preemptedId: preempted ? preempted.id : null, rejeitados: sel.rejeitados };
   }
