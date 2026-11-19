@@ -114,16 +114,47 @@
   border-radius: var(--r-tile);
   box-shadow: var(--lift-2);
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateY(-12px) scale(0.97);
+  transform-origin: top right;
   visibility: hidden;
-  transition: opacity var(--d-open) var(--ease-std), transform var(--d-open) var(--ease-std), visibility 0s linear var(--d-open);
+  transition: opacity 180ms var(--ease-std), transform 220ms var(--ease-std), visibility 0s linear 220ms;
 }
 
 .js .site-nav.is-open {
   opacity: 1;
   transform: none;
   visibility: visible;
-  transition: opacity var(--d-open) var(--ease-std), transform var(--d-open) var(--ease-std);
+  transition: opacity 240ms var(--ease-out), transform 320ms var(--ease-out);
+}
+
+/* Menu hambúrguer (abaixo de 1240 px): o painel surge descendo, os itens entram em cascata
+   e o fundo escurece; ao fechar, tudo esvai mais rápido. */
+@media (max-width: 1239px) {
+  .js .site-nav__list > li { opacity: 0; transform: translateY(-6px); transition: opacity 120ms var(--ease-std), transform 120ms var(--ease-std); }
+  .js .site-nav.is-open .site-nav__list > li { opacity: 1; transform: none; transition: opacity 260ms var(--ease-out), transform 320ms var(--ease-out); }
+  .js .site-nav.is-open .site-nav__list > li:nth-child(2) { transition-delay: 25ms; }
+  .js .site-nav.is-open .site-nav__list > li:nth-child(3) { transition-delay: 50ms; }
+  .js .site-nav.is-open .site-nav__list > li:nth-child(4) { transition-delay: 75ms; }
+  .js .site-nav.is-open .site-nav__list > li:nth-child(5) { transition-delay: 100ms; }
+  .js .site-nav.is-open .site-nav__list > li:nth-child(6) { transition-delay: 125ms; }
+  .js .site-nav.is-open .site-nav__list > li:nth-child(7) { transition-delay: 150ms; }
+  .js .site-nav.is-open .site-nav__list > li:nth-child(n+8) { transition-delay: 175ms; }
+  .js body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgb(11 20 36 / 0.32);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 200ms var(--ease-std), visibility 0s linear 200ms;
+  }
+  .js body:has(.site-nav.is-open)::after { opacity: 1; visibility: visible; transition: opacity 240ms var(--ease-out); }
+  .nav-toggle__bars::before, .nav-toggle__bars::after { transition: transform 280ms var(--ease-out), background-color 200ms; }
+  .nav-toggle[aria-expanded="true"] { background: var(--ink); }
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bars::before,
+  .nav-toggle[aria-expanded="true"] .nav-toggle__bars::after { background: #FFFFFF; }
 }
 
 html:not(.js) .nav-toggle { display: none; }
@@ -281,6 +312,28 @@ html:not(.js) .site-header__bar { flex-wrap: wrap; }
 }
 
 .btn:active { transform: scale(0.98); }
+
+/* Animações dos botões: sobe 1 px com sombra no hover, afunda ao tocar e um brilho atravessa o botão principal. */
+.btn--primary, .btn--dark, .btn--accent { position: relative; overflow: hidden; isolation: isolate; }
+.btn--primary::after, .btn--dark::after, .btn--accent::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.22) 50%, transparent 70%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .btn:not(:disabled):not(.is-loading):hover { transform: translateY(-1px); }
+  .btn--primary:not(:disabled):hover, .btn--dark:not(:disabled):hover, .btn--accent:not(:disabled):hover { box-shadow: 0 12px 24px -14px rgb(11 20 36 / 0.6); }
+  .btn--primary:not(:disabled):hover::after, .btn--dark:not(:disabled):hover::after, .btn--accent:not(:disabled):hover::after {
+    transform: translateX(120%);
+    transition: transform 650ms var(--ease-out);
+  }
+}
+.btn:not(:disabled):active { transform: translateY(0) scale(0.97); transition-duration: 80ms; }
+.nav-toggle:focus-visible, .btn:focus-visible { transition: box-shadow var(--d-fast) var(--ease-std), transform var(--d-press) var(--ease-std); }
 .btn:disabled, .btn[aria-disabled="true"] { background: var(--disabled); color: #FFFFFF; box-shadow: none; cursor: not-allowed; transform: none; }
 
 .btn--primary,
@@ -704,9 +757,53 @@ select.input {
   .tabbar__item:active { transform: scale(0.96); }
 
   body:has(.tabbar) { padding-bottom: 96px; }
-  body:has(.tabbar) .nav-toggle { display: none; }
-  .js body:has(.tabbar) .site-nav { inset: auto 12px calc(88px + env(safe-area-inset-bottom)) 12px; position: fixed; max-height: 70dvh; }
+  /* o menu completo fica no hambúrguer do topo; a barra de abas leva só os atalhos */
+  .tabbar [data-open-menu] { display: none; }
+  .js body:has(.tabbar) .site-nav { max-height: calc(100dvh - var(--header-h) - 112px); }
   body:has(.tabbar) .chat { bottom: calc(92px + env(safe-area-inset-bottom)); }
   body:has(.tabbar) .tour { bottom: calc(92px + env(safe-area-inset-bottom)); }
 }
 .status--aguardando_liberacao { background: var(--p2-bg); color: var(--p2-ink); }
+
+/* Mapa de ruas reais (OpenStreetMap): rastreamento, Delivery e Central */
+.osm { position: absolute; inset: 0; background: #E8E6E1; }
+.osm[hidden] { display: none; }
+.osm__svg { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; user-select: none; }
+.osm__svg.is-arrastando { cursor: grabbing; }
+.osm__svg image { filter: saturate(0.55) contrast(0.96); }
+.osm__attr { position: absolute; right: 0; bottom: 0; margin: 0; padding: 3px 10px; border-radius: 10px 0 0 0; background: rgb(255 255 255 / 0.88); font-size: 0.6875rem; color: #2B2F36; }
+.osm__attr a { color: inherit; }
+.osm__rede.is-oculta { display: none; }
+.osm__rede circle { fill: #FFFFFF; stroke: var(--p1); stroke-width: 1.5; opacity: 0.8; }
+.osm__faixa { fill: none; stroke: rgb(40 104 215 / 0.2); stroke-width: 16; stroke-linecap: round; stroke-linejoin: round; }
+.osm__feito { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.osm__falta { fill: none; stroke: var(--ink); stroke-width: 3.5; stroke-dasharray: 0.5 11.5; stroke-linecap: round; }
+.osm__marca circle { fill: var(--ink); stroke: #FFFFFF; stroke-width: 3; }
+.osm__marca .osm__miolo { fill: #FFFFFF; stroke: none; }
+.osm__marca--retirada circle:not(.osm__miolo) { fill: var(--p1); }
+.osm__marca--destino circle:not(.osm__miolo) { fill: var(--p3); }
+.osm__marca--destino .osm__halo { fill: rgb(30 127 82 / 0.2); stroke: none; }
+.osm__drone { transition: transform 600ms linear; }
+.osm__svg.is-estatico .osm__drone { transition: none; }
+.osm__drone-anel { fill: #FFFFFF; filter: drop-shadow(0 2px 4px rgb(11 20 36 / 0.35)); }
+.osm__drone-ponto { fill: var(--blue); }
+@media (prefers-reduced-motion: no-preference) {
+  .osm__falta { animation: osm-flow 1.6s linear infinite; }
+  .osm__halo { animation: osm-pulse 2.4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+}
+@media (prefers-reduced-motion: reduce) { .osm__drone { transition: none; } }
+@keyframes osm-flow { to { stroke-dashoffset: -12; } }
+@keyframes osm-pulse { from { transform: scale(0.6); opacity: 0.9; } to { transform: scale(1.5); opacity: 0; } }
+/* Várias rotas (Central): cor da prioridade; a rota em foco fica por cima e as outras recuam */
+.osm__faixa.osm--p1 { stroke: rgb(200 50 43 / 0.22); }
+.osm__faixa.osm--p2 { stroke: rgb(242 169 59 / 0.28); }
+.osm__faixa.osm--p3 { stroke: rgb(30 127 82 / 0.22); }
+.osm__feito.osm--p1, .osm__falta.osm--p1 { stroke: var(--p1); }
+.osm__feito.osm--p2, .osm__falta.osm--p2 { stroke: #B86E00; }
+.osm__feito.osm--p3, .osm__falta.osm--p3 { stroke: var(--p3); }
+.osm__drone.osm--p1 .osm__drone-ponto { fill: var(--p1); }
+.osm__drone.osm--p2 .osm__drone-ponto { fill: #B86E00; }
+.osm__drone.osm--p3 .osm__drone-ponto { fill: var(--p3); }
+.osm__drone, .osm__marca[data-rota]:not([data-rota=""]) { cursor: pointer; }
+.osm__svg .is-fundo { opacity: 0.38; }
+.osm__drone.is-foco .osm__drone-anel { stroke: var(--ink); stroke-width: 3; }

@@ -830,7 +830,8 @@
   .login__faceid { display: inline-flex; gap: 10px; }
   #login-demo { display: none; }
   .login__art, .login__panel { min-width: 0; }
-  .login__profiles { flex-wrap: nowrap; overflow-x: auto; }
+  /* 4 perfis: grade 2 × 2, todos visíveis sem rolar */
+  .login__profiles { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; border-radius: 22px; }
   .login__profiles button { padding-inline: 10px; font-size: var(--t-label); }
 }
 
