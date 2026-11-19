@@ -22,5 +22,5 @@ __pycache__/
 ChatBot/node-red/.config.*
 ChatBot/node-red/.flows*.json*
 ChatBot/node-red/.sessions.json
-ChatBot/*_cred.json
+ChatBot/**/*_cred.json
 ChatBot/.fluxo-node-red-sadec*.backup

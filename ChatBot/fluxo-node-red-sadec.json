@@ -8,13 +8,13 @@
     "env": [
       {
         "name": "GROQ_API_KEY",
-        "value": "",
-        "type": "str"
+        "value": "GROQ_API_KEY",
+        "type": "env"
       },
       {
         "name": "TELEGRAM_BOT_TOKEN",
-        "value": "",
-        "type": "str"
+        "value": "TELEGRAM_BOT_TOKEN",
+        "type": "env"
       }
     ]
   },
@@ -570,7 +570,8 @@
     "certificate": "",
     "useselfsignedcertificate": false,
     "sslterminated": false,
-    "verboselogging": false
+    "verboselogging": false,
+    "token": ""
   },
   {
     "id": "db_cfg",
