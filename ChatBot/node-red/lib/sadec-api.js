@@ -213,7 +213,8 @@ function entrar(entrada) {
     const u = email ? db.prepare('SELECT * FROM tbl_usuario WHERE DS_Email = ?').get(email) : null;
     // Mesma mensagem para e-mail inexistente e senha errada: não revela quais e-mails têm conta.
     if (!u || !senhaConfere(e.senha, u.DS_Senha_Hash)) throw new ErroApi(401, 'E-mail ou senha incorretos.');
-    if (e.perfil && e.perfil !== u.TP_Perfil) {
+    // Operador (inclui a conta de administrador) entra por qualquer perfil: tem acesso a tudo.
+    if (e.perfil && e.perfil !== u.TP_Perfil && u.TP_Perfil !== 'operador') {
       const nomes = { cliente: 'Cliente', unidade_saude: 'Unidade de saúde', operador: 'Operador' };
       throw new ErroApi(403, 'Esta conta é do perfil "' + (nomes[u.TP_Perfil] || u.TP_Perfil) + '". Escolha esse perfil para entrar.');
     }

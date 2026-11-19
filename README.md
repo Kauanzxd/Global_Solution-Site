@@ -158,6 +158,7 @@ Nenhuma chave fica no código, no fluxo ou no banco. A API escuta só em `127.0.
 - O cabeçalho do portal, o Saúde e o Delivery mostram a conta conectada. No Delivery, com a API ligada e conta de cliente, o pedido também é gravado na Central (P4) e acompanhado ali mesmo no mapa de ruas reais: a loja libera a decolagem quando o preparo termina e o cliente confirma o recebimento depois da chegada prevista (só no próprio pedido comercial; a Central pode fazer as duas ações em qualquer pedido).
 - O código de 6 dígitos, o Face ID e "Esqueci a senha" continuam **simulados** (nenhum SMS ou e-mail é enviado).
 - Contas de demonstração (fictícias, criadas pela migração 002), todas com a senha `sadec2026`: `operador@sadec.demo`, `hospital@sadec.demo` (Hospital das Clínicas) e `cliente@sadec.demo`.
+- Conta de administrador (criada pela migração 003, mesma senha): `admin@sadec.demo`. É um operador: entra por qualquer perfil da tela de login (inclusive Cliente) e acessa tudo — Delivery, Saúde (P1 a P4), Central, códigos de órgão, decolar e concluir.
 
 Transporte de órgão: o operador entra na Central, emite o código para o hospital (painel "Códigos de órgão", no modo rede real) e o informa ao hospital; a equipe entra com a conta da unidade de saúde e digita o código no pedido de órgão do SADEC Saúde. O código é consumido na mesma transação que grava o pedido.
 
@@ -190,6 +191,7 @@ POST /api/pedidos
 ### Banco de dados
 `ChatBot/migracoes/migrar.py up|down` aplica ou desfaz a migração 001 (faz backup antes, roda em transação): novos estados de drone e de pedido, origem, distância, peso e solicitante no pedido, e as tabelas `tbl_evento` e `tbl_recebimento`.
 `ChatBot/migracoes/migrar_002.py up|down` aplica ou desfaz a migração 002: latitude, longitude e endereço dos locais; todas as unidades do CNES do `sadec.py` (distância até a filial mais próxima pelo `calcular_distancia()` do Python); coordenadas das filiais; e as tabelas `tbl_usuario`, `tbl_sessao` e `tbl_codigo_orgao`, com o dono de cada pedido. Para voltar aos dados demonstrativos depois de testar: pare a API e rode `git checkout -- ChatBot/SADEC_Chatbot.db`.
+`ChatBot/migracoes/migrar_003.py up|down` cria (ou remove) a conta de administrador.
 
 ### Testes
 | Comando | O que cobre |
