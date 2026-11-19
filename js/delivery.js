@@ -8,7 +8,6 @@
   const { el } = SIDEC.ui;
 
   const $ = (id) => doc.getElementById(id);
-  const PREPARO_DEMO_MS = 6000; // preparo acelerado para a demonstração
   const reduced = root.matchMedia('(prefers-reduced-motion: reduce)');
   const place = (state, id) => (ops.findPoint(state, id) || { nome: id }).nome;
 
@@ -180,8 +179,9 @@
         s.deliveryAtual = {
           id: e.id, lojaId, bairroId, modo: m, minutos: q[m].minutos, totalCents: total,
           linhas: sum.linhas.map((l) => ({ nome: l.nome, qtd: l.qtd, subtotalCents: l.subtotalCents })),
-          preparoAte: Date.now() + PREPARO_DEMO_MS
+          preparoAte: Date.now() + loja().preparoMin * 60000 / ops.ESCALA_TEMPO // preparo realista no relógio acelerado
         };
+        e.preparoAte = s.deliveryAtual.preparoAte;
         if (m === 'convencional') ops.markConventional(s, e.id);
         else ops.dispatch(s, e.id);
         return e;
@@ -190,11 +190,157 @@
       syncQty();
       renderCart(store.get());
       setStatus('Pedido ' + nova.id + ' confirmado.', true);
+      gravarNaCentral(sum, nova.id);
       $('acompanhar-title').focus();
       $('acompanhar').scrollIntoView({ behavior: reduced.matches ? 'auto' : 'smooth' });
     } catch (err) {
       setStatus(err.message, false);
     }
+  }
+
+  /* ---------- Conta e Central (API): a mesma conta do portal e do Saúde ---------- */
+  let conta = null;
+  let apiOnline = false;
+  async function ativarConta() {
+    if (!(await SIDEC.api.disponivel())) return;
+    apiOnline = true;
+    observarPainel();
+    $('dl-live-recebi').addEventListener('click', confirmarRecebimento);
+    atualizarReal(true);
+    root.setInterval(() => { if (!doc.hidden) atualizarReal(false); }, 5000);
+    const box = $('dl-conta');
+    const r = SIDEC.api.sessao.atual() ? await SIDEC.api.get('/api/conta') : { ok: false };
+    conta = r.ok && ['cliente', 'operador'].includes(r.dados.perfil) ? r.dados : null;
+    box.hidden = false;
+    if (!conta) {
+      box.replaceChildren(r.ok ? 'Esta conta é de unidade de saúde; pedidos de delivery usam conta de cliente. ' : 'Entre para gravar o pedido na sua conta da Central. ',
+        el('a', { href: '../entrar.html', text: r.ok ? 'Trocar de conta' : 'Entrar ou criar conta' }));
+      return;
+    }
+    const l = await SIDEC.api.get('/api/locais');
+    if (!l.ok) return;
+    $('dl-real').replaceChildren(...l.dados.filter((x) => x.tipo === 'bairro').map((x) => el('option', { value: x.nome, text: x.nome })));
+    $('field-dl-real').hidden = false;
+    box.replaceChildren('Pedido gravado na conta de ', el('strong', { text: conta.nome }), '. ', el('a', { href: '../entrar.html', text: 'Trocar' }));
+  }
+
+  /* Grava o pedido também na Central (P4, mesma regra de prioridade), ligado à conta */
+  async function gravarNaCentral(sum, idSimulado) {
+    if (!conta) return;
+    const msg = $('pedido-central');
+    msg.hidden = false;
+    msg.className = 'form-status';
+    msg.textContent = 'Gravando na Central…';
+    const r = await SIDEC.api.post('/api/pedidos', {
+      tipo_carga: 'encomenda', destino: $('dl-real').value, origem: loja().nome, peso_kg: Math.max(0.1, sum.pesoKg), canal: 'delivery',
+      solicitante: { tipo: 'cliente', nome: conta.nome }
+    });
+    msg.className = 'form-status ' + (r.ok ? 'is-success' : 'is-error');
+    if (!r.ok) { msg.textContent = 'Não foi gravado na Central: ' + SIDEC.api.mensagemErro(r); return; }
+    const p = r.dados.pedido;
+    msg.textContent = idSimulado + ' gravado na Central como ' + p.codigo + '. Acompanhe o drone no mapa abaixo.';
+    store.update((s) => { if (s.deliveryAtual && s.deliveryAtual.id === idSimulado) s.deliveryAtual.central = p.codigo; });
+    atualizarReal(true);
+  }
+
+  /* ---------- Acompanhamento no mapa real (pedido gravado na Central) ---------- */
+  const ESTADO_REAL = {
+    aguardando: 'Na fila da Central: seu pedido sai no próximo drone livre.',
+    reagendada: 'Seu drone foi cedido a uma entrega de saúde urgente. Você recebe o próximo drone livre.',
+    atribuida: 'Drone reservado. A loja está preparando seu pedido.',
+    em_voo: 'Seu pedido está voando até você.',
+    entregue: 'Pedido entregue. Bom apetite!',
+    outro_meio: 'Sem drone disponível agora: o pedido segue por outro meio de transporte.',
+    aguardando_resgate: 'O drone fez um pouso seguro. A carga será recolhida e reenviada.'
+  };
+  const ETAPA_REAL = { aguardando: 1, reagendada: 1, atribuida: 1, em_voo: 2, entregue: 4, outro_meio: 0, aguardando_resgate: 2 };
+  const hhmm = (ms) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  let mapaReal = null;
+  let pedidoReal = null;
+  let droneReal = null;
+  let ocupado = false;
+
+  async function atualizarReal(reenquadrar) {
+    const atual = store.get().deliveryAtual;
+    const codigo = atual && atual.central;
+    $('dl-live').hidden = !codigo;
+    if (!codigo) { pedidoReal = null; $('dl-pill').hidden = true; return; }
+    if (ocupado) return;
+    ocupado = true;
+    try {
+      const [r, drones] = await Promise.all([SIDEC.api.get('/api/pedidos/' + codigo), SIDEC.api.get('/api/drones')]);
+      if (!r.ok) { $('dl-live-msg').textContent = SIDEC.api.mensagemErro(r); return; }
+      pedidoReal = r.dados;
+      droneReal = drones.ok ? drones.dados.find((d) => d.codigo === pedidoReal.drone_codigo) || null : null;
+      // A loja libera a decolagem quando o preparo termina (o dono do pedido comercial pode decolar)
+      if (pedidoReal.status === 'atribuida' && Date.now() >= atual.preparoAte) {
+        const d = await SIDEC.api.post('/api/pedidos/' + codigo + '/decolar');
+        if (d.ok) pedidoReal = d.dados;
+      }
+      pintarReal(reenquadrar);
+    } finally {
+      ocupado = false;
+    }
+  }
+
+  function pintarReal(reenquadrar) {
+    const p = pedidoReal;
+    if (!p) return;
+    const agora = Date.now();
+    const est = SIDEC.mapaOsm.estimarVoo(p, agora);
+    if (!mapaReal) mapaReal = SIDEC.mapaOsm.criar($('dl-osm'));
+    const comDrone = p.drone_codigo && ['atribuida', 'em_voo'].includes(p.status);
+    mapaReal.mostrar({ pontos: p.rota || [], progresso: est.f, drone: comDrone ? 'Drone ' + p.drone_codigo : null }, reenquadrar);
+
+    const chegou = p.status === 'em_voo' && est.chegou;
+    $('dl-live-code').textContent = p.codigo;
+    $('dl-live-estado').textContent = p.status === 'entregue' ? 'concluído' : 'ao vivo';
+    $('dl-live-title').textContent = chegou ? 'O drone chegou ao seu endereço. Retire o pedido e confirme o recebimento.' : (ESTADO_REAL[p.status] || p.status);
+    const faltam = est.chegada ? est.faltamMin : null;
+    $('dl-live-eta').textContent = p.status === 'entregue' ? 'Entregue' : (est.chegada ? hhmm(est.chegada) : '—');
+    $('dl-live-eta-label').textContent = p.status === 'em_voo'
+      ? (chegou ? 'chegada prevista (já passou)' : 'chegada prevista · faltam ' + faltam + ' min')
+      : (p.status === 'atribuida' ? 'decola quando a loja terminar o preparo' : '');
+    $('dl-live-fill').setAttribute('width', String(Math.round(est.f * 100)));
+    const etapa = chegou ? 3 : ETAPA_REAL[p.status];
+    $('dl-live-etapas').querySelectorAll('li').forEach((li, i) => {
+      li.classList.toggle('is-done', i < etapa || p.status === 'entregue');
+      if (i === etapa && p.status !== 'entregue') li.setAttribute('aria-current', 'step');
+      else li.removeAttribute('aria-current');
+    });
+    const dados = [fact('Rota', (p.origem || 'Filial') + ' → ' + p.destino), fact('Distância', String(p.distancia_km || 0).replace('.', ',') + ' km')];
+    if (p.drone_codigo) dados.push(fact('Drone', p.drone_codigo));
+    if (droneReal && comDrone) {
+      // consumo de ida proporcional ao trecho voado (autonomia real do drone no banco)
+      const bat = droneReal.bateria_pct - (p.distancia_km || 0) / droneReal.autonomia_km * 100 * est.f;
+      dados.push(fact('Bateria (estimada)', String(Math.round(bat * 10) / 10).replace('.', ',') + '%'));
+    }
+    $('dl-live-dados').replaceChildren(...dados);
+    $('dl-live-link').setAttribute('href', '../rastreamento.html?id=' + encodeURIComponent(p.codigo));
+    $('dl-live-recebi').hidden = !chegou;
+    $('dl-pill-code').textContent = p.codigo;
+    $('dl-pill-texto').textContent = p.status === 'em_voo' ? (chegou ? 'Chegou · confirmar' : 'A caminho · ' + faltam + ' min') : (p.status === 'entregue' ? 'Entregue' : 'Acompanhar');
+    $('dl-pill').hidden = pillOculta || p.status === 'entregue';
+  }
+
+  /* O atalho fixo aparece só quando o painel do pedido não está na tela */
+  let pillOculta = false;
+  function observarPainel() {
+    if (!root.IntersectionObserver) return;
+    new root.IntersectionObserver((itens) => {
+      pillOculta = itens[0].isIntersecting;
+      if (pedidoReal) $('dl-pill').hidden = pillOculta || pedidoReal.status === 'entregue';
+    }, { threshold: 0.15 }).observe($('acompanhar'));
+  }
+
+  async function confirmarRecebimento() {
+    const b = $('dl-live-recebi');
+    b.disabled = true;
+    const r = await SIDEC.api.post('/api/pedidos/' + pedidoReal.codigo + '/concluir');
+    b.disabled = false;
+    $('dl-live-msg').className = 'form-status ' + (r.ok ? 'is-success' : 'is-error');
+    $('dl-live-msg').textContent = r.ok ? 'Recebimento confirmado e registrado no histórico da Central.' : SIDEC.api.mensagemErro(r);
+    if (r.ok) { pedidoReal = r.dados; pintarReal(false); renderTrack(store.get(), Date.now()); }
   }
 
   /* ---------- Acompanhamento ---------- */
@@ -245,6 +391,10 @@
     $('track').hidden = !e;
     $('track-vazio').hidden = Boolean(e);
     if (!e) { lastPhase = null; return; }
+    // Pedido na Central: o painel do mapa real substitui a animação da simulação
+    const real = Boolean(p.central);
+    ['track-status', 'track-etapas', 'track-ceu', 'track-dados'].forEach((id) => $(id).classList.toggle('is-oculto', real));
+    $('dl-live-entrar').hidden = real || conta !== null || !apiOnline;
 
     const fase = dl.trackingPhase(e, p, ops.flightProgress(e, now), now);
     if (fase !== lastPhase) {
@@ -274,10 +424,10 @@
     if (e.status === 'em_voo') dados.push(fact('Bateria', String(ops.sensorReading(state, e, now).bateria).replace('.', ',') + '%'));
     dados.push(fact('Previsão ilustrativa', 'cerca de ' + p.minutos + ' min'));
     $('track-dados').replaceChildren(...dados);
-    $('link-rastreio').hidden = p.modo !== 'drone';
+    $('link-rastreio').hidden = p.modo !== 'drone' || real;
     $('link-rastreio').setAttribute('href', '../rastreamento.html?id=' + encodeURIComponent(e.id));
 
-    const fim = fase === 'entregue' || fase === 'convencional';
+    const fim = real ? Boolean(pedidoReal && pedidoReal.status === 'entregue') : (fase === 'entregue' || fase === 'convencional');
     $('recibo').hidden = !fim;
     if (fim) {
       $('recibo-linhas').replaceChildren(...p.linhas.map((l) => el('li', {}, [
@@ -366,4 +516,5 @@
   }
 
   init();
+  ativarConta();
 })(window);
