@@ -159,13 +159,13 @@ Contas **fictícias**, só para a apresentação; não são contas de produção
 
 ## Integrantes
 
-| Foto | Nome | RM | Turma | GitHub |
+| Foto | Nome | RM | Turma | Perfis |
 |---|---|---|---|---|
-| <img src="assets/images/integrantes/kauan-gomes.webp" alt="Kauan Gomes dos Santos" width="64"> | Kauan Gomes dos Santos | 574837 | 1TDSPB | [Kauanzxd](https://github.com/Kauanzxd) |
-| <img src="assets/images/integrantes/pablo-ackillys.webp" alt="Pablo Ackillys Anjos da Silva" width="64"> | Pablo Ackillys Anjos da Silva | 576881 | 1TDSPB | [PabloAckillys](https://github.com/PabloAckillys) |
-| <img src="assets/images/integrantes/thomaz-rocha.webp" alt="Thomaz Rafael Krutman Neves da Rocha" width="64"> | Thomaz Rafael Krutman Neves da Rocha | 576834 | 1TDSPB | [ThomazRocha](https://github.com/ThomazRocha) |
-| <img src="assets/images/integrantes/gustavo-almeida.png" alt="Gustavo Almeida" width="64"> | Gustavo Almeida | 576939 | 1TDSPB | [gtzall](https://github.com/gtzall) |
-| <img src="assets/images/integrantes/claudio-assis.webp" alt="Cláudio Augusto Silva de Assis" width="64"> | Cláudio Augusto Silva de Assis | 576661 | 1TDSPB | [claudiosilva06](https://github.com/claudiosilva06) |
+| <img src="assets/images/integrantes/kauan-gomes.webp" alt="Kauan Gomes dos Santos" width="64"> | Kauan Gomes dos Santos | 574837 | 1TDSPB | [GitHub](https://github.com/Kauanzxd) · [LinkedIn](https://www.linkedin.com/in/kauan-gomes-dos-santos-94b02a430/) |
+| <img src="assets/images/integrantes/pablo-ackillys.webp" alt="Pablo Ackillys Anjos da Silva" width="64"> | Pablo Ackillys Anjos da Silva | 576881 | 1TDSPB | [GitHub](https://github.com/PabloAckillys) · [LinkedIn](https://www.linkedin.com/in/pabloackillys/) |
+| <img src="assets/images/integrantes/thomaz-rocha.webp" alt="Thomaz Rafael Krutman Neves da Rocha" width="64"> | Thomaz Rafael Krutman Neves da Rocha | 576834 | 1TDSPB | [GitHub](https://github.com/ThomazRocha) · [LinkedIn](https://www.linkedin.com/in/thomaz-rafael-krutman-neves-da-rocha-42aa7343a/) |
+| <img src="assets/images/integrantes/gustavo-almeida.png" alt="Gustavo Almeida Rodrigues" width="64"> | Gustavo Almeida Rodrigues | 576939 | 1TDSPB | [GitHub](https://github.com/gtzall) · [LinkedIn](https://www.linkedin.com/in/gustavo-almeida-rodrigues) |
+| <img src="assets/images/integrantes/claudio-assis.webp" alt="Cláudio Augusto Silva de Assis" width="64"> | Cláudio Augusto Silva de Assis | 576661 | 1TDSPB | [GitHub](https://github.com/claudiosilva06) · [LinkedIn](https://www.linkedin.com/in/claudio-assis-dev) |
 
 ## Fontes e links
 
