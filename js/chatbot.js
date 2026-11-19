@@ -110,7 +110,7 @@
     reclamar: (ent) => ({
       text: 'Sinto muito pelo problema. Este é um protocolo demonstrativo, nada foi registrado' + (ent.codigo ? ' para ' + ent.codigo : '') +
         '. Para detalhes, use o formulário de contato (nenhum dado é enviado).',
-      links: [link('contato.html', 'Abrir formulário de contato')]
+      links: [link('faq.html#contato', 'Abrir formulário de contato')]
     }),
     delivery: () => ({
       text: 'Pedidos de comida e mercado são prioridade 4 (Comercial). Eles ajudam a financiar a rede, mas cedem o drone para órgãos e emergências enquanto não decolaram. Experimente no protótipo do SADEC Delivery.',
@@ -144,11 +144,10 @@
   /* ---------- Tutoriais guiados ---------- */
   const TOURS = {
     saude: [
-      ['.roles', 'Escolha quem está pedindo', 'Cidadão pede medicamento (P3), hospital pede órgão (P1) e operador envia socorro (P2).'],
-      ['#painel-cidadao', 'Preencha o pedido', 'Escolha o medicamento, onde retirar e o bairro. Nenhum dado pessoal é pedido.'],
+      ['.roles', 'Escolha o pedido', 'Medicamento (P3), órgão (P1) ou socorro (P2). Cada um tem prioridade diferente na fila.'],
+      ['#pedido', 'Preencha e confira', 'Poucos campos e um resumo ao lado com prioridade, rota e controle de temperatura. Nenhum dado pessoal é pedido.'],
       ['#acompanhar', 'Acompanhe o voo', 'Libere a decolagem e veja bateria, temperatura e progresso na etiqueta da entrega.'],
-      ['#simuladores', 'Teste as regras', 'Mude temperatura e bateria e veja quando a central bloqueia ou alerta.'],
-      ['#aprenda', 'Resumo em 5 passos', 'Volte aqui sempre que quiser rever o caminho do pedido.']
+      ['#simuladores', 'Entenda as regras', 'Mude temperatura e bateria, teste a fila e reveja o passo a passo.']
     ],
     delivery: [
       ['#lojas', 'Escolha a loja', 'Restaurante, padaria ou mercado: todos fictícios. Cada pedido é de uma loja só.'],
@@ -255,7 +254,17 @@
   const launcher = el('button', { type: 'button', class: 'chat__launcher', 'aria-expanded': 'false', 'aria-controls': 'chat-panel' }, [
     launcherAvatar, el('span', { class: 'visually-hidden', text: 'Abrir Drone Bot, assistente do SADEC' })
   ]);
-  doc.body.append(el('div', { class: 'chat' }, [panel, launcher]));
+  // Na página do Drone Bot a conversa fica embutida no conteúdo; nas demais, flutua no canto.
+  const inlineHost = doc.getElementById('bot-inline');
+  if (inlineHost) {
+    panel.hidden = false;
+    panel.setAttribute('role', 'region');
+    panel.classList.add('is-open', 'chat__panel--inline');
+    closeBtn.hidden = true;
+    inlineHost.append(panel);
+  } else {
+    doc.body.append(el('div', { class: 'chat' }, [panel, launcher]));
+  }
 
   function setChips(list) {
     chips.replaceChildren(...list.map((label) => el('button', { type: 'button', class: 'chat__chip', text: label, onclick: () => send(label) })));
@@ -339,6 +348,17 @@
   });
 
   if (new URLSearchParams(root.location.search).get('tour') === '1') root.addEventListener('load', startTour);
+
+  if (inlineHost) {
+    addMessage('bot', REPLIES.saudacao());
+    setChips(SUGESTOES);
+  }
+
+  // Atalhos fora do chat (ex.: página do Drone Bot) enviam uma pergunta pronta.
+  doc.querySelectorAll('[data-bot-ask]').forEach((btn) => btn.addEventListener('click', () => {
+    if (!inlineHost && panel.hidden) openPanel();
+    send(btn.getAttribute('data-bot-ask'));
+  }));
 
   SIDEC.bot = { respond, startTour, open: openPanel, intentOf, entities };
 })(window);

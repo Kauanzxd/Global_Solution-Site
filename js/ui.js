@@ -42,11 +42,19 @@
         toggle.focus();
       }
     });
+    // botão "Menu" da barra de abas do celular abre o mesmo painel
+    const tabMenu = doc.querySelector('[data-open-menu]');
+    if (tabMenu) tabMenu.addEventListener('click', () => {
+      const open = !nav.classList.contains('is-open');
+      setOpen(open);
+      tabMenu.setAttribute('aria-expanded', String(open));
+      if (open) nav.querySelector('a').focus();
+    });
     doc.addEventListener('click', (e) => {
-      if (nav.classList.contains('is-open') && !nav.contains(e.target) && !toggle.contains(e.target)) setOpen(false);
+      if (nav.classList.contains('is-open') && !nav.contains(e.target) && !toggle.contains(e.target) && !(tabMenu && tabMenu.contains(e.target))) setOpen(false);
     });
     nav.addEventListener('click', (e) => { if (e.target.closest('a')) setOpen(false); }); // âncoras internas (#secao) não trocam de página
-    root.matchMedia('(min-width: 900px)').addEventListener('change', () => setOpen(false));
+    root.matchMedia('(min-width: 1240px)').addEventListener('change', () => setOpen(false));
   }
 
   /* Accordion acessível: botão com aria-expanded controla o painel; painel fechado fica inerte. */
@@ -75,8 +83,51 @@
     });
   }
 
+  /* Revelação ao rolar: só marca a classe; o CSS só anima sem "reduzir movimento".
+     Sem IntersectionObserver o conteúdo fica visível (nunca escondido por falta de JS). */
+  function initReveal() {
+    const items = doc.querySelectorAll('.reveal');
+    if (!items.length) return;
+    if (!('IntersectionObserver' in root)) { items.forEach((n) => n.classList.add('is-in')); return; }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        en.target.classList.add('is-in');
+        io.unobserve(en.target);
+      });
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.12 });
+    items.forEach((n) => io.observe(n));
+  }
+
+  /* Abas acessíveis ([data-tabs]): setas, Home/End; cada aba mostra o painel de aria-controls. */
+  function initTabs() {
+    doc.querySelectorAll('[data-tabs]').forEach((list) => {
+      const tabs = Array.from(list.querySelectorAll('[role="tab"]'));
+      function select(tab, focus) {
+        tabs.forEach((t) => {
+          const on = t === tab;
+          t.setAttribute('aria-selected', String(on));
+          t.tabIndex = on ? 0 : -1;
+          doc.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+        });
+        if (focus) tab.focus();
+      }
+      tabs.forEach((t, i) => {
+        t.addEventListener('click', () => select(t));
+        t.addEventListener('keydown', (e) => {
+          const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+          if (next === undefined) return;
+          e.preventDefault();
+          select(tabs[(next + tabs.length) % tabs.length], true);
+        });
+      });
+    });
+  }
+
   initMenu();
   initAccordions();
+  initTabs();
+  initReveal();
 
   SIDEC.ui = { el };
 })(window);

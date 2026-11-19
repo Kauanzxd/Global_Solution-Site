@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1350" viewBox="0 0 2400 1350">
+  <!-- Fundo granulado do SADEC em vetor: degradê azul-acinzentado com grão fino, nítido em qualquer resolução -->
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="0.35">
+      <stop offset="0" stop-color="#4E6A86"/>
+      <stop offset="0.45" stop-color="#7E97B0"/>
+      <stop offset="1" stop-color="#D5DFE9"/>
+    </linearGradient>
+    <radialGradient id="luz" cx="0.78" cy="0.2" r="0.7">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="grao" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" stitchTiles="stitch"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 -0.1"/>
+    </filter>
+    <filter id="sombra" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="21" stitchTiles="stitch"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.04  0 0 0 0 0.08  0 0 0 0 0.14  0 0 0 0.5 -0.12"/>
+    </filter>
+  </defs>
+  <rect width="2400" height="1350" fill="url(#base)"/>
+  <rect width="2400" height="1350" fill="url(#luz)"/>
+  <rect width="2400" height="1350" filter="url(#sombra)"/>
+  <rect width="2400" height="1350" filter="url(#grao)"/>
+</svg>

@@ -1,68 +1,88 @@
-/* SIDEC — tokens de design */
+/* SADEC — tokens de design ("Precisão suave").
+   Camadas: referência (valores) -> papéis semânticos (--c-*) -> componentes.
+   Uma gramática para quatro produtos; cada área troca só o acento no <body>:
+   Total (padrão, azul), .control (Central, escuro), .saude (teal) e .delivery (azul comercial). */
 :root {
-  /* Cor */
-  --navy-950: #071226;
-  --navy-900: #0B1B33;
-  --navy-800: #132847;
-  --navy-700: #1E3760;
-  --blue-700: #1858C4;
-  --blue-600: #1F6FEB;
-  --blue-100: #E3EDFD;
-  --cyan-400: #14C8C8;
-  --cyan-700: #0A7373;
-  --cyan-100: #DDF6F6;
-  --white: #FFFFFF;
-  --gray-25: #FAFBFC;
-  --gray-50: #F4F6F9;
-  --gray-100: #E8ECF2;
-  --gray-200: #D5DCE6;
-  --gray-400: #8C97A8;
-  --gray-500: #5E6A7D;
-  --gray-700: #3A4558;
+  /* ---------- Referência ---------- */
+  --ink: #0B1424;          /* tinta: texto e ação principal */
+  --ink-hover: #26344D;
+  --ink-2: #22324A;        /* texto sobre imagem clara */
+  --ink-3: #3A4657;        /* links de navegação */
+  --muted: #5F6B7A;        /* texto suave (4,9:1 sobre #EEEFF2) */
+  --bg: #EEEFF2;           /* fundo */
+  --surface: #F5F6F8;      /* superfície interna */
+  --surface-2: #F1F2F5;    /* trilhos, abas, campos */
+  --field: #F3F4F6;
+  --card: #FFFFFF;
+  --line: #E1E4E9;
+  --line-2: #DADDE3;
+  --line-strong: #D5D9DF;
+  --disabled: #D5D9DF;
 
-  --p1: #D92D20;
-  --p1-bg: #FEE4E2;
-  --p1-ink: #B42318; /* texto pequeno sobre --p1-bg com contraste AA (5,5:1) */
-  --p2: #B54708;
-  --p2-bg: #FEF0C7;
-  --p3: #067647;
-  --p3-bg: #DCFAE6;
-  --p4: #1F6FEB;
-  --p4-bg: #E3EDFD;
+  --blue: #2868D7;         /* azul SADEC: Delivery, foco, P4 */
+  --blue-ink: #1F54B0;
+  --blue-soft: #E8F0FD;
+  --cyan: #35C5D5;         /* rota: só sobre fundo escuro */
+  --teal: #0F6E7A;         /* Saúde */
+  --teal-soft: #E3F1F2;
+  --lilac: #C4B8E5;        /* Drone Bot */
+  --lilac-soft: #F1EEFA;
+  --coral: #E2654B;
 
-  /* SIDEC Saúde: superfície clínica menta */
-  --mint-50: #EEF6F3;
-  --mint-200: #C6E3D8;
+  --night: #111A2B;        /* painel escuro */
+  --night-2: #0B1018;
+  --night-3: #1A2230;
+  --night-4: #232D3D;
+  --night-bg: #06090F;
+  --night-text: #E6EBF2;
+  --night-muted: #8A9AB3;
+  --night-soft: #B7C2D3;
+  --ok-on-dark: #4CC98A;
+  --warn-on-dark: #F5B041;
+  --alert-on-dark: #FF6B5E;
+  --blue-on-dark: #6EA0F5;
 
-  /* SIDEC Delivery: acento comercial âmbar (texto sempre navy sobre ele) e céu da rota */
-  --sun-400: #FFB547;
-  --sun-500: #F5A21E;
-  --sun-50: #FFF6E3;
-  --sky-50: #EEF5FF;
+  /* Prioridades: sempre cor + código, nunca só cor */
+  --p1: #C8322B; --p1-bg: #FDECEA; --p1-ink: #A3221C;
+  --p2: #F2A93B; --p2-bg: #FEF3E0; --p2-ink: #8A4A00;
+  --p3: #1E7F52; --p3-bg: #E5F4EC; --p3-ink: #17673F;
+  --p4: #2868D7; --p4-bg: #E8F0FD; --p4-ink: #1F54B0;
 
-  --text: var(--navy-900);
-  --text-muted: var(--gray-500);
-  --surface: var(--white);
-  --surface-alt: var(--gray-50);
-  --line: var(--gray-100);
-  --line-strong: var(--gray-200);
-  --focus: var(--blue-600);
+  /* ---------- Papéis semânticos (Total) ---------- */
+  --c-bg: var(--bg);
+  --c-surface: var(--surface);
+  --c-card: var(--card);
+  --c-on-surface: var(--ink);
+  --c-muted: var(--muted);
+  --c-line: var(--line);
+  --c-accent: var(--blue);
+  --c-accent-ink: var(--blue-ink);
+  --c-accent-soft: var(--blue-soft);
+  --c-focus: var(--blue);
+  --c-success: var(--p3);
+  --c-success-ink: var(--p3-ink);
+  --c-success-bg: var(--p3-bg);
+  --c-error: var(--p1);
+  --c-error-ink: var(--p1-ink);
+  --c-error-bg: var(--p1-bg);
 
-  /* Tipografia */
-  --font-display: "Sora", system-ui, "Segoe UI", Roboto, sans-serif;
-  --font-body: "IBM Plex Sans", system-ui, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  /* ---------- Tipografia ---------- */
+  --font-display: "Inter Tight", "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
 
-  --fs-xs: 0.75rem;
-  --fs-sm: 0.875rem;
-  --fs-base: 1rem;
-  --fs-md: 1.125rem;
-  --fs-lg: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
-  --fs-xl: clamp(1.6rem, 1.3rem + 1.4vw, 2.25rem);
-  --fs-2xl: clamp(2.1rem, 1.5rem + 2.6vw, 3.4rem);
-  --fs-3xl: clamp(2.5rem, 1.6rem + 3.6vw, 4.25rem);
+  --t-xs: 0.75rem;     /* 12 */
+  --t-sm: 0.8125rem;   /* 13 */
+  --t-label: 0.875rem; /* 14 */
+  --t-body: 1rem;      /* 16 */
+  --t-body-l: 1.125rem;/* 18 */
+  --t-h3: 1.25rem;     /* 20 */
+  --t-h2: clamp(1.75rem, 1.2rem + 2.2vw, 2.25rem);          /* 28–36 */
+  --t-h1: clamp(2.25rem, 1.4rem + 3.4vw, 3.75rem);          /* 36–60 */
+  --t-display: clamp(2.5rem, 1.6rem + 3.6vw, 4.25rem);      /* hero */
+  --t-giant: clamp(5.25rem, 21vw, 18.75rem);                /* marca de fundo */
 
-  /* Espaço (base 4px) */
+  /* ---------- Espaço (base 4px) ---------- */
   --s-1: 0.25rem;
   --s-2: 0.5rem;
   --s-3: 0.75rem;
@@ -72,24 +92,140 @@
   --s-7: 3rem;
   --s-8: 4rem;
   --s-9: 5rem;
-  --s-10: 6rem;
+  --s-10: 7.5rem;
 
-  --container: 75rem;
+  --container: 85rem;   /* 1360 */
+  --measure: 32em;
   --gutter: 1rem;
-  --radius-sm: 4px;
-  --radius: 8px;
-  --radius-lg: 14px;
-  --header-h: 4rem;
+  --header-h: 5.5rem;
+  --section-gap: 4.5rem;
 
-  --shadow-float: 0 12px 32px -12px rgb(11 27 51 / 0.35);
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --dur: 200ms;
+  /* ---------- Forma e elevação ---------- */
+  --r-icon: 12px;
+  --r-field: 16px;
+  --r-inner: 22px;
+  --r-tile: 28px;
+  --r-card: 32px;
+  --r-pill: 999px;
+  --lift-0: 0 1px 2px rgb(11 20 36 / 0.04), 0 8px 24px rgb(11 20 36 / 0.06);
+  --lift-1: 0 12px 32px rgb(11 20 36 / 0.12);
+  --lift-2: 0 18px 40px rgb(11 20 36 / 0.16);
+
+  /* ---------- Movimento ---------- */
+  --d-press: 120ms;
+  --d-fast: 180ms;
+  --d-open: 200ms;
+  --d-confirm: 250ms;
+  --d-reveal: 600ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-std: ease-out;
+
+  /* ---------- Aliases legados (nomes antigos usados pelo JS e CSS das áreas) ---------- */
+  --c-surface-lowest: var(--card);
+  --c-surface-low: var(--surface);
+  --c-surface-container: var(--surface-2);
+  --c-surface-high: var(--line);
+  --c-on-surface-variant: var(--muted);
+  --c-outline: var(--muted);
+  --c-outline-variant: var(--line);
+  --c-primary: var(--ink);
+  --c-on-primary: #FFFFFF;
+  --c-primary-hover: var(--ink-hover);
+  --c-primary-container: var(--blue-soft);
+  --c-on-primary-container: var(--blue-ink);
+  --c-secondary: var(--ink);
+  --c-on-secondary: #FFFFFF;
+  --c-inverse-surface: var(--night);
+  --c-inverse-on-surface: var(--night-text);
+  --c-inverse-variant: var(--night-soft);
+  --navy-950: var(--night-bg);
+  --navy-900: var(--ink);
+  --navy-800: var(--night);
+  --navy-700: var(--night-4);
+  --blue-700: var(--blue-ink);
+  --blue-600: var(--blue);
+  --blue-100: var(--blue-soft);
+  --cyan-400: var(--cyan);
+  --cyan-700: var(--teal);
+  --cyan-100: var(--teal-soft);
+  --white: #FFFFFF;
+  --gray-25: var(--card);
+  --gray-50: var(--surface);
+  --gray-100: var(--surface-2);
+  --gray-200: var(--line);
+  --gray-400: var(--muted);
+  --gray-500: var(--muted);
+  --gray-700: var(--ink-3);
+  --mint-50: var(--teal-soft);
+  --mint-200: #BFDDE0;
+  --sun-400: var(--p2);
+  --sun-500: var(--p2);
+  --sun-50: var(--p2-bg);
+  --sky-50: var(--blue-soft);
+  --text: var(--ink);
+  --text-muted: var(--muted);
+  --surface-alt: var(--surface);
+  --line-strong-legacy: var(--line-strong);
+  --focus: var(--c-focus);
+  --font-body: var(--font);
+  --font-mono: var(--font-data);
+  --fs-xs: var(--t-xs);
+  --fs-sm: var(--t-label);
+  --fs-base: var(--t-body);
+  --fs-md: var(--t-body-l);
+  --fs-lg: var(--t-h3);
+  --fs-xl: var(--t-h2);
+  --fs-2xl: var(--t-h2);
+  --fs-3xl: var(--t-h1);
+  --radius-sm: var(--r-icon);
+  --radius: var(--r-field);
+  --radius-lg: var(--r-inner);
+  --shadow-float: var(--lift-1);
+  --dur: var(--d-fast);
+  --t-fast: var(--d-fast);
+  --t-normal: var(--d-confirm);
 }
 
-@media (min-width: 600px) {
+@media (min-width: 640px) {
   :root { --gutter: 1.5rem; }
 }
 
-@media (min-width: 900px) {
-  :root { --gutter: 2rem; --header-h: 4.5rem; }
+@media (min-width: 1024px) {
+  :root { --gutter: 2rem; --section-gap: 7.5rem; }
+}
+
+/* ---------- Central: painel escuro, só para focar ---------- */
+.control {
+  --c-bg: var(--night-bg);
+  --c-surface: var(--night-2);
+  --c-card: var(--night-3);
+  --c-on-surface: var(--night-text);
+  --c-muted: var(--night-muted);
+  --c-line: var(--night-4);
+  --c-accent: var(--cyan);
+  --c-accent-ink: var(--cyan);
+  --c-accent-soft: rgb(53 197 213 / 0.14);
+  --c-focus: var(--blue-on-dark);
+}
+
+/* ---------- Rastreamento: claro, com blocos de telemetria escuros ---------- */
+.tracking {
+  --c-accent: var(--blue);
+}
+
+/* ---------- Saúde: teal, leitura calma ---------- */
+.saude {
+  --c-bg: #EEF1F1;
+  --c-surface: #F5F7F7;
+  --c-accent: var(--teal);
+  --c-accent-ink: var(--teal);
+  --c-accent-soft: var(--teal-soft);
+  --c-focus: var(--teal);
+}
+
+/* ---------- Delivery: comercial, azul SADEC ---------- */
+.delivery {
+  --c-accent: var(--blue);
+  --c-accent-ink: var(--blue-ink);
+  --c-accent-soft: var(--blue-soft);
 }
