@@ -213,6 +213,14 @@ function listarPedidos() {
   } finally { db.close(); }
 }
 
+function listarLocais() {
+  const db = abrir();
+  try {
+    return db.prepare('SELECT NM_Local, TP_Local, NR_Distancia_Km FROM tbl_local ORDER BY TP_Local, NM_Local').all()
+      .map((l) => ({ nome: l.NM_Local, tipo: l.TP_Local, distancia_km: l.NR_Distancia_Km }));
+  } finally { db.close(); }
+}
+
 function listarDrones() {
   const db = abrir();
   try {
@@ -320,6 +328,6 @@ function recuperarDrone(codigoDrone, acao, responsavel) {
 
 module.exports = {
   CONFIG, ErroApi, AUTORIZADOS,
-  criarPedido, obterPedido, listarPedidos, listarDrones, processarFila,
+  criarPedido, obterPedido, listarPedidos, listarDrones, listarLocais, processarFila,
   decolar, concluirEntrega, registrarRecebimento, recuperarDrone
 };

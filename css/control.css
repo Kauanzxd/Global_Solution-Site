@@ -784,3 +784,7 @@ body.control {
 .control .status--manutencao, .control .status--aguardando_liberacao { background: rgb(245 176 65 / 0.14); color: var(--warn-on-dark); }
 .fleet__item--aguardando_liberacao { box-shadow: inset 0 0 0 1px rgb(245 176 65 / 0.45); }
 .fleet__release { justify-self: start; }
+
+/* Pedido da Central (API): ação de concluir só aparece nesse modo */
+.trk-api-only { display: none; }
+body.is-api .trk-api-only { display: inline-flex; }

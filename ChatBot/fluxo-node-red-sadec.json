@@ -1007,5 +1007,52 @@
     "x": 720,
     "y": 540,
     "wires": []
+  },
+  {
+    "id": "api_9_in",
+    "type": "http in",
+    "z": "sadec_api_tab",
+    "name": "GET /api/locais",
+    "url": "/api/locais",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 180,
+    "y": 600,
+    "wires": [
+      [
+        "api_9_fn"
+      ]
+    ]
+  },
+  {
+    "id": "api_9_fn",
+    "type": "function",
+    "z": "sadec_api_tab",
+    "name": "Listar locais",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "func": "// Listar locais: chama o núcleo comum e devolve JSON com status HTTP.\nconst api = global.get(\"sadecApi\");\nmsg.headers = { \"Content-Type\": \"application/json; charset=utf-8\" };\ntry {\n    msg.payload = { ok: true, dados: api.listarLocais() };\n    msg.statusCode = 200;\n} catch (e) {\n    msg.statusCode = e.status || 500;\n    msg.payload = { ok: false, erro: e.status ? e.message : \"Erro interno.\", detalhes: e.detalhes || null };\n    if (!e.status) node.error(e, msg);\n}\nreturn msg;",
+    "x": 470,
+    "y": 600,
+    "wires": [
+      [
+        "api_9_out"
+      ]
+    ]
+  },
+  {
+    "id": "api_9_out",
+    "type": "http response",
+    "z": "sadec_api_tab",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 720,
+    "y": 600,
+    "wires": []
   }
 ]
