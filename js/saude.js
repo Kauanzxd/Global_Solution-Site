@@ -20,10 +20,10 @@
   function readings(state, e, now) {
     if (e.status !== 'em_voo') return [];
     const r = ops.sensorReading(state, e, now);
-    const list = [el('span', { class: 'tag__reading', text: 'Bateria ' + num.format(r.bateria) + '%' })];
+    const list = [el('span', { class: 'ship__reading', text: 'Bateria ' + num.format(r.bateria) + '%' })];
     if (r.temp !== null) {
       const ok = ops.checkTemperature(r.temp, e.faixaTemp).ok;
-      list.push(el('span', { class: 'tag__reading' + (ok ? '' : ' is-alert'), text: num.format(r.temp) + ' °C' + (ok ? '' : ' fora da faixa') }));
+      list.push(el('span', { class: 'ship__reading' + (ok ? '' : ' is-alert'), text: num.format(r.temp) + ' °C' + (ok ? '' : ' fora da faixa') }));
     }
     return list;
   }
@@ -33,20 +33,20 @@
     const status = [el('span', { text: ops.STATUS[e.status] })];
     if (e.status === 'em_voo') {
       const p = Math.round(ops.flightProgress(e, now) * 100);
-      status.push(el('progress', { class: 'tag__progress', max: '100', value: String(p), 'data-progress': e.id, 'aria-label': 'Progresso do voo de ' + e.id }));
+      status.push(el('progress', { class: 'ship__progress', max: '100', value: String(p), 'data-progress': e.id, 'aria-label': 'Progresso do voo de ' + e.id }));
     }
-    if (e.motivo) status.push(el('span', { class: 'tag__reason', text: e.motivo }));
-    return el('article', { class: 'tag tag--' + e.prioridade, 'aria-label': 'Entrega ' + e.id }, [
-      el('p', { class: 'tag__kind', text: 'P' + e.prioridade + ' ' + ops.PRIORIDADES[e.prioridade] }),
-      el('p', { class: 'tag__code', text: e.id }),
-      el('p', { class: 'tag__cargo', text: e.carga }),
-      el('dl', { class: 'tag__route' }, [
+    if (e.motivo) status.push(el('span', { class: 'ship__reason', text: e.motivo }));
+    return el('article', { class: 'ship ship--' + e.prioridade, 'aria-label': 'Entrega ' + e.id }, [
+      el('p', { class: 'ship__kind', text: 'P' + e.prioridade + ' ' + ops.PRIORIDADES[e.prioridade] }),
+      el('p', { class: 'ship__code', text: e.id }),
+      el('p', { class: 'ship__cargo', text: e.carga }),
+      el('dl', { class: 'ship__route' }, [
         el('dt', { text: 'De' }), el('dd', { text: place(state, e.origemId) }),
         el('dt', { text: 'Para' }), el('dd', { text: place(state, e.destinoId) }),
         el('dt', { text: 'Drone' }), el('dd', { text: drone ? drone.nome : 'a definir' })
       ]),
-      el('div', { class: 'tag__readings', 'data-readings': e.id }, readings(state, e, now)),
-      el('div', { class: 'tag__status' }, status)
+      el('div', { class: 'ship__readings', 'data-readings': e.id }, readings(state, e, now)),
+      el('div', { class: 'ship__status' }, status)
     ]);
   }
 
@@ -76,13 +76,16 @@
 
     const heroTag = top
       ? tag(state, top, now)
-      : el('div', { class: 'tag' }, el('p', { class: 'tag__empty', text: 'Nenhuma entrega de saúde ativa agora. Faça um pedido abaixo.' }));
+      : el('div', { class: 'ship' }, el('p', { class: 'ship__empty', text: 'Nenhuma entrega de saúde ativa agora. Faça um pedido abaixo.' }));
     heroTag.id = 'sh-tag';
     $('sh-tag').replaceWith(heroTag);
+    const acoes = top ? cardActions(top) : null;
+    $('sh-tag-actions').replaceChildren(...(acoes ? [acoes] : []));
 
-    $('sh-ativos').replaceChildren(...(ativos.length
-      ? ativos.map((e) => el('li', {}, [tag(state, e, now), cardActions(e)]))
-      : [el('li', { class: 'cards__empty', text: 'Nenhuma entrega de saúde em andamento. Seus pedidos aparecem aqui.' })]));
+    const outros = ativos.filter((e) => !top || e.id !== top.id); // o mais urgente já aparece em destaque
+    $('sh-ativos').replaceChildren(...(outros.length
+      ? outros.map((e) => el('li', {}, [tag(state, e, now), cardActions(e)]))
+      : [el('li', { class: 'cards__empty', text: top ? 'Nenhuma outra entrega de saúde em andamento.' : 'Nenhuma entrega de saúde em andamento. Seus pedidos aparecem aqui.' })]));
 
     $('sh-historico').replaceChildren(...(fim.length
       ? fim.map((e) => el('li', { class: 'history__item history__item--' + e.status }, [
@@ -122,7 +125,8 @@
         t.tabIndex = on ? 0 : -1;
         $(t.getAttribute('aria-controls')).hidden = !on;
       });
-      $('pedido-resultado').replaceChildren();
+      resetDone();
+      updateSummary();
     };
     tabs.forEach((tab, i) => {
       tab.addEventListener('click', () => select(tab));
@@ -194,24 +198,23 @@
       form.addEventListener('submit', (ev) => {
         ev.preventDefault();
         if (!validate(form)) return;
-        const out = $('pedido-resultado');
         try {
           const { e, r } = store.update((s) => {
             const nova = ops.createOrder(s, orderData(form));
             return { e: nova, r: ops.dispatch(s, nova.id) };
           });
           const actions = [];
-          if (r.status === 'atribuida') actions.push(el('button', { type: 'button', class: 'btn btn--primary btn--sm', 'data-launch': e.id, text: 'Liberar decolagem' }));
-          actions.push(el('a', { class: 'btn btn--ghost btn--sm', href: '#acompanhar', text: 'Acompanhar' }));
-          out.replaceChildren(
-            el('p', { class: 'precheck__line sh-result__msg ' + (r.status === 'outro_meio' ? 'is-alert' : 'is-ok'), text: resultMessage(e, r) }),
-            el('div', { class: 'sh-result__actions' }, actions));
+          if (r.status === 'atribuida') actions.push(el('button', { type: 'button', class: 'btn btn--primary', 'data-launch': e.id, text: 'Liberar decolagem' }));
+          actions.push(el('a', { class: 'btn btn--ghost', href: '#acompanhar', text: 'Acompanhar' }));
+          actions.push(el('button', { type: 'button', class: 'btn btn--ghost', 'data-novo': '', text: 'Novo pedido' }));
+          showDone(r.status === 'outro_meio', r.status === 'outro_meio' ? 'Sem drone elegível' : e.id + ' registrado', resultMessage(e, r), actions);
           form.elements.produto.value = '';
           if (form.elements.ciente) form.elements.ciente.checked = false;
           updatePrecheck();
+          updateSummary();
           stamp();
         } catch (err) {
-          out.replaceChildren(el('p', { class: 'precheck__line sh-result__msg is-alert', text: err.message }));
+          showDone(true, 'Não foi possível registrar', err.message, [el('button', { type: 'button', class: 'btn btn--ghost', 'data-novo': '', text: 'Voltar ao pedido' })]);
         }
       });
     });
@@ -241,6 +244,59 @@
       line = el('p', { class: 'precheck__line is-alert', text: err.message });
     }
     box.replaceChildren(line);
+  }
+
+  /* ---------- Tela de confirmação ---------- */
+  function showDone(alert, title, msg, actions) {
+    const box = $('pedido-resultado');
+    box.closest('.sx-order__form').classList.add('is-done');
+    box.className = 'sx-done' + (alert ? ' is-alert' : '');
+    box.replaceChildren(
+      el('span', { class: 'sx-done__badge', 'aria-hidden': 'true' }),
+      el('h2', { class: 'sx-done__title', tabindex: '-1', text: title }),
+      el('p', { class: 'sx-done__msg', text: msg }),
+      el('div', { class: 'sx-done__actions' }, actions));
+    box.querySelector('.sx-done__title').focus();
+  }
+
+  function resetDone(focus) {
+    const box = $('pedido-resultado');
+    box.closest('.sx-order__form').classList.remove('is-done');
+    box.className = 'sx-done';
+    box.replaceChildren();
+    if (focus) {
+      const form = activeForm();
+      form.elements.produto.focus();
+    }
+  }
+
+  /* ---------- Resumo ao vivo do pedido ---------- */
+  const REGRA = {
+    1: 'Só decola se a bateria cobrir a rota com 30% de reserva. Sem drone elegível, a Central indica outro meio.',
+    2: 'Pode antecipar uma entrega comercial que ainda não decolou. Voo em andamento nunca é interrompido.',
+    3: 'Atendido depois de órgãos e emergências, por ordem de chegada.'
+  };
+  const activeForm = () => doc.querySelector('.role-panel:not([hidden]) .sh-form');
+
+  function updateSummary() {
+    const form = activeForm();
+    if (!form) return;
+    const state = store.get();
+    const p = Number(form.getAttribute('data-prioridade'));
+    const opt = form.elements.produto.selectedOptions[0];
+    const a = ops.findPoint(state, form.elements.origemId.value);
+    const b = ops.findPoint(state, form.elements.destinoId.value);
+    const km = a && b ? ops.distance(a, b) : null;
+    const termico = p === 1 || (opt && opt.hasAttribute('data-termico'));
+    const rows = [
+      ['Prioridade', el('span', { class: 'prio prio--' + p, text: 'P' + p + ' ' + ops.PRIORIDADES[p] })],
+      ['Carga', opt && opt.value ? opt.textContent : '—'],
+      ['Rota', (a ? a.nome : '—') + ' → ' + (b ? b.nome : '—')],
+      ['Distância', km === null ? '—' : num.format(km) + ' km em linha reta'],
+      ['Temperatura', termico ? 'Controlada, 2 a 8 °C' : 'Ambiente']
+    ];
+    $('sx-resumo').replaceChildren(...rows.map(([k, v]) => el('div', {}, [el('dt', { text: k }), el('dd', {}, v)])));
+    $('sx-resumo-nota').textContent = REGRA[p];
   }
 
   /* ---------- Simuladores ---------- */
@@ -343,9 +399,14 @@
       const id = btn.getAttribute('data-launch');
       const r = store.update((s) => ops.launch(s, id, Date.now()));
       if (btn.closest('#pedido-resultado')) {
-        $('pedido-resultado').replaceChildren(el('p', { class: 'precheck__line sh-result__msg ' + (r.ok ? 'is-ok' : 'is-alert'), text: r.ok ? id + ' decolou. Acompanhe o voo abaixo.' : r.motivo }));
+        showDone(!r.ok, r.ok ? id + ' decolou' : 'Decolagem bloqueada', r.ok ? 'O drone está a caminho. Bateria, temperatura e progresso aparecem em Acompanhar.' : r.motivo, [
+          el('a', { class: 'btn btn--primary', href: '#acompanhar', text: 'Acompanhar o voo' }),
+          el('button', { type: 'button', class: 'btn btn--ghost', 'data-novo': '', text: 'Novo pedido' })
+        ]);
       }
     });
+    doc.addEventListener('click', (e) => { if (e.target.closest('[data-novo]')) resetDone(true); });
+    doc.querySelectorAll('.sh-form').forEach((f) => f.addEventListener('change', updateSummary));
     $('btn-tour').addEventListener('click', () => SIDEC.bot.startTour());
     $('quiz-novo').addEventListener('click', newRound);
     ['h-item', 'h-origem', 'h-destino'].forEach((id) => $(id).addEventListener('change', updatePrecheck));
@@ -366,6 +427,7 @@
   initAutonomy();
   newRound();
   initActions();
+  updateSummary();
   store.subscribe(render);
   render(initial);
   setInterval(loop, 1000);
