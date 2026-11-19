@@ -35,7 +35,7 @@
       <div class="login__top">
         <a class="login__back" href="index.html" id="login-home">← Voltar ao site</a>
         <button class="login__back" type="button" id="login-back" hidden>← Voltar</button>
-        <p class="muted">Novo por aqui? <a href="faq.html#contato">Pedir acesso</a></p>
+        <p class="muted" id="login-novo">Novo por aqui? <button class="login__link" type="button" id="login-signup-open">Criar conta</button></p>
       </div>
 
       <form class="login__step" id="login-form" novalidate data-step="form">
@@ -44,6 +44,7 @@
         <div class="segmented login__profiles" role="radiogroup" aria-label="Perfil de acesso">
           <button type="button" role="radio" aria-checked="true" data-profile="saude">Unidade de saúde</button>
           <button type="button" role="radio" aria-checked="false" data-profile="cliente" tabindex="-1">Cliente</button>
+          <button type="button" role="radio" aria-checked="false" data-profile="governo" tabindex="-1">Governo</button>
           <button type="button" role="radio" aria-checked="false" data-profile="operador" tabindex="-1">Operador</button>
         </div>
         <p class="login__dest" id="login-dest">Você vai para o SADEC Saúde</p>
@@ -59,12 +60,12 @@
         <div class="field" id="field-pw">
           <div class="login__pw-head"><label for="login-pw">Senha</label><button class="login__link" type="button" id="login-forgot">Esqueci a senha</button></div>
           <div class="login__pw">
-            <input class="input" id="login-pw" name="senha" type="password" autocomplete="current-password" minlength="8" maxlength="64" placeholder="Mínimo de 8 caracteres" aria-describedby="login-pw-error">
+            <input class="input" id="login-pw" name="senha" type="password" autocomplete="current-password" minlength="6" maxlength="64" placeholder="Sua senha" aria-describedby="login-pw-error">
             <button class="login__eye" type="button" id="login-eye" aria-label="Mostrar senha" aria-pressed="false">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
             </button>
           </div>
-          <p class="field__error" id="login-pw-error">A senha tem pelo menos 8 caracteres.</p>
+          <p class="field__error" id="login-pw-error">A senha tem pelo menos 6 caracteres.</p>
         </div>
         <p class="login__info" id="login-forgot-msg" role="status" hidden>Na versão real, enviaríamos um link de redefinição. Aqui é só demonstração.</p>
 
@@ -72,12 +73,49 @@
 
         <button class="btn btn--primary login__submit" type="submit">Entrar</button>
         <div class="login__or" aria-hidden="true"><span>ou</span></div>
-        <button class="btn btn--ghost login__submit" type="button" id="login-demo">Entrar com acesso de demonstração</button>
+        <button class="btn btn--ghost login__submit" type="button" id="login-demo">Entrar com conta de demonstração</button>
         <button class="btn btn--ghost login__submit login__faceid" type="button" id="login-faceid">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M9 9.5v1M15 9.5v1M12 9.5v3.5h-1M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg>
           Entrar com Face ID
         </button>
-        <p class="login__note">Protótipo: não use uma senha real. Os dados não saem do seu navegador.</p>
+        <p class="login__note" id="login-note">Verificando a conexão com a Central…</p>
+      </form>
+
+      <form class="login__step" id="signup-form" novalidate data-step="signup" hidden>
+        <h1 class="login__title" id="signup-title" tabindex="-1">Criar conta</h1>
+        <p class="muted login__lead">Uma conta vale para o portal, o SADEC Saúde e o SADEC Delivery.</p>
+        <div class="segmented login__profiles" role="radiogroup" aria-label="Tipo de conta">
+          <button type="button" role="radio" aria-checked="true" data-signup="cliente">Cliente</button>
+          <button type="button" role="radio" aria-checked="false" data-signup="unidade_saude" tabindex="-1">Unidade de saúde</button>
+        </div>
+        <p class="login__dest" id="signup-dest">Pedidos no Delivery e remédios de uso contínuo no Saúde.</p>
+
+        <p class="form-status is-error" id="signup-errors" role="alert" hidden></p>
+
+        <div class="field" id="field-s-nome">
+          <label for="signup-nome">Nome</label>
+          <input class="input" id="signup-nome" type="text" autocomplete="name" maxlength="80" aria-describedby="signup-nome-error">
+          <p class="field__error" id="signup-nome-error">Informe seu nome.</p>
+        </div>
+        <div class="field" id="field-s-email">
+          <label for="signup-email">E-mail</label>
+          <input class="input" id="signup-email" type="email" autocomplete="email" maxlength="120" placeholder="nome@dominio.com" aria-describedby="signup-email-error">
+          <p class="field__error" id="signup-email-error">Use um e-mail no formato nome@dominio.com.</p>
+        </div>
+        <div class="field" id="field-s-inst" hidden>
+          <label for="signup-inst">Hospital da rede</label>
+          <select class="input" id="signup-inst" aria-describedby="signup-inst-error"></select>
+          <p class="field__error" id="signup-inst-error">Escolha o hospital.</p>
+        </div>
+        <div class="field" id="field-s-pw">
+          <label for="signup-pw">Senha</label>
+          <input class="input" id="signup-pw" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="Mínimo de 8 caracteres" aria-describedby="signup-pw-error">
+          <p class="field__error" id="signup-pw-error">A senha precisa ter pelo menos 8 caracteres.</p>
+        </div>
+        <p class="login__info">Contas de operador são criadas pela Central. Órgãos (P1) exigem, a cada transporte, um código emitido pela Central.</p>
+        <button class="btn btn--primary login__submit" type="submit">Criar conta e entrar</button>
+        <p class="muted login__resend">Já tem conta? <button class="login__link" type="button" id="signup-login">Entrar</button></p>
+        <p class="login__note">Demonstração acadêmica: a conta fica no banco local da Central. Não use uma senha real.</p>
       </form>
 
       <form class="login__step" id="code-form" novalidate data-step="code" hidden>
@@ -107,13 +145,15 @@
         <h2 class="login__title" tabindex="-1" id="done-title">Tudo pronto!</h2>
         <p class="muted" id="done-msg">Acesso de demonstração liberado.</p>
         <a class="btn btn--primary login__submit" id="done-cta" href="saude/index.html">Abrir o SADEC Saúde</a>
-        <button class="btn btn--ghost login__submit" type="button" id="login-exit">Sair e voltar ao início</button>
+        <a class="btn btn--ghost login__submit" id="done-central" href="central.html#codigos" hidden>Emitir código de órgão</a>
+        <button class="btn btn--ghost login__submit" type="button" id="login-exit">Sair da conta</button>
       </div>
 
       <ol class="login__dots" id="login-dots" aria-label="Etapas do acesso"></ol>
     </main>
   </div>
 
+  <script src="js/api.js" defer></script>
   <script src="js/entrar.js" defer></script>
 </body>
 </html>
