@@ -132,9 +132,9 @@ Pré-requisitos: Node.js 22.5+ (usa o `node:sqlite` nativo), Python 3.10+, JDK 8
 ```bash
 # 1. nós do fluxo original (sqlite e Telegram) no diretório do Node-RED do projeto
 cd ChatBot/node-red && npm install && cd ../..
-# 2. compilar a parte Java (classes em Java/SADEC/out, ignoradas pelo Git)
+# 2. (opcional) a API compila a parte Java sozinha ao iniciar se encontrar o javac; manualmente:
 javac --release 8 -encoding UTF-8 -d Java/SADEC/out $(find Java/SADEC/src Java/SADEC/test -name "*.java")
-# 3. subir a API (porta 1880; editor do Node-RED em http://localhost:1880/admin)
+# 3. subir a API (porta 1880; http://localhost:1880 abre o Webchat e o editor fica em /admin)
 npm run api
 # 4. em outro terminal, o site (porta 5173)
 npm start
@@ -142,10 +142,10 @@ npm start
 
 | Variável | Para que serve | Padrão |
 |---|---|---|
-| `SADEC_PYTHON` | executável do Python | `python` |
-| `SADEC_JAVA` | executável do Java | `java` |
+| `SADEC_PYTHON` | executável do Python | detectado ao iniciar (PATH, `py`, instalações do Windows) |
+| `SADEC_JAVA` | executável do Java | detectado ao iniciar (PATH, `JAVA_HOME`, `~/.jdks`) |
 | `SADEC_DB` | caminho do banco | `ChatBot/SADEC_Chatbot.db` |
-| `GROQ_API_KEY`, `TELEGRAM_BOT_TOKEN` | IA e Telegram do chatbot (opcionais; sem elas o rastreio por código e o pedido de remédio funcionam) | vazias |
+| `GROQ_API_KEY`, `TELEGRAM_BOT_TOKEN` | IA e Telegram do chatbot (opcionais). Sem a chave da Groq, o chatbot usa o entendimento local por palavras-chave (`ChatBot/node-red/lib/entendimento.js`) e continua respondendo, inclusive explicando quando o assunto foge do escopo. | vazias |
 | `NODE_RED_CREDENTIAL_SECRET` | cifra credenciais salvas pelo editor | gerada pelo Node-RED |
 
 Nenhuma chave fica no código, no fluxo ou no banco. A API escuta só em `127.0.0.1` e aceita CORS apenas de `http://localhost:5173`.

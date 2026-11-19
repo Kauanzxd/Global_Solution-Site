@@ -10,6 +10,8 @@ const fs = require('fs');
 const lerWidget = (nome) => fs.readFileSync(path.join(__dirname, 'widget', nome), 'utf8');
 
 process.env.SADEC_DB = process.env.SADEC_DB || path.join(__dirname, '..', 'SADEC_Chatbot.db');
+// Encontra Python e Java (mesmo fora do PATH) e compila a parte Java se ainda não estiver compilada.
+require('./lib/ambiente.js').preparar();
 
 module.exports = {
   uiHost: '127.0.0.1', // só aceita conexões da própria máquina
@@ -30,6 +32,8 @@ module.exports = {
   // Núcleo compartilhado: endpoints da API e chatbot usam as mesmas regras (Python + Java + SQLite).
   functionGlobalContext: {
     sadecApi: require('./lib/sadec-api.js'),
+    // Entendimento por palavras-chave quando a IA (Groq) não está configurada ou não responde
+    sadecNlu: require('./lib/entendimento.js'),
     // Widget incorporável do chatbot: /sadec/widget.js e /sadec/widget.css
     sadecWidget: { js: lerWidget('widget.js'), css: lerWidget('widget.css') }
   },
