@@ -3,7 +3,7 @@
 **Global Solution 2026 · CitizenTech · Turma 1TDSPB · FIAP**
 
 - Repositório: [github.com/Kauanzxd/Global_Solution-Site](https://github.com/Kauanzxd/Global_Solution-Site)
-- Versão publicada: endereço informado aqui após o deploy no Railway
+- Página de contato: [`contato.html`](contato.html) · publicação em serviço único: veja [Versão publicada (Railway)](#versão-publicada-railway)
 
 Rede conceitual de drones que transporta órgãos, kits de emergência e medicamentos com prioridade sobre qualquer outra carga, e usa entregas comerciais para ajudar a sustentar a operação.
 
@@ -77,7 +77,8 @@ Só a **CentralOperacao Java** decide o despacho. O Python calcula; o Node-RED o
 | `rastreamento.html` | Rastreamento e recebimento |
 | `orgaos.html` | Missão P1 demonstrativa |
 | `entrar.html` | Login e cadastro |
-| `drone-bot.html` · `faq.html` | Assistente; ajuda e contato |
+| `drone-bot.html` | Drone Bot, o assistente do SADEC |
+| `faq.html` · `contato.html` | Perguntas frequentes; formulário de contato com validação |
 | `integrantes.html` | Equipe |
 
 ## Estrutura
@@ -165,6 +166,12 @@ Contas **fictícias**, só para a apresentação; não são contas de produção
 | <img src="assets/images/integrantes/thomaz-rocha.webp" alt="Thomaz Rafael Krutman Neves da Rocha" width="64"> | Thomaz Rafael Krutman Neves da Rocha | 576834 | 1TDSPB | [GitHub](https://github.com/ThomazRocha) · [LinkedIn](https://www.linkedin.com/in/thomaz-rafael-krutman-neves-da-rocha-42aa7343a/) |
 | <img src="assets/images/integrantes/gustavo-almeida.png" alt="Gustavo Almeida Rodrigues" width="64"> | Gustavo Almeida Rodrigues | 576939 | 1TDSPB | [GitHub](https://github.com/gtzall) · [LinkedIn](https://www.linkedin.com/in/gustavo-almeida-rodrigues) |
 | <img src="assets/images/integrantes/claudio-assis.webp" alt="Cláudio Augusto Silva de Assis" width="64"> | Cláudio Augusto Silva de Assis | 576661 | 1TDSPB | [GitHub](https://github.com/claudiosilva06) · [LinkedIn](https://www.linkedin.com/in/claudio-assis-dev) |
+
+## Contato
+
+- **Formulário:** página [`contato.html`](contato.html), com validação em JavaScript (campos obrigatórios, formato do e-mail e mensagem de sucesso). É uma demonstração: nada é enviado.
+- **Equipe:** pelos perfis do GitHub e do LinkedIn listados em [Integrantes](#integrantes).
+- **Dúvidas e sugestões sobre o código:** abra uma *issue* no [repositório](https://github.com/Kauanzxd/Global_Solution-Site/issues).
 
 ## Fontes e links
 

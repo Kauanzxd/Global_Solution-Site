@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contato — SADEC</title>
+  <meta name="description" content="Fale com a equipe do SADEC: formulário de contato do projeto acadêmico e outros canais de atendimento.">
+  <link rel="icon" href="assets/icons/drone-bot.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/drone-bot.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body data-page="contato">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="site-header">
+    <div class="container site-header__bar">
+      <a class="brand" href="index.html" aria-label="SADEC, página inicial">
+        <img class="brand__mark" src="assets/icons/drone-bot.svg" alt="" width="42" height="42">
+        <span class="brand__name">SADEC</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="nav-toggle__bars" aria-hidden="true"></span>
+        <span class="visually-hidden">Abrir menu</span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Principal">
+        <ul class="site-nav__list">
+          <li><a href="index.html">Início</a></li>
+          <li><a href="como-funciona.html">Como funciona</a></li>
+          <li><a href="saude/index.html">Saúde</a></li>
+          <li><a href="delivery/index.html">Delivery</a></li>
+          <li><a href="rastreamento.html">Rastrear</a></li>
+          <li><a href="faq.html">Ajuda</a></li>
+          <li><a href="contato.html" aria-current="page">Contato</a></li>
+          <li class="site-nav__extra"><a href="central.html">Central de Operações</a></li>
+          <li class="site-nav__extra"><a href="orgaos.html">Missão P1 · Órgãos</a></li>
+          <li class="site-nav__extra"><a href="sobre.html">Sobre</a></li>
+          <li class="site-nav__extra"><a href="drone-bot.html">Drone Bot</a></li>
+          <li class="site-nav__extra"><a href="integrantes.html">Integrantes</a></li>
+          <li class="site-nav__extra"><a href="entrar.html">Entrar</a></li>
+        </ul>
+      </nav>
+      <div class="site-header__end">
+        <span class="tag tag--demo">Dados ilustrativos</span>
+        <a class="btn btn--primary btn--sm site-header__cta" href="entrar.html">Entrar</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <section class="page-hero help-hero" aria-labelledby="page-title">
+      <div class="container help-hero__inner">
+        <div>
+          <p class="eyebrow">Contato</p>
+          <h1 id="page-title">Fale com quem pilota o projeto.</h1>
+          <p class="lead">Dúvidas sobre o SADEC, sugestões para a rede ou interesse em conhecer a solução de perto: escreva para a equipe da turma 1TDSPB.</p>
+        </div>
+        <p class="help-alert" role="note">
+          <span class="help-alert__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 2.5 20h19L12 3Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 10v4.5M12 17.2v.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+          <span><strong>Emergência real?</strong> Ligue para o SAMU no <strong>192</strong> ou para a Defesa Civil no <strong>199</strong>. Este protótipo não atende pedidos reais.</span>
+        </p>
+      </div>
+    </section>
+
+    <div class="container help-bottom contact-page">
+      <section class="help-contact" id="formulario" aria-labelledby="form-title">
+        <h2 id="form-title">Envie uma mensagem</h2>
+        <p class="muted">Para professores, pesquisadores, imprensa e quem quiser contribuir. Campos com <span class="req">*</span> são obrigatórios.</p>
+        <form class="contact-form" id="contact-form" novalidate>
+          <div class="contact-form__row">
+            <div class="field">
+              <label for="nome">Nome <span class="req" aria-hidden="true">*</span></label>
+              <input class="input" id="nome" name="nome" type="text" autocomplete="name" maxlength="80" placeholder="Como devemos te chamar" required aria-describedby="nome-error">
+              <p class="field__error" id="nome-error"></p>
+            </div>
+            <div class="field">
+              <label for="email">E-mail <span class="req" aria-hidden="true">*</span></label>
+              <input class="input" id="email" name="email" type="email" autocomplete="email" maxlength="120" placeholder="nome@dominio.com" required aria-describedby="email-error">
+              <p class="field__error" id="email-error"></p>
+            </div>
+          </div>
+          <div class="field">
+            <label for="assunto">Você é <span class="req" aria-hidden="true">*</span></label>
+            <select class="input" id="assunto" name="assunto" required aria-describedby="assunto-error">
+              <option value="">Selecione…</option>
+              <option value="pesquisa">Professor(a) ou pesquisador(a)</option>
+              <option value="saude">Profissional de saúde</option>
+              <option value="estudante">Estudante</option>
+              <option value="imprensa">Imprensa</option>
+              <option value="outro">Outro</option>
+            </select>
+            <p class="field__error" id="assunto-error"></p>
+          </div>
+          <div class="field">
+            <label for="mensagem">Mensagem <span class="req" aria-hidden="true">*</span></label>
+            <textarea class="input" id="mensagem" name="mensagem" maxlength="1000" required aria-describedby="mensagem-hint mensagem-error"></textarea>
+            <p class="field__hint" id="mensagem-hint">Mínimo de 20 caracteres. Não inclua dados pessoais sensíveis ou informações médicas.</p>
+            <p class="field__error" id="mensagem-error"></p>
+          </div>
+          <div class="field">
+            <label class="check" for="consentimento">
+              <input id="consentimento" name="consentimento" type="checkbox" required aria-describedby="consentimento-error">
+              <span>Entendo que este é um formulário acadêmico demonstrativo e que nenhum dado será enviado ou armazenado. <span class="req" aria-hidden="true">*</span></span>
+            </label>
+            <p class="field__error" id="consentimento-error"></p>
+          </div>
+          <div class="contact-form__foot">
+            <button class="btn btn--primary" type="submit">Enviar mensagem</button>
+            <span class="counter mono" data-counter aria-hidden="true">0/1000</span>
+          </div>
+          <p class="form-status" role="status" tabindex="-1"></p>
+          <p class="login__note">Demonstração: os dados não saem do seu navegador.</p>
+        </form>
+      </section>
+
+      <aside class="help-about" aria-labelledby="about-title">
+        <h2 id="about-title">Outros canais</h2>
+        <p class="muted">Um estudo acadêmico, não uma empresa.</p>
+        <dl>
+          <div><dt>Dúvidas rápidas</dt><dd><a href="faq.html">Perguntas frequentes</a> sobre o projeto, a saúde, o delivery e a segurança</dd></div>
+          <div><dt>Atendimento</dt><dd><a href="drone-bot.html">Drone Bot</a>, o assistente do SADEC (demonstração por regras)</dd></div>
+          <div><dt>Equipe</dt><dd>Turma 1TDSPB · <a href="integrantes.html">GitHub e LinkedIn dos integrantes</a></dd></div>
+          <div><dt>Código</dt><dd><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório no GitHub</a></dd></div>
+          <div><dt>Instituição</dt><dd>FIAP · Global Solution 2026 · CitizenTech</dd></div>
+        </dl>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="site-footer__grid">
+        <div class="site-footer__brand">
+          <a class="brand" href="index.html"><img class="brand__mark" src="assets/icons/drone-bot.svg" alt="" width="42" height="42"><span class="brand__name">SADEC</span></a>
+          <p>Sistema Autônomo de Drones de Cuidado e Entrega. Projeto acadêmico da FIAP Global Solution 2026.</p>
+        </div>
+        <div>
+          <h2>Operação</h2>
+          <ul><li><a href="como-funciona.html">Como funciona</a></li><li><a href="central.html">Central de Operações</a></li><li><a href="rastreamento.html">Rastrear uma entrega</a></li><li><a href="orgaos.html">Missão P1 · Órgãos</a></li></ul>
+        </div>
+        <div>
+          <h2>Serviços</h2>
+          <ul><li><a href="saude/index.html">SADEC Saúde</a></li><li><a href="delivery/index.html">SADEC Delivery</a></li><li><a href="drone-bot.html">Drone Bot</a></li></ul>
+        </div>
+        <div>
+          <h2>Projeto</h2>
+          <ul><li><a href="sobre.html">Sobre</a></li><li><a href="faq.html">Perguntas frequentes</a></li><li><a href="contato.html">Contato</a></li><li><a href="integrantes.html">Integrantes</a></li><li><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório</a></li></ul>
+        </div>
+      </div>
+      <p class="site-footer__legal">O SADEC é um protótipo acadêmico conceitual. Não opera comercialmente, não controla drones reais, não possui parcerias hospitalares e não tem integração com plataformas de delivery. Frota, rotas, telemetria e missões são simulações com dados fictícios. Uma operação real dependeria de autorização da ANAC e do DECEA.</p>
+    </div>
+  </footer>
+
+  <nav class="tabbar" aria-label="Atalhos">
+    <a class="tabbar__item" href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20h-5v-5H9v5H4z"/></svg><span>Início</span></a>
+    <a class="tabbar__item" href="saude/index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg><span>Saúde</span></a>
+    <a class="tabbar__item" href="delivery/index.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Delivery</span></a>
+    <a class="tabbar__item" href="rastreamento.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11Z"/><circle cx="12" cy="10" r="2.2"/></svg><span>Rastrear</span></a>
+    <button class="tabbar__item" type="button" data-open-menu aria-controls="site-nav"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg><span>Menu</span></button>
+  </nav>
+
+  <script src="js/ui.js" defer></script>
+  <script src="js/operations.js" defer></script>
+  <script src="js/data.js" defer></script>
+  <script src="js/state.js" defer></script>
+  <script src="js/drone-avatar.js" defer></script>
+  <script src="js/api.js" defer></script>
+  <script src="js/chatbot.js" defer></script>
+  <script src="js/form-validation.js" defer></script>
+</body>
+</html>

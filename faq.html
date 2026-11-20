@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ajuda — SADEC</title>
-  <meta name="description" content="Perguntas frequentes sobre o SADEC e formulário de contato com a equipe do projeto acadêmico.">
+  <meta name="description" content="Perguntas frequentes sobre o SADEC: o projeto, a saúde, o delivery e a segurança da rede de drones.">
   <link rel="icon" href="assets/icons/drone-bot.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,6 +36,7 @@
           <li><a href="delivery/index.html">Delivery</a></li>
           <li><a href="rastreamento.html">Rastrear</a></li>
           <li><a href="faq.html" aria-current="page">Ajuda</a></li>
+          <li><a href="contato.html">Contato</a></li>
           <li class="site-nav__extra"><a href="central.html">Central de Operações</a></li>
           <li class="site-nav__extra"><a href="orgaos.html">Missão P1 · Órgãos</a></li>
           <li class="site-nav__extra"><a href="sobre.html">Sobre</a></li>
@@ -89,7 +90,7 @@
         </div>
         <div class="accordion__item">
           <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-4" id="faq-4-btn">O site guarda meus dados?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
-          <div class="accordion__panel" id="faq-4" role="region" aria-labelledby="faq-4-btn"><div><p>Não. O formulário só valida os campos no navegador e nada é enviado. A simulação guarda apenas dados fictícios no armazenamento local do seu navegador, que você pode restaurar na Central.</p></div></div>
+          <div class="accordion__panel" id="faq-4" role="region" aria-labelledby="faq-4-btn"><div><p>Não. O <a href="contato.html">formulário de contato</a> só valida os campos no navegador e nada é enviado. A simulação guarda apenas dados fictícios no armazenamento local do seu navegador, que você pode restaurar na Central.</p></div></div>
         </div>
         <div class="accordion__item">
           <h3><button class="accordion__trigger" type="button" aria-expanded="false" aria-controls="faq-5" id="faq-5-btn">Quem desenvolveu o SADEC?<span class="accordion__icon" aria-hidden="true"></span></button></h3>
@@ -151,68 +152,17 @@
       </div>
     </section>
 
-    <div class="container help-bottom">
-      <section class="help-contact" id="contato" aria-labelledby="form-title">
-        <h2 id="form-title">Fale com a equipe</h2>
-        <p class="muted">Para professores, pesquisadores, imprensa e quem quiser contribuir. Campos com <span class="req">*</span> são obrigatórios.</p>
-        <form class="contact-form" id="contact-form" novalidate>
-          <div class="contact-form__row">
-            <div class="field">
-              <label for="nome">Nome <span class="req" aria-hidden="true">*</span></label>
-              <input class="input" id="nome" name="nome" type="text" autocomplete="name" maxlength="80" placeholder="Como devemos te chamar" required aria-describedby="nome-error">
-              <p class="field__error" id="nome-error"></p>
-            </div>
-            <div class="field">
-              <label for="email">E-mail <span class="req" aria-hidden="true">*</span></label>
-              <input class="input" id="email" name="email" type="email" autocomplete="email" maxlength="120" placeholder="nome@dominio.com" required aria-describedby="email-error">
-              <p class="field__error" id="email-error"></p>
-            </div>
-          </div>
-          <div class="field">
-            <label for="assunto">Você é <span class="req" aria-hidden="true">*</span></label>
-            <select class="input" id="assunto" name="assunto" required aria-describedby="assunto-error">
-              <option value="">Selecione…</option>
-              <option value="pesquisa">Professor(a) ou pesquisador(a)</option>
-              <option value="saude">Profissional de saúde</option>
-              <option value="estudante">Estudante</option>
-              <option value="imprensa">Imprensa</option>
-              <option value="outro">Outro</option>
-            </select>
-            <p class="field__error" id="assunto-error"></p>
-          </div>
-          <div class="field">
-            <label for="mensagem">Mensagem <span class="req" aria-hidden="true">*</span></label>
-            <textarea class="input" id="mensagem" name="mensagem" maxlength="1000" required aria-describedby="mensagem-hint mensagem-error"></textarea>
-            <p class="field__hint" id="mensagem-hint">Mínimo de 20 caracteres. Não inclua dados pessoais sensíveis ou informações médicas.</p>
-            <p class="field__error" id="mensagem-error"></p>
-          </div>
-          <div class="field">
-            <label class="check" for="consentimento">
-              <input id="consentimento" name="consentimento" type="checkbox" required aria-describedby="consentimento-error">
-              <span>Entendo que este é um formulário acadêmico demonstrativo e que nenhum dado será enviado ou armazenado. <span class="req" aria-hidden="true">*</span></span>
-            </label>
-            <p class="field__error" id="consentimento-error"></p>
-          </div>
-          <div class="contact-form__foot">
-            <button class="btn btn--primary" type="submit">Enviar mensagem</button>
-            <span class="counter mono" data-counter aria-hidden="true">0/1000</span>
-          </div>
-          <p class="form-status" role="status" tabindex="-1"></p>
-          <p class="login__note">Demonstração: os dados não saem do seu navegador.</p>
-        </form>
-      </section>
-
-      <aside class="help-about" aria-labelledby="about-title">
-        <h2 id="about-title">Sobre o projeto</h2>
-        <p class="muted">Um estudo acadêmico, não uma empresa.</p>
-        <dl>
-          <div><dt>Instituição</dt><dd>FIAP · Global Solution 2026 · CitizenTech</dd></div>
-          <div><dt>Equipe</dt><dd>Turma 1TDSPB · <a href="integrantes.html">ver integrantes</a></dd></div>
-          <div><dt>Atendimento</dt><dd>Drone Bot nesta página (demonstração por regras). Telegram com áudio previsto, ainda não disponível.</dd></div>
-          <div><dt>Código</dt><dd><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório no GitHub</a></dd></div>
-        </dl>
-      </aside>
-    </div>
+    <section class="container help-cta" aria-labelledby="cta-title">
+      <div>
+        <p class="eyebrow eyebrow--light">Ainda com dúvida?</p>
+        <h2 id="cta-title">Não encontrou o que procurava?</h2>
+        <p class="muted">Escreva para a equipe pela página de contato ou converse com o Drone Bot, o assistente do SADEC.</p>
+      </div>
+      <div class="help-cta__actions">
+        <a class="btn btn--light" href="contato.html">Fale com a equipe</a>
+        <a class="btn btn--ghost" href="drone-bot.html">Perguntar ao Drone Bot</a>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -232,7 +182,7 @@
         </div>
         <div>
           <h2>Projeto</h2>
-          <ul><li><a href="sobre.html">Sobre</a></li><li><a href="faq.html">Perguntas frequentes</a></li><li><a href="faq.html#contato">Contato</a></li><li><a href="integrantes.html">Integrantes</a></li><li><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório</a></li></ul>
+          <ul><li><a href="sobre.html">Sobre</a></li><li><a href="faq.html">Perguntas frequentes</a></li><li><a href="contato.html">Contato</a></li><li><a href="integrantes.html">Integrantes</a></li><li><a href="https://github.com/Kauanzxd/Global_Solution-Site">Repositório</a></li></ul>
         </div>
       </div>
       <p class="site-footer__legal">O SADEC é um protótipo acadêmico conceitual. Não opera comercialmente, não controla drones reais, não possui parcerias hospitalares e não tem integração com plataformas de delivery. Frota, rotas, telemetria e missões são simulações com dados fictícios. Uma operação real dependeria de autorização da ANAC e do DECEA.</p>

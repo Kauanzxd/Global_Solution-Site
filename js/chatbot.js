@@ -110,7 +110,7 @@
     reclamar: (ent) => ({
       text: 'Sinto muito pelo problema. Este é um protocolo demonstrativo, nada foi registrado' + (ent.codigo ? ' para ' + ent.codigo : '') +
         '. Para detalhes, use o formulário de contato (nenhum dado é enviado).',
-      links: [link('faq.html#contato', 'Abrir formulário de contato')]
+      links: [link('contato.html', 'Abrir formulário de contato')]
     }),
     delivery: () => ({
       text: 'Pedidos de comida e mercado são prioridade 4 (Comercial). Eles ajudam a financiar a rede, mas cedem o drone para órgãos e emergências enquanto não decolaram. Experimente no protótipo do SADEC Delivery.',
