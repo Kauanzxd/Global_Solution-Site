@@ -1,6 +1,6 @@
 /* SIDEC — Drone Bot: assistente DEMONSTRATIVO baseado em regras.
-   Ponto de integração futura: SIDEC.bot.respond(texto) -> Promise<resposta>. Uma versão com IBM watsonx Assistant
-   deve chamar um backend próprio (proxy) que guarda as credenciais; nunca colocar chaves no frontend. */
+   SIDEC.bot.respond(texto) -> Promise<resposta>: com a API ligada, usa o fluxo do Node-RED (/sadec/mensagem);
+   sem ela, responde por regras locais. As chaves de IA ficam só no servidor (Node-RED), nunca no frontend. */
 (function (root) {
   'use strict';
   const SIDEC = root.SIDEC;
@@ -97,7 +97,7 @@
     }),
     urgente: (ent) => ({
       text: (ent.tipoCarga === 'órgão'
-        ? 'Transporte de órgãos é prioridade 1: só hospitais e a Central de Transplantes solicitam, e o drone só é liberado se a bateria cobrir a rota com 30% de reserva.'
+        ? 'Transporte de órgãos é prioridade 1: só hospitais e a Central de Transplantes solicitam, e, como em toda entrega, o drone só é liberado se a bateria cobrir ida e volta com 30% de reserva.'
         : 'Emergências (água, medicamentos, kits) são prioridade 2, solicitadas pela Defesa Civil e prefeituras.') +
         ' Em uma emergência real, ligue 192 (SAMU) ou 199 (Defesa Civil).',
       links: [link('central.html#cenarios', 'Ver cenário de prioridade na Central')]
@@ -134,11 +134,34 @@
   };
 
   /* Implementação local por regras. Retorna Promise para manter o mesmo contrato de um backend real. */
-  function respond(text) {
+  function respondLocal(text) {
     const ent = entities(text);
     const intent = intentOf(text, ent);
     const reply = REPLIES[intent](ent);
-    return Promise.resolve(Object.assign({ intent, entities: ent }, reply));
+    return Object.assign({ intent, entities: ent }, reply);
+  }
+
+  /* Com a API (Node-RED) no ar, a conversa usa o mesmo fluxo do Webchat e do Telegram: pedidos reais (códigos SD),
+     regras de autorização e IA quando configurada. Ficam locais: o tutorial guiado e os códigos SDC- da simulação.
+     Se a API não responder, a resposta local por regras assume. */
+  const sessaoApi = 'bot' + Math.random().toString(36).slice(2, 10);
+  async function respond(text) {
+    const local = respondLocal(text);
+    const api = SIDEC.api;
+    if (local.intent === 'tutorial' || /SDC-?\d/i.test(text) || !api || !(await api.disponivel())) return local;
+    try {
+      const resp = await root.fetch(api.base + '/sadec/mensagem', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessao: sessaoApi, texto: text })
+      });
+      const json = await resp.json();
+      if (!resp.ok || !json || !json.resposta) return local;
+      const codigo = String(json.resposta).match(/\bSD\d{4,5}\b/);
+      return { intent: 'api', entities: local.entities, text: json.resposta,
+        links: codigo ? [link('rastreamento.html?id=' + codigo[0], 'Abrir ' + codigo[0] + ' no rastreamento')] : [] };
+    } catch {
+      return local;
+    }
   }
 
   /* ---------- Tutoriais guiados ---------- */
@@ -157,11 +180,11 @@
       ['#acompanhar', 'Acompanhe o voo', 'Veja o preparo, a decolagem e o drone cruzando a rota até a sua porta.']
     ],
     central: [
-      ['#fila', 'Fila por prioridade', 'Os pedidos ficam ordenados de P1 (órgãos) a P4 (comercial). Empates respeitam a ordem de chegada.'],
-      ['#frota', 'Frota', 'Cada drone mostra base, bateria, carga máxima e status. Indisponíveis nunca recebem missão.'],
-      ['#nova-solicitacao', 'Nova solicitação', 'Registre um pedido fictício. Ele entra na fila na posição da sua prioridade.'],
-      ['#cenarios', 'Cenários de teste', 'Cada botão monta uma situação e aplica as regras reais do motor.'],
-      ['#registro', 'Registro de decisões', 'Toda decisão aparece aqui com o motivo e os números usados.']
+      ['#painel', 'Rede real ou simulação', 'Alterne entre os pedidos gravados na API, no mapa de São Paulo, e a cidade-modelo da simulação com os cenários de teste.'],
+      ['#mapa', 'Mapa ao vivo', 'Rotas, filiais, destinos e drones. Toque num drone ou num pedido para focar a rota.'],
+      ['#fila', 'Fila por prioridade', 'Os pedidos ficam ordenados de P1 (órgãos) a P4 (comercial). Órgãos decolam pelo operador; os demais saem sozinhos, com 5 min entre saídas de cada filial.'],
+      ['#frota', 'Frota', 'Bateria em tempo real (cerca de 3% por km a 48 km/h), autonomia restante e status. Indisponíveis nunca recebem missão.'],
+      ['#registro', 'Registro de decisões', 'Toda decisão aparece aqui com o motivo, o responsável e o horário.']
     ],
     rastreamento: [
       ['#busca', 'Escolha a entrega', 'Selecione um código. O rastreamento usa o mesmo pedido e o mesmo drone da Central.'],
@@ -239,13 +262,15 @@
     input,
     el('button', { type: 'submit', class: 'btn btn--primary', text: 'Enviar' })
   ]);
+  const subtitulo = el('p', { class: 'chat__subtitle', text: 'Assistente demonstrativo · respostas por regras' });
+  if (SIDEC.api) SIDEC.api.disponivel().then((on) => { if (on) subtitulo.textContent = 'Conectado à Central SADEC (Node-RED) · dados da demonstração'; });
   const closeBtn = el('button', { type: 'button', class: 'chat__close', 'aria-label': 'Fechar Drone Bot', text: '×' });
   const panel = el('section', { id: 'chat-panel', class: 'chat__panel', role: 'dialog', 'aria-labelledby': 'chat-title', hidden: true }, [
     el('header', { class: 'chat__head' }, [
       el('span', { class: 'chat__head-avatar' }, headAvatar),
       el('div', {}, [
         el('h2', { id: 'chat-title', class: 'chat__title', text: 'Drone Bot' }),
-        el('p', { class: 'chat__subtitle', text: 'Assistente demonstrativo · respostas por regras' })
+        subtitulo
       ]),
       closeBtn
     ]),
