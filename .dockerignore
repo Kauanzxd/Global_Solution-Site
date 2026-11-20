@@ -12,10 +12,5 @@ identificacao.txt
 chaves*.txt
 *.env
 .env*
-.agent
-.agents
-.windsurf
-.claude
-CLAUDE.md
 assets/images/pontos.jpg
 *.zip

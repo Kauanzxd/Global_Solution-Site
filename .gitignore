@@ -8,9 +8,6 @@ chaves*.txt
 *.env
 .env*
 identificacao.txt
-.agent/
-.agents/
-.windsurf/
 
 # Backups locais do banco e artefatos de build
 ChatBot/backups/

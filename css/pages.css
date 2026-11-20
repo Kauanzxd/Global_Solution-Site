@@ -484,6 +484,8 @@
 .help-alert__icon { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 12px; background: var(--p1); color: #FFFFFF; }
 .help-alert__icon svg { width: 20px; height: 20px; }
 @media (min-width: 960px) { .page-hero .help-hero__inner { grid-template-columns: 1fr auto; } }
+/* etiqueta, título e texto de apoio com o mesmo respiro das outras páginas (gap do .page-hero) */
+.help-hero__inner > div { display: flex; flex-direction: column; gap: var(--s-5); }
 
 .help-faq { display: flex; flex-direction: column; gap: var(--s-5); margin-top: var(--s-7); padding: clamp(var(--s-5), 3vw, 40px); border-radius: var(--r-card); background: var(--card); }
 .help-faq > h2 { font-size: var(--t-h3, 1.5rem); }
