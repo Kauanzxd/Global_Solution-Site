@@ -1,0 +1,11 @@
+GLOBAL SOLUTION 2026/2 - CITIZENTECH
+Disciplina: Computational Thinking Using Python
+Projeto: SADEC - Sistema Autônomo de Drones de Entrega e Cuidado
+Turma: 1TDSPB
+
+Integrantes:
+RM 576881 - Pablo Ackillys Anjos da Silva - 1TDSPB
+RM 574837 - Kauan Gomes dos Santos - 1TDSPB
+RM 576834 - Thomaz Rafael Krutman Neves da Rocha - 1TDSPB
+RM 576661 - Claudio Augusto Silva de Assis - 1TDSPB
+RM 576939 - Gustavo Almeida Rodrigues - 1TDSPB

@@ -50,13 +50,13 @@ public class Main {
         Local mooca = new Local("Mooca", "Mooca");
         Local parelheiros = new Local("Parelheiros", "Parelheiros");
 
-        ZonaPouso zParque = new ZonaPouso("Parque Santo Dias", "Capão Redondo", 15, true);
-        ZonaPouso zCampo = new ZonaPouso("Campo de futebol M'Boi Mirim", "Jardim Ângela", 9, true);
-        ZonaPouso zFeira = new ZonaPouso("Praça da feira", "Capão Redondo", 12, false);   // com pessoas
+        ZonaPouso zParque = new ZonaPouso("Parque Santo Dias", "Capão Redondo", 7.5, true);
+        ZonaPouso zCampo = new ZonaPouso("Campo de futebol M'Boi Mirim", "Jardim Ângela", 4.5, true);
+        ZonaPouso zFeira = new ZonaPouso("Praça da feira", "Capão Redondo", 6, false);   // com pessoas
 
         Rota rotaHc = new Rota("R-01", filialCentro, hc, 6);
         Rota rotaMooca = new Rota("R-02", filialCentro, mooca, 6);
-        Rota rotaCapao = new Rota("R-03", filialSul, capao, 18);
+        Rota rotaCapao = new Rota("R-03", filialSul, capao, 8);
         rotaCapao.adicionarZonaPouso(zCampo);
         rotaCapao.adicionarZonaPouso(zFeira);
         rotaCapao.adicionarZonaPouso(zParque);
@@ -116,7 +116,7 @@ public class Main {
 
         LeituraSensor l1 = new LeituraSensor(dr01, "14:02", 5.2, 0.8, 2.0);
         LeituraSensor l2 = new LeituraSensor(dr01, "14:05", 9.1, 1.1, 4.5);
-        LeituraSensor l3 = new LeituraSensor(dr02, "14:07", 24.0, 3.6, 11.0);
+        LeituraSensor l3 = new LeituraSensor(dr02, "14:07", 24.0, 3.6, 5.5);
 
         testarCarga(central, orgao, l1);
         testarCarga(central, orgao, l2);
@@ -136,12 +136,33 @@ public class Main {
         ZonaPouso pouso = central.acionarPousoEmergencia(emergenciaCapao, l3);
         if (pouso != null) {
             System.out.println("-> Pouso em: " + pouso.descrever()
-                    + ". A praça (mais perto, km 12) foi descartada por não ser segura.");
+                    + ". A praça (mais perto, km 6) foi descartada por não ser segura.");
         } else {
             System.out.println("-> Nenhuma zona segura: paraquedas acionado.");
         }
         System.out.println("Estado do drone: " + dr02);
         System.out.println("Estado da entrega: " + emergenciaCapao);
+
+        // ------------------------------------------------------------------
+        // FUNCIONALIDADE 4b: recuperação do drone (resgate, manutenção e liberação)
+        // ------------------------------------------------------------------
+        secao("FUNCIONALIDADE 4b - recuperação do drone: resgate, manutenção e liberação");
+
+        System.out.println("Liberar o DR-02 direto do pouso? " + resultado(central.liberarDrone(dr02)));
+        boolean resgatou = central.concluirResgate(dr02);
+        if (resgatou) {
+            emergenciaCapao.setStatus("resgatada");   // a equipe levou a carga junto com o drone
+        }
+        System.out.println("Resgate concluído (vai para a base)? " + resultado(resgatou)
+                + " -> " + dr02.getStatus() + " | entrega " + emergenciaCapao.getCodigo()
+                + ": " + emergenciaCapao.getStatus());
+        System.out.println("Manutenção concluída? " + resultado(central.concluirManutencao(dr02))
+                + " -> " + dr02.getStatus());
+        System.out.println("\nAntes da liberação, o DR-02 não pode ser despachado:");
+        testarAtribuicao(central, remedio);
+        System.out.println("\nLiberação formal pela Central? " + resultado(central.liberarDrone(dr02))
+                + " -> " + dr02.getStatus());
+        testarAtribuicao(central, remedio);
 
         // ------------------------------------------------------------------
         // Estado final de todos os objetos
@@ -175,6 +196,10 @@ public class Main {
         System.out.println("\nLeitura " + leitura + " (" + entrega.getCodigo() + ", " + entrega.getTipoCarga() + ")");
         boolean ok = central.verificarCondicaoCarga(entrega, leitura);
         System.out.println(ok ? "   Carga dentro dos limites." : "   Carga com alerta.");
+    }
+
+    private static String resultado(boolean ok) {
+        return ok ? "sim" : "não (recusado)";
     }
 
     private static void titulo(String texto) {

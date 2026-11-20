@@ -1,6 +1,6 @@
 """
 SADEC - Global Solution 2026/2 (FIAP)
-Computational Thinking Using Python - 1TDS
+Computational Thinking Using Python - 1TDSPB
 
 Sistema de console da rede de drones SADEC.
 """
@@ -1395,8 +1395,9 @@ lista_hospital_longitude = [
 lista_drone_codigo = ["DR-01", "DR-02", "DR-03", "DR-04"]
 lista_drone_bateria = [100, 70, 45, 20]
 
-# Distância que um drone consegue voar com 100% de bateria (em km)
-autonomia_km = 20
+# Distância que um drone consegue voar com 100% de bateria (em km), já com a carga máxima.
+# É o mesmo alcance usado no aplicativo SADEC e nos drones X6 do projeto Java.
+autonomia_km = 40
 
 # ID (número de identificação) que o próximo pedido vai receber.
 # Começa em 1001 para todo ID ter 4 dígitos e aumenta 1 a cada pedido registrado,
@@ -1685,7 +1686,12 @@ while tela != "sair":
         lista_endereco_retirada.append(novo_pedido[4])
         lista_codigo_recebimento.append(novo_pedido[5])
         lista_drone.append(novo_pedido[6])
-        lista_status.append("Confirmado")    # por enquanto, todo pedido registrado fica confirmado
+        # Emergências (prioridade 1 e 2) já entram confirmadas; o Requerimento de drone (3 e 4)
+        # entra "Em análise" e ainda pode ser editado ou cancelado pelo cliente
+        if novo_pedido[1] <= 2:
+            lista_status.append("Confirmado")
+        else:
+            lista_status.append("Em análise")
 
         exibir_dados("Resumo do requerimento",
                      ["Uso do drone", "Prioridade", "Peso aproximado da carga",

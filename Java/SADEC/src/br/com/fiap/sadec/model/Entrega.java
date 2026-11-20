@@ -5,7 +5,7 @@ package br.com.fiap.sadec.model;
  *
  * Prioridade (o número menor passa na frente):
  *  1 = órgãos | 2 = emergência | 3 = saúde | 4 = comercial.
- * Status: aguardando, em_voo, entregue, reagendada, aguardando_resgate.
+ * Status: aguardando, em_voo, entregue, reagendada, aguardando_resgate, resgatada.
  */
 public class Entrega {
 

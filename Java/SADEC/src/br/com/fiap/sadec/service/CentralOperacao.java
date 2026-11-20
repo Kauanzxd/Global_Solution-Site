@@ -183,6 +183,9 @@ public class CentralOperacao {
         }
 
         Drone drone = entrega.getDrone();
+        if (drone == null) {
+            return null;   // a entrega não está em voo (sem drone): não há pouso a fazer
+        }
         drone.setStatus("pouso_emergencia");
         entrega.setStatus("aguardando_resgate");
         if (maisProxima != null) {
