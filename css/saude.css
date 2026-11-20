@@ -48,6 +48,33 @@
 .roles__tab[aria-selected="true"] .roles__desc { color: rgb(255 255 255 / 0.78); }
 .roles__tab[aria-selected="true"] .roles__ico { background: rgb(255 255 255 / 0.16); }
 
+/* Tipo de pedido bloqueado para o perfil conectado: cadeado na aba e aviso no lugar do formulário */
+.roles__tab.is-locked .roles__name::after {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-left: 8px;
+  vertical-align: 1px;
+  background: currentColor;
+  opacity: 0.7;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 7V5a3.5 3.5 0 0 1 7 0v2h.5a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm1.5 0h4V5a2 2 0 0 0-4 0z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 7V5a3.5 3.5 0 0 1 7 0v2h.5a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm1.5 0h4V5a2 2 0 0 0-4 0z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.sx-lock { display: grid; justify-items: start; gap: 12px; padding: 8px 0; }
+.sx-lock .sx-h2 { margin: 0; }
+.sx-lock__msg { margin: 0; max-width: 46ch; color: var(--c-muted); }
+.sx-lock__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--p1-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23B42318' d='M4.5 7V5a3.5 3.5 0 0 1 7 0v2h.5a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm1.5 0h4V5a2 2 0 0 0-4 0z'/%3E%3C/svg%3E") center / 20px no-repeat;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sx-lock { animation: sx-lock-in 280ms var(--ease-out) both; }
+  @keyframes sx-lock-in { from { opacity: 0; transform: translateY(6px); } }
+}
+
 @media (min-width: 760px) {
   .roles { grid-template-columns: repeat(3, 1fr); }
   .roles__tab { grid-template-columns: 1fr; grid-template-rows: auto auto auto; gap: 6px; min-height: 220px; padding: 22px; align-content: start; }
@@ -244,3 +271,9 @@
 /* ---------- Rodapé da área ---------- */
 .site-footer--saude { margin-top: 0; padding-top: var(--s-6); }
 .site-footer--saude .site-footer__legal { margin: 0; }
+
+/* Selo do modo: integrado à Central (API) ou simulado no navegador */
+.sx-mode { flex-basis: 100%; order: 3; padding: 10px 14px; border: 1px dashed var(--line-2); border-radius: var(--r-field); font-size: var(--t-sm); color: var(--c-muted); }
+.sx-mode.is-online { border-style: solid; border-color: transparent; background: var(--p3-bg); color: var(--p3-ink); }
+.sx-conta { flex-basis: 100%; order: 3; margin: 0; font-size: var(--t-sm); color: var(--c-muted); }
+.sx-conta strong { color: var(--c-on-surface); }
