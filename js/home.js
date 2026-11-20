@@ -17,7 +17,7 @@
     const lugar = (id) => (ops.byId(state.filiais, id) || ops.byId(state.locais, id) || {}).nome || id;
     if (voo) {
       const p = ops.flightProgress(voo, Date.now());
-      const restS = Math.max(0, Math.ceil(((1 - p) * voo.duracaoMs) / 1000));
+      const restS = Math.max(0, Math.ceil(((1 - p) * voo.duracaoMs * SIDEC.ops.ESCALA_TEMPO) / 1000)); // tempo da operação
       prio.textContent = 'P' + voo.prioridade;
       prio.setAttribute('data-prio', String(voo.prioridade));
       doc.getElementById('hero-flight').textContent = 'Em voo · ' + voo.carga;
