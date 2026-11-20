@@ -65,6 +65,7 @@
 
   let signature = '';
   function render(state) {
+    if (modoApi) return; // na demonstração integrada os pedidos vêm da API (renderApi)
     const now = Date.now();
     const ativos = state.entregas.filter((e) => isHealth(e) && ATIVOS.includes(e.status))
       .sort((a, b) => RANK[a.status] - RANK[b.status] || a.prioridade - b.prioridade || a.ordem - b.ordem);
@@ -139,6 +140,7 @@
         t.focus();
       });
     });
+    return select;
   }
 
   /* ---------- Pedidos ---------- */
@@ -198,6 +200,7 @@
       form.addEventListener('submit', (ev) => {
         ev.preventDefault();
         if (!validate(form)) return;
+        if (modoApi) { enviarApi(form); return; }
         try {
           const { e, r } = store.update((s) => {
             const nova = ops.createOrder(s, orderData(form));
@@ -225,6 +228,10 @@
     const form = $('form-hospital');
     const box = $('h-precheck');
     if (!form.elements.produto.value) { box.replaceChildren(); return; }
+    if (modoApi) {
+      box.replaceChildren(el('p', { class: 'precheck__line is-ok', text: 'Ao enviar, o sistema calcula a bateria da rota de ida e volta com 30% de reserva e a Central confere a autonomia antes de reservar o drone.' }));
+      return;
+    }
     const copia = JSON.parse(JSON.stringify(store.get()));
     let line;
     try {
@@ -234,8 +241,8 @@
         const d = ops.byId(copia.drones, r.droneId);
         line = el('p', { class: 'precheck__line is-ok' }, [
           'Autonomia confirmada: ' + d.nome + ' pode levar este órgão.',
-          el('span', { class: 'precheck__math', text: num.format(e.km) + ' km × ' + num.format(d.consumoKm) + '%/km = ' + num.format(e.consumo) +
-            '% × 1,3 (reserva de 30%) = ' + num.format(e.necessario) + '% ≤ bateria de ' + num.format(d.bateria) + '%' })
+          el('span', { class: 'precheck__math', text: 'Ida de ' + num.format(e.km) + ' km + volta à base, × ' + num.format(d.consumoKm) + '%/km × 1,3 (reserva de 30%) = ' +
+            num.format(e.necessario) + '% ≤ bateria de ' + num.format(d.bateria) + '%' })
         ]);
       } else {
         line = el('p', { class: 'precheck__line is-alert', text: (r.motivo || 'Nenhum drone elegível nesta rota.') + ' O pedido seguirá para outro meio de transporte.' });
@@ -244,6 +251,162 @@
       line = el('p', { class: 'precheck__line is-alert', text: err.message });
     }
     box.replaceChildren(line);
+  }
+
+  /* ---------- Demonstração integrada (API: Python + Java + SQLite) ---------- */
+  let modoApi = false;
+  const TIPO_DO_FORM = { 'form-cidadao': ['remedio', 'cidadao'], 'form-hospital': ['orgao', 'hospital'], 'form-operador': ['kit_emergencia', 'defesa_civil'] };
+  const STATUS_API = { aguardando: 'Na fila', atribuida: 'Drone reservado, aguardando decolagem', em_voo: 'Em voo', entregue: 'Entregue',
+    reagendada: 'Reagendada', outro_meio: 'Outro meio de transporte', aguardando_resgate: 'Aguardando resgate' };
+
+  function marcarModo(online) {
+    const m = $('sx-modo');
+    m.className = 'sx-mode' + (online ? ' is-online' : '');
+    m.textContent = online
+      ? 'Conectado à Central SADEC: pedidos gravados no banco, bateria estimada pelo sistema e drone escolhido pela Central.'
+      : 'Modo simulado: a API de integração está desligada; os pedidos ficam só neste navegador.';
+  }
+
+  async function ativarApi() {
+    const online = await SIDEC.api.disponivel();
+    marcarModo(online);
+    if (!online) return;
+    const r = await SIDEC.api.get('/api/locais');
+    if (!r.ok || !Array.isArray(r.dados) || !r.dados.length) { marcarModo(false); return; }
+    modoApi = true;
+    const opcoes = (tipo) => r.dados.filter((l) => l.tipo === tipo).map((l) => el('option', { value: l.nome, text: l.nome + ' (' + num.format(l.distancia_km) + ' km)' }));
+    ['c-destino', 'o-destino'].forEach((id) => $(id).replaceChildren(...opcoes('bairro')));
+    // Todos os hospitais do CNES gravados no banco (origem e destino do transporte de órgão)
+    $('h-destino').replaceChildren(...opcoes('hospital'));
+    $('h-origem').replaceChildren(...r.dados.filter((l) => l.tipo === 'hospital').map((l) => el('option', { value: l.nome, text: l.nome })));
+    $('field-h-codigo').hidden = false;
+    await mostrarConta();
+    $('tag-legenda').textContent = 'Mais urgente na Central (API)';
+    updatePrecheck();
+    updateSummary();
+    renderApi();
+  }
+
+  /* Conta conectada (a mesma do portal e do Delivery): define quem pede e libera órgão (com código) e socorro. */
+  let conta = null;
+  const PERFIL_NOME = { cliente: 'Cliente', unidade_saude: 'Unidade de saúde', governo: 'Governo', operador: 'Operador da Central' };
+
+  /* Acesso por perfil (a API aplica a mesma regra): órgão só com cadastro médico autorizado,
+     socorro só com conta do governo; a Central (operador e administrador) acessa tudo. Medicamento é livre. */
+  const ACESSO = {
+    'form-hospital': { perfis: ['unidade_saude', 'operador'], texto: 'Transporte de órgão é exclusivo de unidades de saúde com cadastro médico autorizado.' },
+    'form-operador': { perfis: ['governo', 'operador'], texto: 'Envio de socorro é exclusivo de contas do governo (Defesa Civil ou município).' }
+  };
+  function aplicarAcesso(perfil) {
+    Object.keys(ACESSO).forEach((id) => {
+      const form = $(id);
+      const regra = ACESSO[id];
+      const liberado = regra.perfis.includes(perfil);
+      const painel = form.closest('[role="tabpanel"]');
+      $(painel.getAttribute('aria-labelledby')).classList.toggle('is-locked', !liberado);
+      form.hidden = !liberado;
+      let aviso = painel.querySelector('.sx-lock');
+      if (liberado) {
+        if (aviso) aviso.remove();
+        return;
+      }
+      if (!aviso) {
+        aviso = el('div', { class: 'sx-lock' });
+        form.before(aviso);
+      }
+      aviso.replaceChildren(
+        el('span', { class: 'sx-lock__icon', 'aria-hidden': 'true' }),
+        el('h2', { class: 'sx-h2', text: 'Acesso restrito' }),
+        el('p', { class: 'sx-lock__msg', text: regra.texto + (perfil ? ' A conta conectada (' + (PERFIL_NOME[perfil] || perfil) + ') não tem esse acesso.' : ' Entre com uma conta autorizada para continuar.') }),
+        el('a', { class: 'btn btn--primary', href: '../entrar.html', text: perfil ? 'Trocar de conta' : 'Entrar' }));
+    });
+  }
+  const sessaoLocal = SIDEC.api && SIDEC.api.sessao.atual();
+  aplicarAcesso(sessaoLocal && sessaoLocal.conta ? sessaoLocal.conta.perfil : null);
+
+  async function mostrarConta() {
+    const box = $('sx-conta');
+    const r = SIDEC.api.sessao.atual() ? await SIDEC.api.get('/api/conta') : { ok: false };
+    conta = r.ok ? r.dados : null;
+    aplicarAcesso(conta ? conta.perfil : null);
+    box.hidden = false;
+    if (!conta) {
+      box.replaceChildren('Sem conta conectada: medicamento é livre; órgão exige cadastro médico autorizado e socorro, conta do governo. ',
+        el('a', { href: '../entrar.html', text: 'Entrar' }));
+      return;
+    }
+    box.replaceChildren('Conectado como ', el('strong', { text: conta.nome }), ' (' + PERFIL_NOME[conta.perfil] + (conta.instituicao ? ', ' + conta.instituicao : '') + '). ',
+      el('a', { href: '../entrar.html', text: 'Trocar de conta' }));
+    if (conta.instituicao) $('h-origem').value = conta.instituicao;
+  }
+
+  async function enviarApi(form) {
+    const btn = form.querySelector('[type="submit"]');
+    const opt = form.elements.produto.selectedOptions[0];
+    const tipo = TIPO_DO_FORM[form.id];
+    const origem = form.elements.origemId.selectedOptions[0];
+    btn.disabled = true;
+    btn.classList.add('is-loading');
+    const r = await SIDEC.api.post('/api/pedidos', {
+      tipo_carga: tipo[0], destino: form.elements.destinoId.value, origem: origem ? origem.textContent : null,
+      peso_kg: Number(opt.getAttribute('data-peso')) || undefined, canal: 'site',
+      codigo_orgao: form.elements.codigoOrgao ? form.elements.codigoOrgao.value.trim().toUpperCase() || undefined : undefined,
+      solicitante: { tipo: tipo[1], nome: conta ? (conta.instituicao || conta.nome) : 'SADEC Saúde (demonstração)' }
+    });
+    btn.disabled = false;
+    btn.classList.remove('is-loading');
+    const novo = el('button', { type: 'button', class: 'btn btn--ghost', 'data-novo': '', text: 'Novo pedido' });
+    if (!r.ok) {
+      showDone(true, 'Pedido não registrado', SIDEC.api.mensagemErro(r), [novo]);
+      return;
+    }
+    const p = r.dados.pedido;
+    const calc = r.dados.calculo_python;
+    const texto = p.codigo + ' gravado na Central. ' + (STATUS_API[p.status] || p.status) + (p.drone_codigo ? ' (drone ' + p.drone_codigo + ')' : '') +
+      '. Rota de ' + num.format(calc.distancia_km) + ' km: o sistema estimou ' + num.format(calc.bateria_necessaria_pct) + '% de bateria para ida e volta, com 30% de reserva.' +
+      (p.motivo ? ' ' + p.motivo : '');
+    form.elements.produto.value = '';
+    if (form.elements.ciente) form.elements.ciente.checked = false;
+    if (form.elements.codigoOrgao) form.elements.codigoOrgao.value = '';
+    showDone(p.status === 'outro_meio', p.status === 'outro_meio' ? 'Sem drone elegível' : p.codigo + ' registrado', texto, [
+      el('a', { class: 'btn btn--primary', href: '../rastreamento.html?id=' + p.codigo, text: 'Acompanhar ' + p.codigo }), novo
+    ]);
+    renderApi();
+  }
+
+  function etiquetaApi(p) {
+    return el('article', { class: 'ship ship--' + p.prioridade, 'aria-label': 'Entrega ' + p.codigo }, [
+      el('p', { class: 'ship__kind', text: 'P' + p.prioridade + ' ' + ops.PRIORIDADES[p.prioridade] }),
+      el('p', { class: 'ship__code', text: p.codigo }),
+      el('p', { class: 'ship__cargo', text: p.tipo_carga + ' para ' + p.destino }),
+      el('dl', { class: 'ship__route' }, [el('dt', { text: 'Drone' }), el('dd', { text: p.drone_codigo || 'a definir' }),
+        el('dt', { text: 'Situação' }), el('dd', { text: STATUS_API[p.status] || p.status })]),
+      p.motivo ? el('p', { class: 'ship__reason', text: p.motivo }) : null
+    ]);
+  }
+  const linkRastreio = (p) => el('div', { class: 'cards__actions' }, el('a', { class: 'btn btn--ghost btn--sm', href: '../rastreamento.html?id=' + p.codigo, text: 'Rastrear ' + p.codigo }));
+
+  async function renderApi() {
+    const r = await SIDEC.api.get('/api/pedidos');
+    if (!r.ok) {
+      $('sh-ativos').replaceChildren(el('li', { class: 'cards__empty', text: SIDEC.api.mensagemErro(r) }));
+      return;
+    }
+    const saude = r.dados.filter((p) => p.prioridade <= 3);
+    const ativos = saude.filter((p) => p.status !== 'entregue');
+    const top = ativos[0] || null;
+    const heroTag = top ? etiquetaApi(top) : el('div', { class: 'ship' }, el('p', { class: 'ship__empty', text: 'Nenhuma entrega de saúde ativa na Central.' }));
+    heroTag.id = 'sh-tag';
+    $('sh-tag').replaceWith(heroTag);
+    $('sh-tag-actions').replaceChildren(...(top ? [linkRastreio(top)] : []));
+    const outros = ativos.slice(1);
+    $('sh-ativos').replaceChildren(...(outros.length ? outros.map((p) => el('li', {}, [etiquetaApi(p), linkRastreio(p)]))
+      : [el('li', { class: 'cards__empty', text: 'Nenhuma outra entrega de saúde em andamento na Central.' })]));
+    const fim = saude.filter((p) => p.status === 'entregue');
+    $('sh-historico').replaceChildren(...(fim.length ? fim.map((p) => el('li', { class: 'history__item history__item--entregue' }, [
+      el('div', { class: 'history__top' }, [el('span', { class: 'history__code', text: p.codigo }), el('span', { class: 'prio prio--' + p.prioridade, text: 'P' + p.prioridade })]),
+      el('span', { text: p.tipo_carga + ' · ' + p.destino })
+    ])) : [el('li', { class: 'history__item', text: 'Nenhuma entrega concluída na Central.' })]));
   }
 
   /* ---------- Tela de confirmação ---------- */
@@ -272,7 +435,7 @@
 
   /* ---------- Resumo ao vivo do pedido ---------- */
   const REGRA = {
-    1: 'Só decola se consumo da rota × 1,3 couber na bateria (reserva de 30%). Sem drone elegível, a Central indica outro meio.',
+    1: 'Só decola se a rota de ida e volta × 1,3 couber na bateria (reserva de 30%). Sem drone elegível, a Central indica outro meio.',
     2: 'Pode antecipar uma entrega comercial que ainda não decolou. Voo em andamento nunca é interrompido.',
     3: 'Atendido depois de órgãos e emergências, por ordem de chegada.'
   };
@@ -284,15 +447,18 @@
     const state = store.get();
     const p = Number(form.getAttribute('data-prioridade'));
     const opt = form.elements.produto.selectedOptions[0];
-    const a = ops.findPoint(state, form.elements.origemId.value);
-    const b = ops.findPoint(state, form.elements.destinoId.value);
-    const km = a && b ? ops.distance(a, b) : null;
+    const origOpt = form.elements.origemId.selectedOptions[0];
+    const a = ops.findPoint(state, form.elements.origemId.value) || (origOpt ? { nome: origOpt.textContent } : null);
+    // No modo integrado o destino é um local do banco: a distância vem da API (cálculo do Python no envio).
+    const destOpt = form.elements.destinoId.selectedOptions[0];
+    const b = ops.findPoint(state, form.elements.destinoId.value) || (destOpt ? { nome: destOpt.textContent } : null);
+    const km = a && b && typeof a.x === 'number' && typeof b.x === 'number' ? ops.distance(a, b) : null;
     const termico = p === 1 || (opt && opt.hasAttribute('data-termico'));
     const rows = [
       ['Prioridade', el('span', { class: 'prio prio--' + p, text: 'P' + p + ' ' + ops.PRIORIDADES[p] })],
       ['Carga', opt && opt.value ? opt.textContent : '—'],
       ['Rota', (a ? a.nome : '—') + ' → ' + (b ? b.nome : '—')],
-      ['Distância', km === null ? '—' : num.format(km) + ' km em linha reta'],
+      ['Distância', km === null ? (modoApi ? 'calculada pelo sistema ao enviar' : '—') : num.format(km) + ' km em linha reta'],
       ['Temperatura', termico ? 'Controlada, 2 a 8 °C' : 'Ambiente']
     ];
     $('sx-resumo').replaceChildren(...rows.map(([k, v]) => el('div', {}, [el('dt', { text: k }), el('dd', {}, v)])));
@@ -333,7 +499,7 @@
       const out = $('aut-saida');
       out.className = 'sim__out ' + (a.ok ? 'is-ok' : 'is-alert');
       out.textContent = a.ok
-        ? 'Pode decolar: consumo de ' + num.format(a.consumo) + '% mais ' + Math.round(a.reserva * 100) + '% de reserva cabe na bateria, com ' + num.format(a.sobra) + '% de folga.'
+        ? 'Pode decolar: ida e volta consomem ' + num.format(a.consumo) + '%; com ' + Math.round(a.reserva * 100) + '% de reserva cabe na bateria, com ' + num.format(a.sobra) + '% de folga.'
         : 'Não decola: faltam ' + num.format(-a.sobra) + '% de bateria. A central procura outro drone ou outro meio de transporte.';
     };
     [km, bat, tipo].forEach((n) => n.addEventListener('input', update));
@@ -421,13 +587,17 @@
 
   const initial = store.get();
   fillPlaces(initial);
-  initRoles();
+  const selectRole = initRoles();
   initForms();
   initTemperature();
   initAutonomy();
   newRound();
   initActions();
+  // Abre direto no tipo de pedido do perfil conectado (hospital: órgão; governo: socorro)
+  const abaDoPerfil = { unidade_saude: 'tab-hospital', governo: 'tab-operador' }[sessaoLocal && sessaoLocal.conta ? sessaoLocal.conta.perfil : ''];
+  if (abaDoPerfil) selectRole($(abaDoPerfil));
   updateSummary();
+  ativarApi();
   store.subscribe(render);
   render(initial);
   setInterval(loop, 1000);
