@@ -90,6 +90,11 @@
             <label for="dl-bairro">Entregar em</label>
             <select class="input" id="dl-bairro" name="bairro"></select>
           </div>
+          <div class="field" id="field-dl-real" hidden>
+            <label for="dl-real">Endereço na rede piloto (Central)</label>
+            <select class="input" id="dl-real"></select>
+          </div>
+          <p class="dl-conta" id="dl-conta" hidden></p>
 
           <fieldset class="modes" id="dl-modos">
             <legend>Como entregar</legend>
@@ -126,6 +131,7 @@
           </div>
           <button class="btn btn--accent cart__submit" type="submit" id="btn-confirmar">Confirmar pedido</button>
           <p class="form-status" id="pedido-status" role="status"></p>
+          <p class="form-status" id="pedido-central" role="status" hidden></p>
         </form>
       </aside>
     </div>
@@ -136,6 +142,34 @@
         <p class="dl-track__empty" id="track-vazio">Nenhum pedido em andamento. Confirme um carrinho para ver o drone sair da loja até a sua porta.</p>
 
         <div class="track" id="track" hidden>
+          <!-- Pedido gravado na Central: mapa de ruas reais com a rota e a posição estimada do drone -->
+          <div class="dl-live" id="dl-live" hidden>
+            <div class="dl-live__map">
+              <svg class="osm__svg" id="dl-osm" role="img" aria-label="Mapa de ruas com a rota do drone da filial até o endereço de entrega"></svg>
+              <p class="osm__attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</p>
+            </div>
+            <div class="dl-live__info">
+              <p class="dl-live__code"><span class="live-dot" aria-hidden="true"></span><span class="mono" id="dl-live-code">—</span><span id="dl-live-estado">ao vivo</span></p>
+              <h3 class="dl-live__title" id="dl-live-title" aria-live="polite">Carregando seu pedido…</h3>
+              <p class="dl-live__eta"><strong class="mono" id="dl-live-eta">—</strong><span id="dl-live-eta-label">chegada prevista</span></p>
+              <span class="dl-live__bar" aria-hidden="true"><svg viewBox="0 0 100 6" preserveAspectRatio="none"><rect width="100" height="6" rx="3" class="dl-live__track"/><rect id="dl-live-fill" width="0" height="6" rx="3" class="dl-live__fill"/></svg></span>
+              <ol class="dl-live__steps" id="dl-live-etapas">
+                <li>Confirmado</li>
+                <li>Preparando</li>
+                <li>A caminho</li>
+                <li>Entregue</li>
+              </ol>
+              <dl class="track__facts" id="dl-live-dados"></dl>
+              <div class="dl-live__actions">
+                <a class="btn btn--accent" id="dl-live-link" href="../rastreamento.html">Abrir rastreamento ao vivo</a>
+                <button class="btn btn--dark" type="button" id="dl-live-recebi" hidden>Confirmar recebimento</button>
+              </div>
+              <p class="dl-live__note">Posição estimada pelo horário da decolagem e pela distância, a 48 km/h (sem telemetria real). Tempo acelerado na demonstração: 1 min passa em 5 s.</p>
+              <p class="form-status" id="dl-live-msg" role="status"></p>
+            </div>
+          </div>
+          <p class="dl-live__cta" id="dl-live-entrar" hidden>Quer ver o drone nas ruas reais de São Paulo? <a href="../entrar.html">Entre na sua conta</a> antes de confirmar o próximo pedido.</p>
+
           <p class="track__status" id="track-status" aria-live="polite"></p>
 
           <ol class="stepper" id="track-etapas">
@@ -184,6 +218,9 @@
       </div>
     </section>
 
+    <!-- Atalho fixo para o pedido em andamento (some quando o painel está na tela) -->
+    <a class="dl-pill" id="dl-pill" href="#acompanhar" hidden><span class="live-dot" aria-hidden="true"></span><span class="mono" id="dl-pill-code">—</span><span id="dl-pill-texto">Acompanhar</span></a>
+
     <section class="dl-how" id="como-funciona" aria-labelledby="como-title">
       <div class="container">
         <h2 id="como-title" class="dl-h2">Como funciona</h2>
@@ -227,7 +264,9 @@
   <script src="../js/data.js" defer></script>
   <script src="../js/state.js" defer></script>
   <script src="../js/drone-avatar.js" defer></script>
+  <script src="../js/api.js" defer></script>
   <script src="../js/chatbot.js" defer></script>
+  <script src="../js/mapa-osm.js" defer></script>
   <script src="../js/delivery-core.js" defer></script>
   <script src="../js/delivery.js" defer></script>
 </body>

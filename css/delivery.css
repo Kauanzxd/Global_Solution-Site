@@ -131,6 +131,9 @@
 .cart__empty { font-size: var(--t-label); color: var(--c-muted); }
 .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cart__form { display: grid; gap: var(--s-4); }
+.dl-conta { margin: 0; font-size: var(--t-sm); color: var(--c-muted); }
+.dl-conta strong { color: var(--c-on-surface); }
+#pedido-central[hidden] { display: none; }
 
 .modes { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
 .modes legend { margin-bottom: 8px; font-weight: 600; font-size: var(--t-label); }
@@ -304,6 +307,47 @@
   .stepper li + li::after { top: auto; bottom: calc(100% + 2px); right: auto; left: 9px; width: 0; height: 26px; border-top: 0; border-left: 2px dashed #3A4352; }
   .stepper li.is-done + li::after { border-left-color: rgb(255 255 255 / 0.7); }
 }
+
+/* ---------- Pedido na Central: mapa de ruas reais e estado ao vivo ---------- */
+.track > .is-oculto { display: none; }
+.dl-live { display: grid; gap: var(--s-5); }
+.dl-live__map { position: relative; height: clamp(280px, 52vw, 380px); overflow: hidden; border-radius: var(--r-inner); background: #E8E6E1; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08); }
+.dl-live__info { display: grid; gap: 14px; align-content: start; }
+.dl-live__code { display: flex; align-items: center; gap: 10px; margin: 0; font-size: var(--t-sm); color: var(--night-muted); }
+.dl-live__code .mono { padding: 3px 10px; border-radius: var(--r-pill); background: rgb(255 255 255 / 0.08); color: #FFFFFF; }
+.dl-live__code .live-dot { background: var(--ok-on-dark); }
+.dl-live__title { margin: 0; font-family: var(--font-display); font-size: clamp(1.375rem, 1.1rem + 1vw, 1.75rem); font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; color: #FFFFFF; text-wrap: balance; }
+.dl-live__eta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 0; color: var(--night-muted); font-size: var(--t-sm); }
+.dl-live__eta strong { font-size: clamp(2rem, 1.6rem + 1.6vw, 2.75rem); font-weight: 500; letter-spacing: -0.04em; color: #FFFFFF; font-variant-numeric: tabular-nums; }
+.dl-live__bar svg { display: block; width: 100%; height: 6px; }
+.dl-live__track { fill: rgb(255 255 255 / 0.1); }
+.dl-live__fill { fill: var(--cyan); transition: width 600ms linear; }
+.dl-live__steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; font-size: var(--t-xs); color: var(--night-muted); }
+.dl-live__steps li { padding-top: 10px; border-top: 3px solid rgb(255 255 255 / 0.12); }
+.dl-live__steps li.is-done { border-top-color: var(--cyan); color: var(--night-text); }
+.dl-live__steps li[aria-current] { border-top-color: #FFFFFF; color: #FFFFFF; font-weight: 600; }
+.dl-live__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.dl-live__actions .btn { flex: 1 1 12rem; }
+.dl-live__note { margin: 0; font-size: var(--t-xs); color: var(--night-muted); }
+.dl-live__cta { margin: 0; padding: 14px 16px; border-radius: var(--r-field); background: rgb(53 197 213 / 0.1); color: var(--night-text); font-size: var(--t-label); }
+.dl-live__cta a { color: var(--cyan); font-weight: 600; }
+@media (min-width: 900px) {
+  .dl-live { grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1fr); align-items: stretch; }
+  .dl-live__map { height: auto; min-height: 420px; }
+}
+@media (prefers-reduced-motion: reduce) { .dl-live__fill { transition: none; } }
+
+/* Atalho fixo do pedido em andamento: acima da barra de abas no celular */
+.dl-pill {
+  position: fixed; z-index: 30; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); translate: -50% 0;
+  display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 20px 0 16px; border-radius: var(--r-pill);
+  background: var(--ink); color: #FFFFFF; font-size: var(--t-label); font-weight: 500; white-space: nowrap;
+  box-shadow: 0 10px 30px rgb(11 20 36 / 0.3), 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+.dl-pill[hidden] { display: none; }
+.dl-pill .live-dot { background: var(--ok-on-dark); }
+.dl-pill .mono { color: var(--cyan); }
+@media (max-width: 899px) { body:has(.tabbar) .dl-pill { bottom: calc(96px + env(safe-area-inset-bottom)); } }
 
 /* ---------- Como funciona ---------- */
 .dl-how { padding-block: var(--s-8); }
